@@ -1,0 +1,88 @@
+﻿- info Loaded env from C:\BENGKEL APPS\.env.local
+- info Creating an optimized production build...
+- info Compiled successfully
+- info Linting and checking validity of types...
+- info Collecting page data...
+npx : ΓÜá∩╕Å  Node.js 18 and below are deprecated and will no longer be supported in future versions of 
+@supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: 
+https://github.com/orgs/supabase/discussions/37217
+At line:1 char:1
++ npx next build 2>&1 | Out-File -FilePath "C:\BENGKEL APPS\tmp\build_o ...
++ ~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ΓÜá∩╕Å  Node.js...scussions/37217:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ΓÜá∩╕Å  Node.js 18 and below are deprecated and will no longer be supported in future versions of 
+@supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: 
+https://github.com/orgs/supabase/discussions/37217
+ΓÜá∩╕Å  Node.js 18 and below are deprecated and will no longer be supported in future versions of 
+@supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: 
+https://github.com/orgs/supabase/discussions/37217
+ΓÜá∩╕Å  Node.js 18 and below are deprecated and will no longer be supported in future versions of 
+@supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: 
+https://github.com/orgs/supabase/discussions/37217
+ΓÜá∩╕Å  Node.js 18 and below are deprecated and will no longer be supported in future versions of 
+@supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: 
+https://github.com/orgs/supabase/discussions/37217
+- info Generating static pages (0/26)
+ΓÜá∩╕Å  Node.js 18 and below are deprecated and will no longer be supported in future versions of 
+@supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: 
+https://github.com/orgs/supabase/discussions/37217
+ΓÜá∩╕Å  Node.js 18 and below are deprecated and will no longer be supported in future versions of 
+@supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: 
+https://github.com/orgs/supabase/discussions/37217
+- info Generating static pages (6/26)
+- info Generating static pages (12/26)
+ΓÜá∩╕Å  Node.js 18 and below are deprecated and will no longer be supported in future versions of 
+@supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: 
+https://github.com/orgs/supabase/discussions/37217
+- info Generating static pages (19/26)
+- info Generating static pages (26/26)
+- info Finalizing page optimization...
+
+Route (app)                                Size     First Load JS
+Γöî Γùï /                                      19.4 kB         216 kB
+Γö£ Γùï /admin/montir-ai                       2.81 kB         200 kB
+Γö£ Γùï /antrian                               4.42 kB         201 kB
+Γö£ ╬╗ /api/auth/signout                      0 B                0 B
+Γö£ ╬╗ /api/branches                          0 B                0 B
+Γö£ ╬╗ /api/montir-ai                         0 B                0 B
+Γö£ Γùï /api/setup-settings                    0 B                0 B
+Γö£ ╬╗ /api/users                             0 B                0 B
+Γö£ Γùï /bookings                              7.79 kB         205 kB
+Γö£ Γùï /bookings-mitra                        7.71 kB         205 kB
+Γö£ Γùï /branches                              7.29 kB         204 kB
+Γö£ Γùï /catalog                               6.94 kB         204 kB
+Γö£ Γùï /commissions                           4.91 kB         202 kB
+Γö£ Γùï /expenses                              4.65 kB         202 kB
+Γö£ ╬╗ /invoice/[id]                          9.62 kB         153 kB
+Γö£ Γùï /login                                 4.12 kB         183 kB
+Γö£ Γùï /montir-ai                             4.28 kB         201 kB
+Γö£ Γùï /pos                                   9.11 kB         206 kB
+Γö£ Γùï /register                              4.57 kB         184 kB
+Γö£ Γùï /reports                               7.49 kB         204 kB
+Γö£ Γùï /settings                              3 kB            200 kB
+Γö£ Γùï /settings/bank                         3.25 kB         200 kB
+Γö£ Γùï /staff                                 5.53 kB         202 kB
+Γö£ Γùï /users                                 7.62 kB         204 kB
+Γöö Γùï /withdrawals                           3.33 kB         200 kB
++ First Load JS shared by all              134 kB
+  Γö£ chunks/596-71d6ae6d7488d2ae.js         26.1 kB
+  Γö£ chunks/87-1aced2682cdf32ef.js          55.9 kB
+  Γö£ chunks/fd9d1056-b079a5691feb42a5.js    50.5 kB
+  Γö£ chunks/main-app-1a7cb3126b1204e3.js    219 B
+  Γöö chunks/webpack-3e30c845282c9d83.js     1.73 kB
+
+Route (pages)                              Size     First Load JS
+ΓöÇ Γùï /404                                   182 B          76.7 kB
++ First Load JS shared by all              76.6 kB
+  Γö£ chunks/framework-8883d1e9be70c3da.js   45.1 kB
+  Γö£ chunks/main-e038ac55e73cae28.js        29.6 kB
+  Γö£ chunks/pages/_app-52924524f99094ab.js  195 B
+  Γöö chunks/webpack-3e30c845282c9d83.js     1.73 kB
+
+╞Æ Middleware                               150 kB
+
+╬╗  (Server)  server-side renders at runtime (uses getInitialProps or getServerSideProps)
+Γùï  (Static)  automatically rendered as static HTML (uses no initial props)
+
