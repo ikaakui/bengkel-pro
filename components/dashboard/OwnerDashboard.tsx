@@ -135,7 +135,7 @@ export default function OwnerDashboard() {
         // For total counts we still need some data, but we can limit what we fetch
         const { data: recentBookingsData } = await supabase
             .from("bookings")
-            .select("id, status, branch_id, customer_phone, created_at, car_model, customer_name, service_date, mitra_id")
+            .select("id, status, branch_id, customer_phone, created_at, updated_at, car_model, customer_name, service_date, mitra_id")
             .gte('created_at', historyStartDateStr);
 
         const allBookings = recentBookingsData || [];
