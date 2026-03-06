@@ -282,7 +282,7 @@ export default function OwnerDashboard() {
         setCurrentMonthRevenue(thisMonthRevenue);
         setLastMonthRevenue(prevMonthRevenue);
 
-        const thisMonthExp = allExpenses?.filter(e => new Date(e.expense_date) >= firstDayThisMonth)
+        const thisMonthExp = currentMonthExpData?.filter(e => new Date(e.created_at) >= firstDayThisMonth)
             ?.reduce((acc, curr) => acc + Number(curr.amount), 0) || 0;
         setCurrentMonthExpenses(thisMonthExp);
 
