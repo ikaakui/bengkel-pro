@@ -35,27 +35,19 @@ export default function MitraDashboard() {
         setLoading(true);
 
         try {
-            // Fetch commission rate
-            const { data: settings } = await supabase
-                .from("app_settings")
-                .select("value")
-                .eq("key", "commission_rate")
-                .single();
+            // Concurrent fetch for maximum responsiveness
+            const [
+                { data: settings },
+                { data: bookings },
+                { data: withdrawals }
+            ] = await Promise.all([
+                supabase.from("app_settings").select("value").eq("key", "commission_rate").single(),
+                supabase.from("bookings").select("*").eq("mitra_id", profile.id).order("created_at", { ascending: false }),
+                supabase.from("withdrawals").select("*").eq("mitra_id", profile.id)
+            ]);
+
             const rate = settings ? Number(settings.value) : 5;
             setCommissionRate(rate);
-
-            // Fetch bookings for this mitra
-            const { data: bookings } = await supabase
-                .from("bookings")
-                .select("*")
-                .eq("mitra_id", profile.id)
-                .order("created_at", { ascending: false });
-
-            // Fetch withdrawals
-            const { data: withdrawals } = await supabase
-                .from("withdrawals")
-                .select("*")
-                .eq("mitra_id", profile.id);
 
             if (bookings) {
                 const total = bookings.length;
@@ -211,8 +203,8 @@ export default function MitraDashboard() {
                                         referrals.map((ref) => (
                                             <tr key={ref.id} className="hover:bg-slate-50 transition-colors">
                                                 <td className="px-6 py-4">
-                                                    <p className="font-bold text-slate-900">{ref.customer_name}</p>
-                                                    <p className="text-xs text-slate-500">{ref.car_model} • {ref.license_plate}</p>
+                                                    <p className="font-bold text-slate-900 break-words line-clamp-2">{ref.customer_name}</p>
+                                                    <p className="text-xs text-slate-500 break-words">{ref.car_model} • {ref.license_plate}</p>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <Badge variant={

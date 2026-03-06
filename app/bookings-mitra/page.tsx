@@ -60,9 +60,9 @@ export default function BookingsPage() {
 
     const isAdmin = role === 'admin' || role === 'owner';
 
-    const fetchBookings = async () => {
-        setIsLoadingData(true);
-        const { data, error } = await supabase
+    const fetchBookings = async (showLoader = false) => {
+        if (showLoader) setIsLoadingData(true);
+        const { data } = await supabase
             .from("bookings")
             .select("*, mitra:mitra_id(full_name, referral_code)")
             .order("created_at", { ascending: false });
@@ -70,7 +70,7 @@ export default function BookingsPage() {
         if (data) {
             setBookings(data);
         }
-        setIsLoadingData(false);
+        if (showLoader) setIsLoadingData(false);
     };
 
     const fetchBranches = async () => {
@@ -79,9 +79,32 @@ export default function BookingsPage() {
     };
 
     useEffect(() => {
-        fetchBookings();
-        if (role === 'mitra') fetchBranches();
-    }, [profile]);
+        const loadInitialData = async () => {
+            setIsLoadingData(true);
+            const promises: Promise<void>[] = [
+                (async () => {
+                    const { data } = await supabase.from("bookings").select("*, mitra:mitra_id(full_name, referral_code)").order("created_at", { ascending: false });
+                    if (data) setBookings(data);
+                })()
+            ];
+
+            if (role === 'mitra') {
+                promises.push(
+                    (async () => {
+                        const { data } = await supabase.from("branches").select("id, name");
+                        if (data) setBranches(data);
+                    })()
+                );
+            }
+
+            await Promise.all(promises);
+            setIsLoadingData(false);
+        };
+
+        if (profile) {
+            loadInitialData();
+        }
+    }, [profile, role, supabase]);
 
     useEffect(() => {
         const fetchBookedTimes = async () => {
@@ -217,7 +240,7 @@ export default function BookingsPage() {
             setLicensePlate("");
             setServiceDate("");
             setServiceTime("");
-            fetchBookings();
+            fetchBookings(false);
         }
     };
 
@@ -260,7 +283,7 @@ export default function BookingsPage() {
             setLicensePlate("");
             setServiceDate("");
             setServiceTime("");
-            fetchBookings();
+            fetchBookings(false);
         }
     };
 
@@ -277,7 +300,7 @@ export default function BookingsPage() {
         } else {
             alert(`✅ Status berhasil diubah menjadi ${newStatus}`);
             if (selectedBooking) setSelectedBooking({ ...selectedBooking, status: newStatus });
-            fetchBookings();
+            fetchBookings(false);
         }
     };
 
@@ -631,7 +654,7 @@ export default function BookingsPage() {
                                 value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
-                        <Button variant="outline" onClick={fetchBookings} className="h-[50px] px-4" title="Refresh Data">
+                        <Button variant="outline" onClick={() => fetchBookings(true)} className="h-[50px] px-4" title="Refresh Data">
                             <RefreshCw size={20} className={isLoadingData ? "animate-spin" : ""} />
                         </Button>
                     </div>
@@ -653,39 +676,39 @@ export default function BookingsPage() {
                                             <Car size={24} />
                                         </div>
                                         <div>
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <h4 className="font-bold text-lg text-slate-900 uppercase">{bk.car_model}</h4>
-                                                <Badge variant="neutral" className="text-xs">{bk.license_plate}</Badge>
+                                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                <h4 className="font-bold text-lg text-slate-900 uppercase break-words">{bk.car_model}</h4>
+                                                <Badge variant="neutral" className="text-xs shrink-0">{bk.license_plate}</Badge>
                                                 {/* Type badge */}
                                                 {bk.booking_type === 'direct' || !bk.mitra_id ? (
-                                                    <Badge variant="neutral" className="text-[9px] bg-slate-200 text-slate-600">🏷️ DIRECT</Badge>
+                                                    <Badge variant="neutral" className="text-[9px] bg-slate-200 text-slate-600 shrink-0">🏷️ DIRECT</Badge>
                                                 ) : (
-                                                    <Badge variant="info" className="text-[9px]">
+                                                    <Badge variant="info" className="text-[9px] shrink-0">
                                                         🤝 {bk.mitra?.full_name || 'Mitra'}
                                                     </Badge>
                                                 )}
                                             </div>
-                                            <p className="text-sm text-slate-500 font-medium">{bk.customer_name} • {bk.customer_phone}</p>
+                                            <p className="text-sm text-slate-500 font-medium break-words">{bk.customer_name} • {bk.customer_phone}</p>
                                             {bk.booking_code && (
                                                 <p className="text-[10px] font-mono font-bold text-slate-400 mt-0.5">{bk.booking_code}</p>
                                             )}
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-6">
-                                        <div className="text-right hidden sm:block">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-6 mt-4 md:mt-0 sm:border-l border-slate-100 sm:pl-6 w-full md:w-auto">
+                                        <div className="text-left sm:text-right w-full sm:w-auto">
                                             <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Jadwal</p>
                                             <p className="text-sm font-bold text-slate-700 flex items-center gap-1 justify-end">
                                                 <Calendar size={14} />
                                                 {new Date(bk.service_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })} • {bk.service_time}
                                             </p>
                                         </div>
-                                        <Badge variant={statusVariant(bk.status)}>
+                                        <Badge variant={statusVariant(bk.status)} className="shrink-0 ml-auto sm:ml-0 mt-2 sm:mt-0">
                                             {bk.status}
                                         </Badge>
                                     </div>
                                 </div>
-                                <div className="bg-slate-50 border-t md:border-t-0 md:border-l border-slate-100 p-4 flex items-center justify-center">
+                                <div className="bg-slate-50 border-t md:border-t-0 md:border-l border-slate-100 p-4 flex items-center justify-center shrink-0 w-full md:w-auto">
                                     <button className="text-xs font-bold text-primary hover:underline"
                                         onClick={() => setSelectedBooking(bk)}>
                                         LIHAT DETAIL

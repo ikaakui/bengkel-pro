@@ -139,10 +139,10 @@ export default function WithdrawalsPage() {
                                             </div>
 
                                             {/* Bank Details */}
-                                            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 min-w-0">
                                                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Rekening Tujuan</p>
-                                                <p className="text-sm font-bold text-slate-700">{wd.profiles?.bank_name} • {wd.profiles?.bank_account_number}</p>
-                                                <p className="text-xs text-slate-500 truncate mt-0.5">a.n {wd.profiles?.bank_account_name}</p>
+                                                <p className="text-sm font-bold text-slate-700 break-words">{wd.profiles?.bank_name} • {wd.profiles?.bank_account_number}</p>
+                                                <p className="text-xs text-slate-500 break-words line-clamp-2 mt-0.5">a.n {wd.profiles?.bank_account_name}</p>
                                             </div>
 
                                             {/* Status & Date */}

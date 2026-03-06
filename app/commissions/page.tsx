@@ -33,32 +33,27 @@ export default function CommissionsPage() {
     const [showWithdrawPopup, setShowWithdrawPopup] = useState(false);
     const [isWithdrawing, setIsWithdrawing] = useState(false);
 
-    const fetchData = async () => {
-        setIsLoading(true);
+    const fetchData = async (showLoading = true) => {
+        if (showLoading) setIsLoading(true);
 
-        // Fetch commission rate
-        const { data: settings } = await supabase
-            .from("app_settings")
-            .select("value")
-            .eq("key", "commission_rate")
-            .single();
+        const [
+            { data: settings },
+            { data: bkData },
+            { data: wdData }
+        ] = await Promise.all([
+            // Fetch commission rate
+            supabase.from("app_settings").select("value").eq("key", "commission_rate").single(),
+            // Fetch bookings for this mitra
+            supabase.from("bookings").select("*").order("created_at", { ascending: false }),
+            // Fetch withdrawals for this mitra
+            supabase.from("withdrawals").select("*").order("created_at", { ascending: false })
+        ]);
+
         if (settings) setCommissionRate(Number(settings.value));
-
-        // Fetch bookings for this mitra
-        const { data: bkData } = await supabase
-            .from("bookings")
-            .select("*")
-            .order("created_at", { ascending: false });
         if (bkData) setBookings(bkData);
-
-        // Fetch withdrawals for this mitra
-        const { data: wdData } = await supabase
-            .from("withdrawals")
-            .select("*")
-            .order("created_at", { ascending: false });
         if (wdData) setWithdrawals(wdData);
 
-        setIsLoading(false);
+        if (showLoading) setIsLoading(false);
     };
 
     useEffect(() => {
@@ -113,7 +108,7 @@ export default function CommissionsPage() {
         } else {
             alert("✅ Permintaan penarikan komisi berhasil dikirim! Owner akan memproses dalam 1-3 hari kerja.");
             setShowWithdrawPopup(false);
-            fetchData();
+            fetchData(false);
         }
     };
 
@@ -138,7 +133,7 @@ export default function CommissionsPage() {
                             <h2 className="text-3xl font-bold text-slate-900">Earnings & Commissions</h2>
                             <p className="text-slate-500 mt-1">Pantau penghasilan anda dari setiap referensi.</p>
                         </div>
-                        <Button variant="outline" onClick={fetchData} className="h-12 px-4" title="Refresh Data">
+                        <Button variant="outline" onClick={() => fetchData(true)} className="h-12 px-4" title="Refresh Data">
                             <RefreshCw size={20} className={isLoading ? "animate-spin" : ""} />
                         </Button>
                     </div>
@@ -265,12 +260,12 @@ export default function CommissionsPage() {
                                             return (
                                                 <tr key={bk.id} className="hover:bg-slate-50 transition-colors">
                                                     <td className="px-6 py-4">
-                                                        <p className="font-bold text-slate-900">{bk.customer_name}</p>
-                                                        <p className="text-xs text-slate-500">{bk.customer_phone}</p>
+                                                        <p className="font-bold text-slate-900 break-words line-clamp-2">{bk.customer_name}</p>
+                                                        <p className="text-xs text-slate-500 break-words">{bk.customer_phone}</p>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <p className="font-medium">{bk.car_model}</p>
-                                                        <p className="text-xs text-slate-400 font-mono">{bk.license_plate}</p>
+                                                        <p className="font-medium break-words">{bk.car_model}</p>
+                                                        <p className="text-xs text-slate-400 font-mono break-words">{bk.license_plate}</p>
                                                     </td>
                                                     <td className="px-6 py-4 font-bold">
                                                         {bk.status === 'completed' ? (
@@ -322,11 +317,11 @@ export default function CommissionsPage() {
                                         <tbody className="divide-y divide-slate-100">
                                             {withdrawals.map((wd) => (
                                                 <tr key={wd.id} className="hover:bg-slate-50 transition-colors">
-                                                    <td className="px-6 py-4 text-sm text-slate-500">
+                                                    <td className="px-6 py-4 text-sm text-slate-500 break-words line-clamp-2">
                                                         {new Date(wd.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                                                     </td>
-                                                    <td className="px-6 py-4 font-bold text-slate-900">{formatRp(wd.amount)}</td>
-                                                    <td className="px-6 py-4 text-sm text-slate-500">{wd.notes || '-'}</td>
+                                                    <td className="px-6 py-4 font-bold text-slate-900 break-words">{formatRp(wd.amount)}</td>
+                                                    <td className="px-6 py-4 text-sm text-slate-500 break-words line-clamp-3">{wd.notes || '-'}</td>
                                                     <td className="px-6 py-4 text-right">
                                                         <Badge variant={
                                                             wd.status === 'approved' ? 'success' :
@@ -366,13 +361,13 @@ export default function CommissionsPage() {
                                         <span className="text-slate-500">Bank Tujuan</span>
                                         <span className="font-bold">{profile?.bank_name || 'Belum diatur'}</span>
                                     </div>
-                                    <div className="flex justify-between text-sm">
+                                    <div className="flex justify-between text-sm flex-wrap gap-2">
                                         <span className="text-slate-500">No. Rekening</span>
-                                        <span className="font-bold font-mono">{profile?.bank_account_number || '-'}</span>
+                                        <span className="font-bold font-mono break-all text-right">{profile?.bank_account_number || '-'}</span>
                                     </div>
-                                    <div className="flex justify-between text-sm">
+                                    <div className="flex justify-between text-sm flex-wrap gap-2">
                                         <span className="text-slate-500">Atas Nama</span>
-                                        <span className="font-bold">{profile?.bank_account_name || '-'}</span>
+                                        <span className="font-bold break-words text-right">{profile?.bank_account_name || '-'}</span>
                                     </div>
                                 </div>
 
