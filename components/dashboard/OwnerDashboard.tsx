@@ -200,7 +200,7 @@ export default function OwnerDashboard() {
         // Fetch Expenses (Current Month only)
         const { data: currentMonthExpData } = await supabase
             .from("expenses")
-            .select("amount")
+            .select("amount, created_at")
             .gte('expense_date', startOfThisMonth);
 
         const currentMonthExp = currentMonthExpData?.reduce((acc, curr) => acc + Number(curr.amount), 0) || 0;
