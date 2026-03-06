@@ -150,7 +150,7 @@ export default function OwnerDashboard() {
         // Optimize: Fetch transactions with date filter
         const { data: transactionsData } = await supabase
             .from("transactions")
-            .select("id, total_amount, status, created_at, branch_id")
+            .select("id, total_amount, status, created_at, branch_id, mitra_id")
             .gte('created_at', historyStartDateStr);
 
         const allTransactions = transactionsData || [];
