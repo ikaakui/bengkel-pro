@@ -302,7 +302,24 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- ============================================
--- 11. Migration SQL (jalankan terpisah jika tabel sudah ada)
+-- 11. Migration SQL & Performance Indexes
 -- ============================================
 -- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS branch_id UUID REFERENCES branches(id) ON DELETE SET NULL;
 -- ALTER TABLE bookings ADD COLUMN IF NOT EXISTS branch_id UUID REFERENCES branches(id) ON DELETE SET NULL;
+
+-- Create indexes for performance
+CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON transactions (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_transactions_branch_id ON transactions (branch_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_status ON transactions (status);
+CREATE INDEX IF NOT EXISTS idx_transactions_mitra_id ON transactions (mitra_id);
+
+CREATE INDEX IF NOT EXISTS idx_bookings_created_at ON bookings (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_bookings_branch_id ON bookings (branch_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings (status);
+CREATE INDEX IF NOT EXISTS idx_bookings_mitra_id ON bookings (mitra_id);
+
+CREATE INDEX IF NOT EXISTS idx_expenses_created_at ON expenses (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_expenses_branch_id ON expenses (branch_id);
+
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles (role);
+CREATE INDEX IF NOT EXISTS idx_catalog_is_active ON catalog (is_active);

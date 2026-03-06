@@ -113,18 +113,54 @@ export default function OwnerDashboard() {
     const fetchDashboardData = async () => {
         setLoading(true);
 
-        // Fetch all branches
+        const now = new Date();
+        const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfThisMonth = firstDayThisMonth.toISOString();
+
+        // Optimize: Determine start date based on salesPeriod to avoid fetching all-time data
+        let historyStartDate = new Date();
+        if (salesPeriod === '7d') historyStartDate.setDate(now.getDate() - 7);
+        else if (salesPeriod === '1m') historyStartDate.setMonth(now.getMonth() - 1);
+        else if (salesPeriod === '1y') historyStartDate.setFullYear(now.getFullYear() - 1);
+        else {
+            const years = parseInt(salesPeriod.replace('y', ''));
+            historyStartDate.setFullYear(now.getFullYear() - years);
+        }
+        const historyStartDateStr = historyStartDate.toISOString();
+
+        // Fetch all branches (small table, fine to fetch all)
         const { data: branches } = await supabase.from("branches").select("id, name").order("name");
 
-        // Fetch all bookings
-        const { data: allBookings } = await supabase.from("bookings").select("*");
-        const completedBookings = allBookings?.filter(b => b.status === "completed") || [];
-        setTotalBookings(allBookings?.length || 0);
+        // Optimize: Fetch only necessary columns and filter by date where appropriate
+        // For total counts we still need some data, but we can limit what we fetch
+        const { data: recentBookingsData } = await supabase
+            .from("bookings")
+            .select("id, status, branch_id, customer_phone, created_at, car_model, customer_name, service_date, mitra_id")
+            .gte('created_at', historyStartDateStr);
 
-        // Fetch real revenue from transactions table
-        const { data: allTransactions } = await supabase.from("transactions").select("*");
-        const paidTransactions = allTransactions?.filter(t => t.status === 'Paid') || [];
-        const realRevenue = paidTransactions.reduce((acc, t) => acc + Number(t.total_amount), 0);
+        const allBookings = recentBookingsData || [];
+        const completedBookings = allBookings.filter(b => b.status === "completed") || [];
+
+        // For total bookings count (all time), use head: true
+        const { count: totalBookingsCount } = await supabase
+            .from("bookings")
+            .select("id", { count: 'exact', head: true });
+        setTotalBookings(totalBookingsCount || 0);
+
+        // Optimize: Fetch transactions with date filter
+        const { data: transactionsData } = await supabase
+            .from("transactions")
+            .select("id, total_amount, status, created_at, branch_id")
+            .gte('created_at', historyStartDateStr);
+
+        const allTransactions = transactionsData || [];
+        const paidTransactions = allTransactions.filter(t => t.status === 'Paid') || [];
+
+        // Fetch all-time total revenue efficiently (ideally should be a summary table, but for now just sum what we have if needed)
+        // If we really need all-time, we should use an RPC or just sum the filtered ones if that's what's meant.
+        // Usually dashboards show "Total Revenue" as either all-time or this year.
+        const { data: totalRevData } = await supabase.from("transactions").select("total_amount").eq('status', 'Paid');
+        const realRevenue = totalRevData?.reduce((acc, t) => acc + Number(t.total_amount), 0) || 0;
         setTotalRevenue(realRevenue);
 
         // Load branch targets from app_settings
@@ -133,6 +169,7 @@ export default function OwnerDashboard() {
         if (targetSetting?.value) {
             try { targetMap = JSON.parse(targetSetting.value); } catch (e) { }
         }
+
         // Ensure all branches have targets
         let needSave = false;
         for (const br of branches || []) {
@@ -146,31 +183,29 @@ export default function OwnerDashboard() {
         const totalTargetSum = Object.values(targetMap).reduce((acc, t) => acc + t.target, 0);
         setMonthlyTarget(totalTargetSum);
 
-        // Generate sales data based on selected period
         const today = new Date();
-        const now = new Date();
-        const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
         const AVG_PRICE = realRevenue > 0 ? realRevenue / (paidTransactions.length || 1) : 500000;
 
         const salesData = generateSalesData(salesPeriod, paidTransactions, AVG_PRICE, today);
         setSalesHistory(salesData);
 
-        // Fetch Mitra Count
-        const { count: mCount } = await supabase.from("profiles").select("*", { count: 'exact', head: true }).eq("role", "mitra");
+        // Fetch Mitra Count efficiently
+        const { count: mCount } = await supabase.from("profiles").select("id", { count: 'exact', head: true }).eq("role", "mitra");
         setMitraCount(mCount || 0);
 
-        // Fetch Pending Withdrawals
-        const { count: pWD } = await supabase.from("withdrawals").select("*", { count: 'exact', head: true }).eq("status", "pending");
+        // Fetch Pending Withdrawals efficiently
+        const { count: pWD } = await supabase.from("withdrawals").select("id", { count: 'exact', head: true }).eq("status", "pending");
         setPendingWD(pWD || 0);
 
-        // Fetch Expenses (Current Month only for stats, but we can fetch all and filter)
-        const { data: allExpenses } = await supabase.from("expenses").select("*");
+        // Fetch Expenses (Current Month only)
+        const { data: currentMonthExpData } = await supabase
+            .from("expenses")
+            .select("amount")
+            .gte('expense_date', startOfThisMonth);
 
-        const currentMonthExp = allExpenses?.filter(e => new Date(e.expense_date) >= firstDayThisMonth)
-            ?.reduce((acc, curr) => acc + Number(curr.amount), 0) || 0;
+        const currentMonthExp = currentMonthExpData?.reduce((acc, curr) => acc + Number(curr.amount), 0) || 0;
 
-        setTotalExpenses(currentMonthExp); // renamed to current month for clarity in dashboard stats
+        setTotalExpenses(currentMonthExp);
         setCurrentMonthExpenses(currentMonthExp);
 
         // Build per-branch stats using transactions
@@ -646,7 +681,7 @@ export default function OwnerDashboard() {
                 {/* Net Profit Card */}
                 <Card className="border-none shadow-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-blue-800 p-8 text-white group relative overflow-hidden ring-4 ring-indigo-50/50">
                     <div className="flex items-center justify-between relative z-10">
-                        <div className="p-3.5 bg-white/20 backdrop-blur-lg rounded-2xl">
+                        <div className="p-3.5 bg-white/40 rounded-2xl">
                             <TrendingUp size={24} />
                         </div>
                         <div className="flex flex-col items-end">
@@ -869,7 +904,7 @@ export default function OwnerDashboard() {
             )}
 
             {/* Consolidated Sales Analysis Card */}
-            <Card className="border-none shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] p-0 overflow-hidden bg-white/80 backdrop-blur-xl mt-12 ring-1 ring-slate-100">
+            <Card className="border-none shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] p-0 overflow-hidden bg-white mt-12 ring-1 ring-slate-100">
                 <CardHeader className="p-10 border-b border-slate-50 flex flex-col gap-6 bg-gradient-to-br from-white via-white to-blue-50/30">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                         <div className="flex items-center gap-5">
@@ -883,7 +918,7 @@ export default function OwnerDashboard() {
                                 </p>
                             </div>
                         </div>
-                        <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100/50 rounded-2xl backdrop-blur-sm ring-1 ring-slate-200/50">
+                        <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100/50 rounded-2xl ring-1 ring-slate-200/50">
                             {PERIOD_OPTIONS.map(opt => (
                                 <button
                                     key={opt.key}

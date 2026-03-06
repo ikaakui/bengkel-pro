@@ -220,7 +220,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Main Content */}
             <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
                 {/* Topbar */}
-                <header className="h-20 flex-shrink-0 flex items-center justify-between px-6 lg:px-10 border-b border-slate-200 bg-white/50 backdrop-blur-md z-30">
+                <header className="h-20 flex-shrink-0 flex items-center justify-between px-6 lg:px-10 border-b border-slate-200 bg-white z-30">
                     <button
                         onClick={() => setSidebarOpen(true)}
                         className="p-2 lg:hidden text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"

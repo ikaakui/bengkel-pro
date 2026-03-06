@@ -73,7 +73,8 @@ export default function AntrianServicePage() {
                 transaction_items(id, qty, price_at_sale, catalog:catalog_id(name, category))
             `)
             .in("status", ["Draft", "In Progress", "Paid"])
-            .order("created_at", { ascending: false });
+            .order("created_at", { ascending: false })
+            .limit(100);
 
         if (data && !error) {
             setItems(data as unknown as QueueItem[]);

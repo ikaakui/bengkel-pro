@@ -92,17 +92,25 @@ export default function AdminDashboard() {
         const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
-        // Fetch all bookings for this branch
+        // Optimize: Limit bookings to those created recently (e.g., last 3 months) or relevant for current operations
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(now.getMonth() - 3);
+
         const { data: allBookings } = await supabase
             .from("bookings")
-            .select("*")
-            .eq("branch_id", branchId);
+            .select("id, status, customer_name, car_model, license_plate, created_at, updated_at, service_date, customer_phone, service_type, service")
+            .eq("branch_id", branchId)
+            .gte('created_at', threeMonthsAgo.toISOString());
 
-        // Fetch transactions for this branch
+        // Optimize: Limit transactions to the selected salesPeriod or last 3 months
+        let historyStartDate = new Date(threeMonthsAgo);
+        if (salesPeriod === '1y') historyStartDate.setFullYear(now.getFullYear() - 1);
+
         const { data: allTransactions } = await supabase
             .from("transactions")
-            .select("*")
-            .eq("branch_id", branchId);
+            .select("id, total_amount, status, created_at")
+            .eq("branch_id", branchId)
+            .gte('created_at', historyStartDate.toISOString());
 
         const paidTransactions = allTransactions?.filter(t => t.status === 'Paid') || [];
 
@@ -393,7 +401,7 @@ export default function AdminDashboard() {
                 {/* Pendapatan Hari Ini */}
                 <Card className="border-none shadow-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-blue-800 p-6 text-white group relative overflow-hidden ring-4 ring-indigo-50/50">
                     <div className="flex items-center justify-between relative z-10">
-                        <div className="p-3 bg-white/20 backdrop-blur-lg rounded-2xl">
+                        <div className="p-3 bg-white/40 rounded-2xl">
                             <DollarSign size={22} />
                         </div>
                         <p className="text-[9px] font-black text-indigo-200 uppercase tracking-[0.15em]">Hari Ini</p>
@@ -534,7 +542,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* ===== SECTION 3: Sales Chart ===== */}
-            <Card className="border-none shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] p-0 overflow-hidden bg-white/80 backdrop-blur-xl ring-1 ring-slate-100">
+            <Card className="border-none shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] p-0 overflow-hidden bg-white ring-1 ring-slate-100">
                 <CardHeader className="p-8 border-b border-slate-50 bg-gradient-to-br from-white via-white to-blue-50/30">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">

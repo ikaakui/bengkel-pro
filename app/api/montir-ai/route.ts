@@ -5,7 +5,7 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 // Models to try, in order of preference (different models have separate quotas)
-const MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-pro"];
+const MODELS = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
 
 export async function POST(req: Request) {
     try {
