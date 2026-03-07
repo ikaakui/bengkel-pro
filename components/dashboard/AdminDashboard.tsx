@@ -88,184 +88,121 @@ export default function AdminDashboard() {
 
         const now = new Date();
         const todayStr = now.toISOString().split('T')[0];
-        const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+        const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-        // Optimize: Limit bookings to those created recently (e.g., last 3 months) or relevant for current operations
         const threeMonthsAgo = new Date();
         threeMonthsAgo.setMonth(now.getMonth() - 3);
+        const threeMonthsAgoStr = threeMonthsAgo.toISOString();
 
-        const { data: allBookings } = await supabase
-            .from("bookings")
-            .select("id, status, customer_name, car_model, license_plate, created_at, updated_at, service_date, customer_phone, service_type, service")
-            .eq("branch_id", branchId)
-            .gte('created_at', threeMonthsAgo.toISOString());
-
-        // Optimize: Limit transactions to the selected salesPeriod or last 3 months
         let historyStartDate = new Date(threeMonthsAgo);
         if (salesPeriod === '1y') historyStartDate.setFullYear(now.getFullYear() - 1);
+        const historyStartDateStr = historyStartDate.toISOString();
 
-        const { data: allTransactions } = await supabase
-            .from("transactions")
-            .select("id, total_amount, status, created_at")
-            .eq("branch_id", branchId)
-            .gte('created_at', historyStartDate.toISOString());
+        try {
+            const [
+                { data: allBookings },
+                { data: allTransactions },
+                { data: targetSetting },
+                { data: lowStock },
+                { data: recent }
+            ] = await Promise.all([
+                supabase.from("bookings")
+                    .select("id, status, customer_name, car_model, license_plate, created_at, updated_at, service_date, customer_phone, service_type, service")
+                    .eq("branch_id", branchId)
+                    .gte('created_at', threeMonthsAgoStr),
+                supabase.from("transactions")
+                    .select("id, total_amount, status, created_at")
+                    .eq("branch_id", branchId)
+                    .gte('created_at', historyStartDateStr),
+                supabase.from('app_settings').select('value').eq('key', 'branch_targets').single(),
+                supabase.from("catalog")
+                    .select("name, stock")
+                    .eq("category", "Spare Part")
+                    .lt("stock", 5)
+                    .limit(5),
+                supabase.from("bookings")
+                    .select("*")
+                    .eq("branch_id", branchId)
+                    .order("created_at", { ascending: false })
+                    .limit(5)
+            ]);
 
-        const paidTransactions = allTransactions?.filter(t => t.status === 'Paid') || [];
+            const bookings = allBookings || [];
+            const transactions = allTransactions || [];
+            const paidTransactions = transactions.filter(t => t.status === 'Paid');
 
-        // === TODAY STATS ===
-        const todayBookings = (allBookings || []).filter(b => {
-            const bDate = new Date(b.created_at || b.service_date);
-            return bDate.toISOString().split('T')[0] === todayStr;
-        });
+            // Today Stats
+            const todayBookings = bookings.filter(b => (b.created_at || b.service_date)?.startsWith(todayStr));
+            setTodayBookingsIn(todayBookings.length);
+            setTodayProcessing(todayBookings.filter(b => b.status === "processing").length);
+            setTodayCompleted(todayBookings.filter(b => b.status === "completed").length);
+            setTodayRevenue(paidTransactions.filter(t => t.created_at?.startsWith(todayStr)).reduce((acc, t) => acc + Number(t.total_amount), 0));
 
-        setTodayBookingsIn(todayBookings.length);
-        setTodayProcessing(todayBookings.filter(b => b.status === "processing").length);
-        setTodayCompleted(todayBookings.filter(b => b.status === "completed").length);
-
-        const todayTx = paidTransactions.filter(t =>
-            new Date(t.created_at).toISOString().split('T')[0] === todayStr
-        );
-        setTodayRevenue(todayTx.reduce((acc, t) => acc + Number(t.total_amount), 0));
-
-        // === BRANCH TARGET ===
-        const { data: targetSetting } = await supabase
-            .from('app_settings')
-            .select('value')
-            .eq('key', 'branch_targets')
-            .single();
-
-        if (targetSetting?.value) {
-            try {
-                const targetMap = JSON.parse(targetSetting.value);
-                if (targetMap[branchId]) {
-                    setBranchTarget(targetMap[branchId].target || 250000000);
-                }
-            } catch (e) { }
-        }
-
-        // === MONTHLY REVENUE ===
-        const thisMonthRevenue = paidTransactions
-            .filter(t => new Date(t.created_at) >= firstDayThisMonth)
-            .reduce((acc, t) => acc + Number(t.total_amount), 0);
-
-        const prevMonthRevenue = paidTransactions
-            .filter(t => {
-                const tDate = new Date(t.created_at);
-                return tDate >= firstDayLastMonth && tDate <= lastDayLastMonth;
-            })
-            .reduce((acc, t) => acc + Number(t.total_amount), 0);
-
-        setCurrentMonthRevenue(thisMonthRevenue);
-        setLastMonthRevenue(prevMonthRevenue);
-
-        // === SALES CHART ===
-        const today = new Date();
-        const AVG_PRICE = paidTransactions.length > 0
-            ? paidTransactions.reduce((acc, t) => acc + Number(t.total_amount), 0) / paidTransactions.length
-            : 500000;
-
-        const salesData = generateSalesData(salesPeriod, paidTransactions, AVG_PRICE, today);
-        setSalesHistory(salesData);
-
-        // === VEHICLES IN PROGRESS (duration tracking) ===
-        const processingBookings = (allBookings || []).filter(b => b.status === "processing");
-        const completedToday = (allBookings || []).filter(b =>
-            b.status === "completed" &&
-            new Date(b.updated_at).toISOString().split('T')[0] === todayStr
-        );
-
-        const vehiclesList: VehicleInProgress[] = [...processingBookings, ...completedToday].map(b => {
-            const start = new Date(b.created_at).getTime();
-            const end = b.status === "completed"
-                ? new Date(b.updated_at).getTime()
-                : Date.now();
-            const durationMs = end - start;
-            return {
-                id: b.id,
-                customer_name: b.customer_name,
-                car_model: b.car_model || '-',
-                license_plate: b.license_plate || '-',
-                status: b.status,
-                created_at: b.created_at,
-                updated_at: b.updated_at,
-                duration: formatDuration(durationMs),
-                durationMinutes: Math.round(durationMs / 60000),
-            };
-        }).sort((a, b) => {
-            // Processing first, then completed
-            if (a.status === 'processing' && b.status !== 'processing') return -1;
-            if (a.status !== 'processing' && b.status === 'processing') return 1;
-            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        });
-
-        setVehiclesInProgress(vehiclesList);
-
-        // === RECENT BOOKINGS ===
-        const { data: recent } = await supabase
-            .from("bookings")
-            .select("*")
-            .eq("branch_id", branchId)
-            .order("created_at", { ascending: false })
-            .limit(5);
-
-        if (recent) setRecentBookings(recent);
-
-        // === CUSTOMER RETENTION ===
-        const phoneCounts = new Map<string, number>();
-        (allBookings || []).forEach(b => {
-            if (b.customer_phone) {
-                phoneCounts.set(b.customer_phone, (phoneCounts.get(b.customer_phone) || 0) + 1);
+            // Target
+            if (targetSetting?.value) {
+                try {
+                    const targetMap = JSON.parse(targetSetting.value);
+                    if (targetMap[branchId]) setBranchTarget(targetMap[branchId].target || 250000000);
+                } catch (e) { }
             }
-        });
-        const totalCustomers = phoneCounts.size || 1;
-        const repeatCustomers = Array.from(phoneCounts.values()).filter(count => count > 1).length;
-        setRetentionStats({ new: totalCustomers - repeatCustomers, repeat: repeatCustomers });
 
-        // === AVG SERVICE TIME ===
-        const completedBookings = (allBookings || []).filter(b => b.status === "completed");
-        const serviceTimesInMs = completedBookings
-            .map(b => {
+            // Monthly
+            const thisMonthRev = paidTransactions.filter(t => t.created_at >= firstDayThisMonth).reduce((acc, t) => acc + Number(t.total_amount), 0);
+            const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+            const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59).toISOString();
+            const prevMonthRev = paidTransactions.filter(t => t.created_at >= firstDayLastMonth && t.created_at <= lastDayLastMonth).reduce((acc, t) => acc + Number(t.total_amount), 0);
+
+            setCurrentMonthRevenue(thisMonthRev);
+            setLastMonthRevenue(prevMonthRev);
+
+            // Sales Chart
+            const avgPrice = paidTransactions.length > 0 ? paidTransactions.reduce((acc, t) => acc + Number(t.total_amount), 0) / paidTransactions.length : 500000;
+            setSalesHistory(generateSalesData(salesPeriod, paidTransactions, avgPrice, now));
+
+            // Vehicles In Progress / Completed Today
+            const processing = bookings.filter(b => b.status === "processing");
+            const completedToday = bookings.filter(b => b.status === "completed" && b.updated_at?.startsWith(todayStr));
+            const vehiclesList = [...processing, ...completedToday].map(b => {
                 const start = new Date(b.created_at).getTime();
-                const end = new Date(b.updated_at).getTime();
-                return end - start;
-            })
-            .filter(t => t > 0);
+                const end = b.status === "completed" ? new Date(b.updated_at).getTime() : Date.now();
+                const durationMs = end - start;
+                return {
+                    id: b.id, customer_name: b.customer_name, car_model: b.car_model || '-', license_plate: b.license_plate || '-',
+                    status: b.status, created_at: b.created_at, updated_at: b.updated_at,
+                    duration: formatDuration(durationMs), durationMinutes: Math.round(durationMs / 60000)
+                };
+            }).sort((a, b) => (a.status === 'processing' ? -1 : 1) || new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            setVehiclesInProgress(vehiclesList);
 
-        const avgMs = serviceTimesInMs.length > 0
-            ? serviceTimesInMs.reduce((a, b) => a + b, 0) / serviceTimesInMs.length
-            : 0;
+            if (recent) setRecentBookings(recent);
 
-        const avgMinutes = Math.round(avgMs / 60000);
-        setAvgServiceTime({
-            value: avgMinutes,
-            label: avgMinutes > 60 ? `${Math.floor(avgMinutes / 60)}j ${avgMinutes % 60}m` : `${avgMinutes}m`
-        });
+            // Retention
+            const phoneCounts = new Map<string, number>();
+            bookings.forEach(b => { if (b.customer_phone) phoneCounts.set(b.customer_phone, (phoneCounts.get(b.customer_phone) || 0) + 1); });
+            const totalC = phoneCounts.size || 1;
+            const repeatC = Array.from(phoneCounts.values()).filter(c => c > 1).length;
+            setRetentionStats({ new: totalC - repeatC, repeat: repeatC });
 
-        // === TOP SERVICES ===
-        const serviceColors = ['#2563eb', '#059669', '#7c3aed', '#f59e0b', '#ef4444'];
-        const serviceCounts = new Map<string, number>();
-        (allBookings || []).forEach(b => {
-            const svc = b.service_type || b.service || 'Lainnya';
-            serviceCounts.set(svc, (serviceCounts.get(svc) || 0) + 1);
-        });
-        const topSvcList = Array.from(serviceCounts.entries())
-            .map(([name, count], i) => ({ name, count, color: serviceColors[i % serviceColors.length] }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 5);
-        setTopServices(topSvcList);
+            // Avg Time
+            const completed = bookings.filter(b => b.status === "completed");
+            const times = completed.map(b => new Date(b.updated_at).getTime() - new Date(b.created_at).getTime()).filter(t => t > 0);
+            const avgM = times.length ? Math.round((times.reduce((a, b) => a + b, 0) / times.length) / 60000) : 0;
+            setAvgServiceTime({ value: avgM, label: avgM > 60 ? `${Math.floor(avgM / 60)}j ${avgM % 60}m` : `${avgM}m` });
 
-        // === LOW STOCK / INVENTORY RISK ===
-        const { data: lowStock } = await supabase
-            .from("catalog")
-            .select("name, stock")
-            .eq("category", "Spare Part")
-            .lt("stock", 5)
-            .limit(5);
-        if (lowStock) setLowStockItems(lowStock);
+            // Services
+            const sCounts = new Map<string, number>();
+            bookings.forEach(b => { const s = b.service_type || b.service || 'Lainnya'; sCounts.set(s, (sCounts.get(s) || 0) + 1); });
+            const colors = ['#2563eb', '#059669', '#7c3aed', '#f59e0b', '#ef4444'];
+            setTopServices(Array.from(sCounts.entries()).map(([name, count], i) => ({ name, count, color: colors[i % colors.length] })).sort((a, b) => b.count - a.count).slice(0, 5));
 
-        setLoading(false);
+            if (lowStock) setLowStockItems(lowStock);
+
+        } catch (error) {
+            console.error("Admin dashboard fetch error:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const generateSalesData = (

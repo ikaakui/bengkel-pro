@@ -32,6 +32,7 @@ interface AuthContextType {
     signOut: () => Promise<void>;
     refreshProfile: () => Promise<void>;
     refreshGlobalLogo: () => Promise<void>;
+    setInitialData: (user: User | null, profile: UserProfile | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -46,6 +47,7 @@ const AuthContext = createContext<AuthContextType>({
     signOut: async () => { },
     refreshProfile: async () => { },
     refreshGlobalLogo: async () => { },
+    setInitialData: () => { },
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -60,35 +62,31 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const router = useRouter();
     const supabase = useMemo(() => createClient(), []);
 
+    const setInitialData = useCallback((initialUser: User | null, initialProfile: UserProfile | null) => {
+        if (initialUser) setUser(initialUser);
+        if (initialProfile) {
+            setProfile(initialProfile);
+            setLoading(false);
+        }
+    }, []);
+
     const fetchProfile = useCallback(async (userId: string) => {
         console.log("Fetching profile for:", userId);
 
         try {
-            // Add a timeout to the fetch
-            const fetchPromise = supabase
+            const { data, error }: any = await supabase
                 .from("profiles")
                 .select("*")
                 .eq("id", userId)
                 .single();
 
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Timeout")), 15000)
-            );
-
-            const { data, error }: any = await Promise.race([fetchPromise, timeoutPromise]);
-
             if (error) {
-                console.error("Error fetching profile:", error.message, error?.code);
-                if (error.code === 'PGRST116') {
-                    // Only clear profile if it genuinely does not exist in the database
-                    setProfile(null);
-                }
-                // Do not clear the existing profile on network errors/timeouts
+                console.error("Error fetching profile:", error.message);
+                if (error.code === 'PGRST116') setProfile(null);
                 return;
             }
 
             if (data) {
-                console.log("Profile found:", data.role);
                 setProfile(data as UserProfile);
                 if (data.branch_id) {
                     const { data: branchData } = await supabase
@@ -100,12 +98,9 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                 } else {
                     setBranchName(null);
                 }
-            } else {
-                console.warn("No data returned for user profile:", userId);
             }
         } catch (err: any) {
             console.error("Profile fetch exception:", err.message);
-            // Do not clear the existing profile on timeout/network exceptions
         }
     }, [supabase]);
 
@@ -139,9 +134,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     useEffect(() => {
         let mounted = true;
 
-        // Get initial session
         const getSession = async () => {
-            console.log("Checking initial session...");
             try {
                 // Fetch global logo independently
                 refreshGlobalLogo();
@@ -149,15 +142,17 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                 const { data: { session } } = await supabase.auth.getSession();
                 if (!mounted) return;
 
-                setUser(session?.user ?? null);
                 if (session?.user) {
-                    await fetchProfile(session.user.id);
+                    setUser(session.user);
+                    // Only fetch if profile isn't already set via setInitialData
+                    if (!profile) {
+                        await fetchProfile(session.user.id);
+                    }
                 }
             } catch (err) {
                 console.error("Session check error:", err);
             } finally {
                 if (mounted) {
-                    console.log("Initial session check complete. Loading: false");
                     setLoading(false);
                 }
             }
@@ -165,10 +160,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
         getSession();
 
-        // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
-                console.log("Auth state changed:", event);
                 if (!mounted) return;
 
                 setUser(session?.user ?? null);
@@ -186,37 +179,29 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             mounted = false;
             subscription.unsubscribe();
         };
-    }, [supabase, fetchProfile]);
+    }, [supabase, fetchProfile, refreshGlobalLogo]); // Removed profile from dependency to avoid loop
 
     const signOut = async () => {
         try {
-            // Clear all possible storage to ensure a clean state
             if (typeof window !== 'undefined') {
                 localStorage.clear();
                 sessionStorage.clear();
             }
 
-            // Clear state immediately for instant UI feedback
             setUser(null);
             setProfile(null);
             setBranchName(null);
             setGlobalLogoUrl(null);
             setLogoLoading(true);
 
-            // Sign out from Supabase client-side
             await supabase.auth.signOut();
 
-            // Also call server-side signout to clear server cookies
-            // This prevents middleware from seeing stale session
             try {
                 await fetch('/api/auth/signout', { method: 'POST', cache: 'no-store' });
-            } catch {
-                // Non-critical, continue with redirect
-            }
+            } catch { }
         } catch (err) {
             console.error("Error during signOut:", err);
         } finally {
-            // Also manually clear Supabase auth cookies as a safety net
             if (typeof document !== 'undefined') {
                 const cookies = document.cookie.split(';');
                 for (const cookie of cookies) {
@@ -226,7 +211,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                     }
                 }
             }
-            // Invalidate Next.js cache and Force a hard navigation to login
             router.refresh();
             setTimeout(() => {
                 window.location.href = "/login";
@@ -248,6 +232,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                 signOut,
                 refreshProfile,
                 refreshGlobalLogo,
+                setInitialData,
             }}
         >
             {children}

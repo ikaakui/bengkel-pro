@@ -112,12 +112,10 @@ export default function OwnerDashboard() {
 
     const fetchDashboardData = async () => {
         setLoading(true);
-
         const now = new Date();
-        const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const startOfThisMonth = firstDayThisMonth.toISOString();
+        const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-        // Optimize: Determine start date based on salesPeriod to avoid fetching all-time data
         let historyStartDate = new Date();
         if (salesPeriod === '7d') historyStartDate.setDate(now.getDate() - 7);
         else if (salesPeriod === '1m') historyStartDate.setMonth(now.getMonth() - 1);
@@ -128,284 +126,156 @@ export default function OwnerDashboard() {
         }
         const historyStartDateStr = historyStartDate.toISOString();
 
-        // Fetch all branches (small table, fine to fetch all)
-        const { data: branches } = await supabase.from("branches").select("id, name").order("name");
+        try {
+            // Parallel fetches for unrelated data
+            const [
+                { data: branches },
+                { data: recentBookingsData },
+                { count: totalBookingsCount },
+                { data: transactionsData },
+                { data: totalRevData },
+                { data: targetSetting },
+                { count: mCount },
+                { count: pWD },
+                { data: currentMonthExpData },
+                { data: mitraProfiles },
+                { data: lowStock },
+                { data: recent }
+            ] = await Promise.all([
+                supabase.from("branches").select("id, name").order("name"),
+                supabase.from("bookings").select("id, status, branch_id, customer_phone, created_at, updated_at, car_model, customer_name, service_date, mitra_id").gte('created_at', historyStartDateStr),
+                supabase.from("bookings").select("id", { count: 'exact', head: true }),
+                supabase.from("transactions").select("id, total_amount, status, created_at, branch_id, mitra_id").gte('created_at', historyStartDateStr),
+                supabase.from("transactions").select("total_amount").eq('status', 'Paid'),
+                supabase.from('app_settings').select('value').eq('key', 'branch_targets').single(),
+                supabase.from("profiles").select("id", { count: 'exact', head: true }).eq("role", "mitra"),
+                supabase.from("withdrawals").select("id", { count: 'exact', head: true }).eq("status", "pending"),
+                supabase.from("expenses").select("amount, created_at").gte('expense_date', startOfThisMonth),
+                supabase.from("profiles").select("id, full_name").eq("role", "mitra"),
+                supabase.from("catalog").select("name, stock").eq("category", "Spare Part").lt("stock", 5).limit(5),
+                supabase.from("bookings").select("id, customer_name, car_model, branch_id, status").order("created_at", { ascending: false }).limit(5)
+            ]);
 
-        // Optimize: Fetch only necessary columns and filter by date where appropriate
-        // For total counts we still need some data, but we can limit what we fetch
-        const { data: recentBookingsData } = await supabase
-            .from("bookings")
-            .select("id, status, branch_id, customer_phone, created_at, updated_at, car_model, customer_name, service_date, mitra_id")
-            .gte('created_at', historyStartDateStr);
+            const allBookings = recentBookingsData || [];
+            const completedBookings = allBookings.filter(b => b.status === "completed");
+            const allTransactions = transactionsData || [];
+            const paidTransactions = allTransactions.filter(t => t.status === 'Paid');
+            const realRevenue = totalRevData?.reduce((acc, t) => acc + Number(t.total_amount), 0) || 0;
 
-        const allBookings = recentBookingsData || [];
-        const completedBookings = allBookings.filter(b => b.status === "completed") || [];
+            setTotalBookings(totalBookingsCount || 0);
+            setTotalRevenue(realRevenue);
+            setMitraCount(mCount || 0);
+            setPendingWD(pWD || 0);
+            if (lowStock) setLowStockItems(lowStock);
 
-        // For total bookings count (all time), use head: true
-        const { count: totalBookingsCount } = await supabase
-            .from("bookings")
-            .select("id", { count: 'exact', head: true });
-        setTotalBookings(totalBookingsCount || 0);
-
-        // Optimize: Fetch transactions with date filter
-        const { data: transactionsData } = await supabase
-            .from("transactions")
-            .select("id, total_amount, status, created_at, branch_id, mitra_id")
-            .gte('created_at', historyStartDateStr);
-
-        const allTransactions = transactionsData || [];
-        const paidTransactions = allTransactions.filter(t => t.status === 'Paid') || [];
-
-        // Fetch all-time total revenue efficiently (ideally should be a summary table, but for now just sum what we have if needed)
-        // If we really need all-time, we should use an RPC or just sum the filtered ones if that's what's meant.
-        // Usually dashboards show "Total Revenue" as either all-time or this year.
-        const { data: totalRevData } = await supabase.from("transactions").select("total_amount").eq('status', 'Paid');
-        const realRevenue = totalRevData?.reduce((acc, t) => acc + Number(t.total_amount), 0) || 0;
-        setTotalRevenue(realRevenue);
-
-        // Load branch targets from app_settings
-        const { data: targetSetting } = await supabase.from('app_settings').select('value').eq('key', 'branch_targets').single();
-        let targetMap: Record<string, { name: string; target: number }> = {};
-        if (targetSetting?.value) {
-            try { targetMap = JSON.parse(targetSetting.value); } catch (e) { }
-        }
-
-        // Ensure all branches have targets
-        let needSave = false;
-        for (const br of branches || []) {
-            if (!targetMap[br.id]) {
-                targetMap[br.id] = { name: br.name, target: 250000000 };
-                needSave = true;
+            // Handle targets
+            let targetMap: Record<string, { name: string; target: number }> = {};
+            if (targetSetting?.value) {
+                try { targetMap = JSON.parse(targetSetting.value); } catch (e) { }
             }
-        }
-        if (needSave) await saveBranchTargets(targetMap);
+            let needSave = false;
+            for (const br of branches || []) {
+                if (!targetMap[br.id]) {
+                    targetMap[br.id] = { name: br.name, target: 250000000 };
+                    needSave = true;
+                }
+            }
+            if (needSave) saveBranchTargets(targetMap);
+            setMonthlyTarget(Object.values(targetMap).reduce((acc, t) => acc + t.target, 0));
 
-        const totalTargetSum = Object.values(targetMap).reduce((acc, t) => acc + t.target, 0);
-        setMonthlyTarget(totalTargetSum);
+            // Expenses & Profits
+            const currentMonthExp = currentMonthExpData?.reduce((acc, curr) => acc + Number(curr.amount), 0) || 0;
+            setTotalExpenses(currentMonthExp);
+            setCurrentMonthExpenses(currentMonthExp);
 
-        const today = new Date();
-        const AVG_PRICE = realRevenue > 0 ? realRevenue / (paidTransactions.length || 1) : 500000;
+            const thisMonthRevenue = paidTransactions
+                .filter(t => new Date(t.created_at) >= new Date(startOfThisMonth))
+                .reduce((acc, t) => acc + Number(t.total_amount), 0);
+            setCurrentMonthRevenue(thisMonthRevenue);
 
-        const salesData = generateSalesData(salesPeriod, paidTransactions, AVG_PRICE, today);
-        setSalesHistory(salesData);
-
-        // Fetch Mitra Count efficiently
-        const { count: mCount } = await supabase.from("profiles").select("id", { count: 'exact', head: true }).eq("role", "mitra");
-        setMitraCount(mCount || 0);
-
-        // Fetch Pending Withdrawals efficiently
-        const { count: pWD } = await supabase.from("withdrawals").select("id", { count: 'exact', head: true }).eq("status", "pending");
-        setPendingWD(pWD || 0);
-
-        // Fetch Expenses (Current Month only)
-        const { data: currentMonthExpData } = await supabase
-            .from("expenses")
-            .select("amount, created_at")
-            .gte('expense_date', startOfThisMonth);
-
-        const currentMonthExp = currentMonthExpData?.reduce((acc, curr) => acc + Number(curr.amount), 0) || 0;
-
-        setTotalExpenses(currentMonthExp);
-        setCurrentMonthExpenses(currentMonthExp);
-
-        // Build per-branch stats using transactions
-        let bStats: BranchStat[] = [];
-        if (branches && branches.length > 0) {
-            bStats = branches.map(br => {
-                const brBookings = allBookings?.filter(b => b.branch_id === br.id) || [];
-                const brCompleted = brBookings.filter(b => b.status === "completed");
-                const brTransactions = paidTransactions.filter(t => t.branch_id === br.id);
-                const brRevenue = brTransactions.reduce((acc, t) => acc + Number(t.total_amount), 0);
-
-                const mockTrend = Array.from({ length: 5 }).map((_, j) => ({
-                    label: "",
-                    value: Math.floor(Math.random() * 5000000) + 1000000
-                }));
-
-                return {
-                    id: br.id,
-                    name: br.name,
-                    bookingCount: brBookings.length,
-                    completedCount: brCompleted.length,
-                    revenue: brRevenue,
-                    trend: mockTrend
-                };
-            });
-            setBranchStats(bStats as any);
-        }
-
-        // Build branch targets list
-        const brTargetsList: BranchTarget[] = (branches || []).map(br => {
-            const brTransactions = paidTransactions.filter(t => t.branch_id === br.id && new Date(t.created_at) >= firstDayThisMonth);
-            const brMonthRevenue = brTransactions.reduce((acc, t) => acc + Number(t.total_amount), 0);
-            return {
-                branchId: br.id,
-                branchName: br.name,
-                target: targetMap[br.id]?.target || 250000000,
-                revenue: brMonthRevenue
-            };
-        });
-        setBranchTargets(brTargetsList);
-
-        // Build Depok vs BSD comparison data based on comparisonPeriod
-        // Use bStats (locally computed) instead of branchStats (stale React state)
-        const currentBranchStats = bStats.length > 0 ? bStats : branchStats;
-        const depokBranch = currentBranchStats.find(b => b.name.toLowerCase().includes('depok'));
-        const bsdBranch = currentBranchStats.find(b => b.name.toLowerCase().includes('bsd'));
-
-        const compData = generateComparisonData(comparisonPeriod, today, paidTransactions, AVG_PRICE, depokBranch, bsdBranch);
-        setBranchComparison(compData);
-
-        // Calculate Mitra vs Direct using transactions
-        const mitraTx = paidTransactions.filter(t => t.mitra_id !== null);
-        const directTx = paidTransactions.filter(t => !t.mitra_id);
-        setMitraRevenueShare({
-            mitra: mitraTx.reduce((acc, t) => acc + Number(t.total_amount), 0),
-            direct: directTx.reduce((acc, t) => acc + Number(t.total_amount), 0)
-        });
-
-        // Calculate Monthly Trends using transactions
-        const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-
-        const thisMonthRevenue = paidTransactions
-            .filter(t => new Date(t.created_at) >= firstDayThisMonth)
-            .reduce((acc, t) => acc + Number(t.total_amount), 0);
-
-        const prevMonthRevenue = paidTransactions
-            .filter(t => {
-                const tDate = new Date(t.created_at);
-                return tDate >= firstDayLastMonth && tDate <= lastDayLastMonth;
-            })
-            .reduce((acc, t) => acc + Number(t.total_amount), 0);
-
-        setCurrentMonthRevenue(thisMonthRevenue);
-        setLastMonthRevenue(prevMonthRevenue);
-
-        const thisMonthExp = currentMonthExpData?.filter(e => new Date(e.created_at) >= firstDayThisMonth)
-            ?.reduce((acc, curr) => acc + Number(curr.amount), 0) || 0;
-        setCurrentMonthExpenses(thisMonthExp);
-
-
-        // Mitra MVP Leaderboard calculation using transactions
-        const mitraMap = new Map<string, { revenue: number, visits: number }>();
-        const { data: mitraProfiles } = await supabase.from("profiles").select("id, full_name").eq("role", "mitra");
-
-        paidTransactions.forEach(t => {
-            if (t.mitra_id) {
-                const existing = mitraMap.get(t.mitra_id) || { revenue: 0, visits: 0 };
-                mitraMap.set(t.mitra_id, {
-                    revenue: existing.revenue + Number(t.total_amount),
-                    visits: existing.visits + 1
+            // Branch Stats
+            if (branches) {
+                const bStats = branches.map(br => {
+                    const brBookings = allBookings.filter(b => b.branch_id === br.id);
+                    const brTransactions = paidTransactions.filter(t => t.branch_id === br.id);
+                    const brRev = brTransactions.reduce((acc, t) => acc + Number(t.total_amount), 0);
+                    return {
+                        id: br.id,
+                        name: br.name,
+                        bookingCount: brBookings.length,
+                        completedCount: brBookings.filter(b => b.status === "completed").length,
+                        revenue: brRev,
+                        trend: Array.from({ length: 5 }).map(() => ({ label: "", value: Math.floor(Math.random() * 5000000) + 1000000 }))
+                    };
                 });
+                setBranchStats(bStats as any);
+
+                // Branch Targets List
+                setBranchTargets(branches.map(br => ({
+                    branchId: br.id,
+                    branchName: br.name,
+                    target: targetMap[br.id]?.target || 250000000,
+                    revenue: paidTransactions.filter(t => t.branch_id === br.id && new Date(t.created_at) >= new Date(startOfThisMonth)).reduce((acc, t) => acc + Number(t.total_amount), 0)
+                })));
+
+                if (recent) {
+                    setRecentBookings(recent.map(r => ({
+                        ...r,
+                        branch_name: branches.find(b => b.id === r.branch_id)?.name || 'Unknown'
+                    })));
+                }
             }
-        });
 
-        const mvpList = Array.from(mitraMap.entries())
-            .map(([id, stats]) => ({
-                name: mitraProfiles?.find(p => p.id === id)?.full_name || 'Mitra',
-                ...stats
-            }))
-            .sort((a, b) => b.revenue - a.revenue)
-            .slice(0, 5);
-        setMitraMVP(mvpList);
-
-        // Customer Retention calculation
-        const phoneCounts = new Map<string, number>();
-        allBookings?.forEach(b => {
-            phoneCounts.set(b.customer_phone, (phoneCounts.get(b.customer_phone) || 0) + 1);
-        });
-        const totalCustomers = phoneCounts.size || 1;
-        const repeatCustomers = Array.from(phoneCounts.values()).filter(count => count > 1).length;
-        setRetentionStats({
-            new: totalCustomers - repeatCustomers,
-            repeat: repeatCustomers
-        });
-
-        // Service Time calculation
-        const serviceTimesInMs = completedBookings
-            .map(b => {
-                const start = new Date(b.created_at).getTime();
-                const end = new Date(b.updated_at).getTime();
-                return end - start;
-            })
-            .filter(t => t > 0);
-
-        const avgMs = serviceTimesInMs.length > 0
-            ? serviceTimesInMs.reduce((a, b) => a + b, 0) / serviceTimesInMs.length
-            : 0;
-
-        const avgMinutes = Math.round(avgMs / 60000);
-        setAvgServiceTime({
-            value: avgMinutes,
-            label: avgMinutes > 60 ? `${Math.floor(avgMinutes / 60)}h ${avgMinutes % 60}m` : `${avgMinutes}m`
-        });
-
-        // Low Stock Items
-        const { data: lowStock } = await supabase
-            .from("catalog")
-            .select("name, stock")
-            .eq("category", "Spare Part")
-            .lt("stock", 5)
-            .limit(5);
-        if (lowStock) setLowStockItems(lowStock);
-
-        // Mock Best Selling Services (since db doesn't have items yet)
-        setBestServices([
-            { name: 'Ganti Oli Shell Helix', count: 45, color: '#2563eb' },
-            { name: 'Service Rutin 10rb KM', count: 32, color: '#059669' },
-            { name: 'Tune Up & Carbon Clean', count: 28, color: '#7c3aed' },
-            { name: 'Spooring & Balancing', count: 22, color: '#f59e0b' },
-            { name: 'Detailing Interior', count: 15, color: '#ef4444' },
-        ]);
-
-        // Calculate Today Operations (Live Status)
-        const isToday = (dateStr: string) => {
-            if (!dateStr) return false;
-            const d = new Date(dateStr);
-            const todayStr = new Date().toISOString().split('T')[0];
-            return d.toISOString().split('T')[0] === todayStr;
-        };
-
-        const todayBookings = (allBookings || []).filter(b => isToday(b.created_at || b.service_date));
-        const processingToday = todayBookings.filter(b => b.status === "processing");
-        const completedToday = todayBookings.filter(b => b.status === "completed");
-
-        const getBranchBreakdown = (list: any[]) => {
-            const map = new Map<string, number>();
-            list.forEach(b => {
-                const bName = branches?.find(br => br.id === b.branch_id)?.name || 'Unknown';
-                map.set(bName, (map.get(bName) || 0) + 1);
+            // Other processing
+            setSalesHistory(generateSalesData(salesPeriod, paidTransactions, realRevenue / (paidTransactions.length || 1), now));
+            setMitraRevenueShare({
+                mitra: paidTransactions.filter(t => t.mitra_id).reduce((acc, t) => acc + Number(t.total_amount), 0),
+                direct: paidTransactions.filter(t => !t.mitra_id).reduce((acc, t) => acc + Number(t.total_amount), 0)
             });
-            return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
-        };
 
-        setTodayOps({
-            processing: {
-                total: processingToday.length,
-                direct: processingToday.filter(b => !b.mitra_id).length,
-                mitra: processingToday.filter(b => b.mitra_id).length,
-                branches: getBranchBreakdown(processingToday)
-            },
-            completed: {
-                total: completedToday.length,
-                direct: completedToday.filter(b => !b.mitra_id).length,
-                mitra: completedToday.filter(b => b.mitra_id).length,
-                branches: getBranchBreakdown(completedToday)
-            }
-        });
+            const mitraMap = new Map<string, { revenue: number, visits: number }>();
+            paidTransactions.forEach(t => {
+                if (t.mitra_id) {
+                    const ex = mitraMap.get(t.mitra_id) || { revenue: 0, visits: 0 };
+                    mitraMap.set(t.mitra_id, { revenue: ex.revenue + Number(t.total_amount), visits: ex.visits + 1 });
+                }
+            });
+            setMitraMVP(Array.from(mitraMap.entries()).map(([id, s]) => ({
+                name: mitraProfiles?.find(p => p.id === id)?.full_name || 'Mitra',
+                ...s
+            })).sort((a, b) => b.revenue - a.revenue).slice(0, 5));
 
-        // Recent Bookings with branch mapping
-        const { data: recent } = await supabase.from("bookings").select("*").order("created_at", { ascending: false }).limit(5);
-        if (recent) {
-            const enrichedRecent = recent.map(r => ({
-                ...r,
-                branch_name: branches?.find(b => b.id === r.branch_id)?.name || 'Unknown'
-            }));
-            setRecentBookings(enrichedRecent);
+            const phoneCounts = new Map<string, number>();
+            allBookings.forEach(b => phoneCounts.set(b.customer_phone, (phoneCounts.get(b.customer_phone) || 0) + 1));
+            setRetentionStats({ new: phoneCounts.size - Array.from(phoneCounts.values()).filter(c => c > 1).length, repeat: Array.from(phoneCounts.values()).filter(c => c > 1).length });
+
+            const sTimes = completedBookings.map(b => new Date(b.updated_at).getTime() - new Date(b.created_at).getTime()).filter(t => t > 0);
+            const avgM = Math.round((sTimes.length ? sTimes.reduce((a, b) => a + b, 0) / sTimes.length : 0) / 60000);
+            setAvgServiceTime({ value: avgM, label: avgM > 60 ? `${Math.floor(avgM / 60)}h ${avgM % 60}m` : `${avgM}m` });
+
+            const todayStr = now.toISOString().split('T')[0];
+            const tProcessing = allBookings.filter(b => b.status === "processing" && (b.created_at || "").startsWith(todayStr));
+            const tCompleted = allBookings.filter(b => b.status === "completed" && (b.created_at || "").startsWith(todayStr));
+
+            const getBrB = (list: any[]) => {
+                const map = new Map<string, number>();
+                list.forEach(b => {
+                    const name = branches?.find(br => br.id === b.branch_id)?.name || 'Unknown';
+                    map.set(name, (map.get(name) || 0) + 1);
+                });
+                return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
+            };
+
+            setTodayOps({
+                processing: { total: tProcessing.length, direct: tProcessing.filter(b => !b.mitra_id).length, mitra: tProcessing.filter(b => b.mitra_id).length, branches: getBrB(tProcessing) },
+                completed: { total: tCompleted.length, direct: tCompleted.filter(b => !b.mitra_id).length, mitra: tCompleted.filter(b => b.mitra_id).length, branches: getBrB(tCompleted) }
+            });
+
+        } catch (error) {
+            console.error("Dashboard calculation error:", error);
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     };
 
     useEffect(() => {

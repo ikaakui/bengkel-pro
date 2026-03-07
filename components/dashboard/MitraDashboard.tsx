@@ -35,49 +35,35 @@ export default function MitraDashboard() {
         setLoading(true);
 
         try {
-            // Concurrent fetch for maximum responsiveness
             const [
                 { data: settings },
                 { data: bookings },
                 { data: withdrawals }
             ] = await Promise.all([
                 supabase.from("app_settings").select("value").eq("key", "commission_rate").single(),
-                supabase.from("bookings").select("*").eq("mitra_id", profile.id).order("created_at", { ascending: false }),
-                supabase.from("withdrawals").select("*").eq("mitra_id", profile.id)
+                supabase.from("bookings").select("id, status, created_at, customer_name, car_model, license_plate").eq("mitra_id", profile.id).order("created_at", { ascending: false }),
+                supabase.from("withdrawals").select("amount, status").eq("mitra_id", profile.id)
             ]);
 
             const rate = settings ? Number(settings.value) : 5;
             setCommissionRate(rate);
 
             if (bookings) {
-                const total = bookings.length;
-                const completed = bookings.filter(b => b.status === 'completed');
                 const pending = bookings.filter(b => b.status === 'pending' || b.status === 'processing');
-
-                // Commission logic (example: 10% of 500k base service if not specified in booking)
-                // In real app, we should use transaction total if available
-                const paidComm = withdrawals
-                    ?.filter(w => w.status === 'approved')
-                    .reduce((acc, w) => acc + Number(w.amount), 0) || 0;
-
-                // Simple estimate for display
+                const paidComm = withdrawals?.filter(w => w.status === 'approved').reduce((acc, w) => acc + Number(w.amount), 0) || 0;
                 const estPending = pending.length * 500000 * (rate / 100);
 
                 setStats({
-                    totalReferrals: total,
+                    totalReferrals: bookings.length,
                     paidCommissions: paidComm,
                     pendingCommissions: estPending,
-                    recentIncrease: bookings.filter(b => {
-                        const d = new Date(b.created_at);
-                        const now = new Date();
-                        return (now.getTime() - d.getTime()) < 7 * 24 * 60 * 60 * 1000;
-                    }).length
+                    recentIncrease: bookings.filter(b => (new Date().getTime() - new Date(b.created_at).getTime()) < 7 * 24 * 3600 * 1000).length
                 });
 
                 setReferrals(bookings.slice(0, 5));
             }
         } catch (err) {
-            console.error("Error fetching mitra dashboard data:", err);
+            console.error("Error fetching mira dashboard:", err);
         } finally {
             setLoading(false);
         }
