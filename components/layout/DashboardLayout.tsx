@@ -37,7 +37,16 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import type { UserRole } from "@/components/providers/AuthProvider";
 
 const navigation = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['owner', 'admin', 'mitra'], group: 'Utama' },
+    { name: 'Overview', href: '/', icon: LayoutDashboard, roles: ['owner', 'admin', 'mitra'], group: 'Utama' },
+    // Owner Analytics
+    { name: 'Performa Cabang', href: '/analytics/branches', icon: Building2, roles: ['owner'], group: 'Analisis' },
+    { name: 'Analisis Mitra', href: '/analytics/mitra', icon: Users2, roles: ['owner'], group: 'Analisis' },
+    { name: 'Retensi & Servis', href: '/analytics/customers', icon: PieChart, roles: ['owner'], group: 'Analisis' },
+    { name: 'Status Inventori', href: '/analytics/inventory', icon: Package, roles: ['owner'], group: 'Analisis' },
+    // Admin Analytics
+    { name: 'Operasional Live', href: '/analytics/operations', icon: Bot, roles: ['admin'], group: 'Analisis' },
+    { name: 'Keuangan Cabang', href: '/analytics/finance', icon: Banknote, roles: ['admin'], group: 'Analisis' },
+
     { name: 'POS (Kasir)', href: '/pos', icon: ShoppingCart, roles: ['admin'], group: 'Utama' },
     { name: 'Antrian Service', href: '/antrian', icon: ClipboardList, roles: ['owner', 'admin'], group: 'Utama' },
     { name: 'Booking Direct', href: '/bookings', icon: Package, roles: ['admin'], group: 'Operasional' },
@@ -136,6 +145,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <nav className="flex-1 overflow-y-auto custom-scrollbar px-3 pt-6 pb-20 space-y-8">
                         {[
                             { id: 'utama', label: 'Utama', group: 'Utama' },
+                            { id: 'analisis', label: 'Analisis & Data', group: 'Analisis' },
                             { id: 'layanan', label: 'Operasional', group: 'Operasional' },
                             { id: 'keuangan', label: 'Keuangan', group: 'Keuangan' },
                             { id: 'manajemen', label: 'Manajemen', group: 'Manajemen' },

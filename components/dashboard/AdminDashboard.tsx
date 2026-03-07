@@ -10,33 +10,20 @@ import { createClient } from "@/lib/supabase-client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
     TrendingUp,
-    TrendingDown,
-    Loader2,
     BarChart3,
     ArrowRight,
-    Trophy,
     DollarSign,
     Target,
     Zap,
-    Clock,
     Car,
     CheckCircle2,
     CalendarClock,
     Timer,
+    Bot,
     UserPlus,
-    RotateCcw,
-    PackageSearch,
     Wrench,
+    Activity
 } from "lucide-react";
-import SalesChart from "./SalesChart";
-
-type SalesPeriod = '7d' | '1m' | '1y';
-
-const PERIOD_OPTIONS: { key: SalesPeriod; label: string }[] = [
-    { key: '7d', label: '7 Hari' },
-    { key: '1m', label: '1 Bulan' },
-    { key: '1y', label: '1 Tahun' },
-];
 
 interface VehicleInProgress {
     id: string;
@@ -47,26 +34,19 @@ interface VehicleInProgress {
     created_at: string;
     updated_at: string;
     duration: string;
-    durationMinutes: number;
 }
 
 export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
-    const [todayBookingsIn, setTodayBookingsIn] = useState(0);
-    const [todayProcessing, setTodayProcessing] = useState(0);
-    const [todayCompleted, setTodayCompleted] = useState(0);
-    const [todayRevenue, setTodayRevenue] = useState(0);
+    const [todayStats, setTodayStats] = useState({
+        in: 0,
+        processing: 0,
+        completed: 0,
+        revenue: 0
+    });
     const [branchTarget, setBranchTarget] = useState(250000000);
     const [currentMonthRevenue, setCurrentMonthRevenue] = useState(0);
-    const [lastMonthRevenue, setLastMonthRevenue] = useState(0);
-    const [salesHistory, setSalesHistory] = useState<{ label: string; value: number }[]>([]);
-    const [salesPeriod, setSalesPeriod] = useState<SalesPeriod>('7d');
     const [vehiclesInProgress, setVehiclesInProgress] = useState<VehicleInProgress[]>([]);
-    const [recentBookings, setRecentBookings] = useState<any[]>([]);
-    const [retentionStats, setRetentionStats] = useState({ new: 0, repeat: 0 });
-    const [avgServiceTime, setAvgServiceTime] = useState({ value: 0, label: '0m' });
-    const [topServices, setTopServices] = useState<{ name: string; count: number; color: string }[]>([]);
-    const [lowStockItems, setLowStockItems] = useState<{ name: string; stock: number }[]>([]);
 
     const { branchId, branchName } = useAuth();
     const supabase = createClient();
@@ -76,70 +56,41 @@ export default function AdminDashboard() {
         if (minutes < 60) return `${minutes}m`;
         const hours = Math.floor(minutes / 60);
         const remainingMinutes = minutes % 60;
-        if (hours < 24) return `${hours}j ${remainingMinutes}m`;
-        const days = Math.floor(hours / 24);
-        const remainingHours = hours % 24;
-        return `${days}h ${remainingHours}j`;
+        return `${hours}j ${remainingMinutes}m`;
     };
 
-    const fetchDashboardData = async () => {
+    const fetchAdminOverview = async () => {
         if (!branchId) return;
         setLoading(true);
 
         const now = new Date();
         const todayStr = now.toISOString().split('T')[0];
-        const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-        const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
-        const threeMonthsAgo = new Date();
-        threeMonthsAgo.setMonth(now.getMonth() - 3);
-        const threeMonthsAgoStr = threeMonthsAgo.toISOString();
-
-        let historyStartDate = new Date(threeMonthsAgo);
-        if (salesPeriod === '1y') historyStartDate.setFullYear(now.getFullYear() - 1);
-        const historyStartDateStr = historyStartDate.toISOString();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
         try {
             const [
-                { data: allBookings },
-                { data: allTransactions },
-                { data: targetSetting },
-                { data: lowStock },
-                { data: recent }
+                { data: bookings },
+                { data: transactions },
+                { data: targetSetting }
             ] = await Promise.all([
-                supabase.from("bookings")
-                    .select("id, status, customer_name, car_model, license_plate, created_at, updated_at, service_date, customer_phone, service_type, service")
-                    .eq("branch_id", branchId)
-                    .gte('created_at', threeMonthsAgoStr),
-                supabase.from("transactions")
-                    .select("id, total_amount, status, created_at")
-                    .eq("branch_id", branchId)
-                    .gte('created_at', historyStartDateStr),
-                supabase.from('app_settings').select('value').eq('key', 'branch_targets').single(),
-                supabase.from("catalog")
-                    .select("name, stock")
-                    .eq("category", "Spare Part")
-                    .lt("stock", 5)
-                    .limit(5),
-                supabase.from("bookings")
-                    .select("*")
-                    .eq("branch_id", branchId)
-                    .order("created_at", { ascending: false })
-                    .limit(5)
+                supabase.from("bookings").select("*").eq("branch_id", branchId).gte('created_at', startOfMonth),
+                supabase.from("transactions").select("total_amount, status, created_at").eq("branch_id", branchId).gte('created_at', startOfMonth),
+                supabase.from('app_settings').select('value').eq('key', 'branch_targets').single()
             ]);
 
-            const bookings = allBookings || [];
-            const transactions = allTransactions || [];
-            const paidTransactions = transactions.filter(t => t.status === 'Paid');
+            const monthBookings = bookings || [];
+            const todayBookings = monthBookings.filter(b => b.created_at?.startsWith(todayStr));
+            const paidTxs = (transactions || []).filter(t => t.status === 'Paid');
 
-            // Today Stats
-            const todayBookings = bookings.filter(b => (b.created_at || b.service_date)?.startsWith(todayStr));
-            setTodayBookingsIn(todayBookings.length);
-            setTodayProcessing(todayBookings.filter(b => b.status === "processing").length);
-            setTodayCompleted(todayBookings.filter(b => b.status === "completed").length);
-            setTodayRevenue(paidTransactions.filter(t => t.created_at?.startsWith(todayStr)).reduce((acc, t) => acc + Number(t.total_amount), 0));
+            setTodayStats({
+                in: todayBookings.length,
+                processing: todayBookings.filter(b => b.status === 'processing').length,
+                completed: todayBookings.filter(b => b.status === 'completed').length,
+                revenue: paidTxs.filter(t => t.created_at?.startsWith(todayStr)).reduce((acc, t) => acc + Number(t.total_amount), 0)
+            });
 
-            // Target
+            setCurrentMonthRevenue(paidTxs.reduce((acc, t) => acc + Number(t.total_amount), 0));
+
             if (targetSetting?.value) {
                 try {
                     const targetMap = JSON.parse(targetSetting.value);
@@ -147,123 +98,36 @@ export default function AdminDashboard() {
                 } catch (e) { }
             }
 
-            // Monthly
-            const thisMonthRev = paidTransactions.filter(t => t.created_at >= firstDayThisMonth).reduce((acc, t) => acc + Number(t.total_amount), 0);
-            const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
-            const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59).toISOString();
-            const prevMonthRev = paidTransactions.filter(t => t.created_at >= firstDayLastMonth && t.created_at <= lastDayLastMonth).reduce((acc, t) => acc + Number(t.total_amount), 0);
+            // Real-time List
+            const activeList = monthBookings
+                .filter(b => b.status === 'processing' || (b.status === 'completed' && b.updated_at?.startsWith(todayStr)))
+                .map(b => {
+                    const durationMs = (b.status === 'completed' ? new Date(b.updated_at).getTime() : Date.now()) - new Date(b.created_at).getTime();
+                    return {
+                        id: b.id, customer_name: b.customer_name, car_model: b.car_model || '-', license_plate: b.license_plate || '-',
+                        status: b.status, created_at: b.created_at, updated_at: b.updated_at,
+                        duration: formatDuration(durationMs)
+                    };
+                }).sort((a, b) => (a.status === 'processing' ? -1 : 1));
 
-            setCurrentMonthRevenue(thisMonthRev);
-            setLastMonthRevenue(prevMonthRev);
-
-            // Sales Chart
-            const avgPrice = paidTransactions.length > 0 ? paidTransactions.reduce((acc, t) => acc + Number(t.total_amount), 0) / paidTransactions.length : 500000;
-            setSalesHistory(generateSalesData(salesPeriod, paidTransactions, avgPrice, now));
-
-            // Vehicles In Progress / Completed Today
-            const processing = bookings.filter(b => b.status === "processing");
-            const completedToday = bookings.filter(b => b.status === "completed" && b.updated_at?.startsWith(todayStr));
-            const vehiclesList = [...processing, ...completedToday].map(b => {
-                const start = new Date(b.created_at).getTime();
-                const end = b.status === "completed" ? new Date(b.updated_at).getTime() : Date.now();
-                const durationMs = end - start;
-                return {
-                    id: b.id, customer_name: b.customer_name, car_model: b.car_model || '-', license_plate: b.license_plate || '-',
-                    status: b.status, created_at: b.created_at, updated_at: b.updated_at,
-                    duration: formatDuration(durationMs), durationMinutes: Math.round(durationMs / 60000)
-                };
-            }).sort((a, b) => (a.status === 'processing' ? -1 : 1) || new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-            setVehiclesInProgress(vehiclesList);
-
-            if (recent) setRecentBookings(recent);
-
-            // Retention
-            const phoneCounts = new Map<string, number>();
-            bookings.forEach(b => { if (b.customer_phone) phoneCounts.set(b.customer_phone, (phoneCounts.get(b.customer_phone) || 0) + 1); });
-            const totalC = phoneCounts.size || 1;
-            const repeatC = Array.from(phoneCounts.values()).filter(c => c > 1).length;
-            setRetentionStats({ new: totalC - repeatC, repeat: repeatC });
-
-            // Avg Time
-            const completed = bookings.filter(b => b.status === "completed");
-            const times = completed.map(b => new Date(b.updated_at).getTime() - new Date(b.created_at).getTime()).filter(t => t > 0);
-            const avgM = times.length ? Math.round((times.reduce((a, b) => a + b, 0) / times.length) / 60000) : 0;
-            setAvgServiceTime({ value: avgM, label: avgM > 60 ? `${Math.floor(avgM / 60)}j ${avgM % 60}m` : `${avgM}m` });
-
-            // Services
-            const sCounts = new Map<string, number>();
-            bookings.forEach(b => { const s = b.service_type || b.service || 'Lainnya'; sCounts.set(s, (sCounts.get(s) || 0) + 1); });
-            const colors = ['#2563eb', '#059669', '#7c3aed', '#f59e0b', '#ef4444'];
-            setTopServices(Array.from(sCounts.entries()).map(([name, count], i) => ({ name, count, color: colors[i % colors.length] })).sort((a, b) => b.count - a.count).slice(0, 5));
-
-            if (lowStock) setLowStockItems(lowStock);
+            setVehiclesInProgress(activeList);
 
         } catch (error) {
-            console.error("Admin dashboard fetch error:", error);
+            console.error("Admin overview error:", error);
         } finally {
             setLoading(false);
         }
     };
 
-    const generateSalesData = (
-        period: SalesPeriod,
-        transactions: any[],
-        avgPrice: number,
-        today: Date
-    ): { label: string; value: number }[] => {
-        let points: number;
-        let getDate: (i: number) => Date;
-        let getLabel: (d: Date) => string;
-
-        switch (period) {
-            case '7d':
-                points = 7;
-                getDate = (i) => { const d = new Date(today); d.setDate(today.getDate() - (6 - i)); return d; };
-                getLabel = (d) => d.toLocaleDateString('id-ID', { weekday: 'short' });
-                break;
-            case '1m':
-                points = 30;
-                getDate = (i) => { const d = new Date(today); d.setDate(today.getDate() - (29 - i)); return d; };
-                getLabel = (d) => d.toLocaleDateString('id-ID', { day: 'numeric' });
-                break;
-            case '1y':
-                points = 12;
-                getDate = (i) => { const d = new Date(today); d.setMonth(today.getMonth() - (11 - i)); return d; };
-                getLabel = (d) => d.toLocaleDateString('id-ID', { month: 'short' });
-                break;
-        }
-
-        return Array.from({ length: points }).map((_, i) => {
-            const date = getDate(i);
-            const dateStr = date.toISOString().split('T')[0];
-
-            let realSales = 0;
-            if (period === '7d' || period === '1m') {
-                realSales = transactions.filter(t => {
-                    return new Date(t.created_at).toISOString().split('T')[0] === dateStr;
-                }).reduce((acc, t) => acc + Number(t.total_amount), 0);
-            } else if (period === '1y') {
-                const month = date.getMonth();
-                const year = date.getFullYear();
-                realSales = transactions.filter(t => {
-                    const tDate = new Date(t.created_at);
-                    return tDate.getMonth() === month && tDate.getFullYear() === year;
-                }).reduce((acc, t) => acc + Number(t.total_amount), 0);
-            }
-
-            return { label: getLabel(date), value: realSales };
-        });
-    };
-
     useEffect(() => {
-        fetchDashboardData();
-    }, [salesPeriod, branchId]);
+        fetchAdminOverview();
+    }, [branchId]);
 
     if (loading) {
         return (
             <div className="py-20 flex flex-col items-center justify-center">
-                <Loader2 size={40} className="animate-spin text-primary" />
-                <p className="text-slate-500 mt-4 font-medium italic">Memuat data cabang...</p>
+                <Activity size={40} className="animate-spin text-primary" />
+                <p className="text-slate-500 mt-4 font-medium italic">status cabang terkini...</p>
             </div>
         );
     }
@@ -271,487 +135,190 @@ export default function AdminDashboard() {
     const targetPct = Math.round((currentMonthRevenue / (branchTarget || 1)) * 100);
 
     return (
-        <div className="space-y-6 sm:space-y-8 lg:space-y-10">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                <div className="min-w-0">
-                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
-                        Dashboard Admin
-                    </h2>
-                    <p className="text-slate-500 mt-1 font-medium text-sm sm:text-base truncate">
-                        Monitoring cabang <span className="text-blue-600 font-black">{branchName || 'Cabang'}</span> secara real-time.
-                    </p>
+        <div className="space-y-10 pb-20">
+            {/* Admin Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Status {branchName} 🏁</h2>
+                    <p className="text-slate-500 mt-1 font-medium">Overview operasional dan pencapaian hari ini.</p>
                 </div>
-                <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm self-start sm:self-auto shrink-0">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Live</span>
-                    <div className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </div>
+                <div className="flex gap-2">
+                    <Link href="/analytics/operations" className="px-4 py-3 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm">
+                        Monitor Live <Bot size={14} className="text-blue-600" />
+                    </Link>
                 </div>
             </div>
 
-            {/* ===== SECTION 1: Today Stats ===== */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-                {/* Mobil Masuk */}
-                <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.05)] bg-white p-6 group hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-all overflow-hidden relative">
-                    <div className="flex items-center justify-between relative z-10">
+            {/* Today Top Stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card className="p-6 border-none shadow-xl bg-white flex flex-col justify-between hover:shadow-2xl transition-all">
+                    <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
                             <Car size={22} />
                         </div>
-                        <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] sm:tracking-[0.15em] truncate">Masuk Hari Ini</p>
+                        <Badge variant="neutral" className="font-black text-[8px]">In</Badge>
                     </div>
-                    <div className="mt-6 relative z-10">
-                        <h3 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter italic">{todayBookingsIn}</h3>
-                        <p className="text-[10px] text-slate-400 mt-1 font-bold">Unit kendaraan</p>
+                    <div>
+                        <p className="text-3xl font-black text-slate-900 tracking-tighter italic">{todayStats.in}</p>
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Mobil Masuk Hari Ini</p>
                     </div>
                 </Card>
 
-                {/* Sedang Dikerjakan */}
-                <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.05)] bg-white p-6 group hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-all overflow-hidden relative">
-                    <div className="flex items-center justify-between relative z-10">
+                <Card className="p-6 border-none shadow-xl bg-white flex flex-col justify-between hover:shadow-2xl transition-all">
+                    <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl">
                             <Zap size={22} />
                         </div>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Dikerjakan</p>
+                        <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
                     </div>
-                    <div className="mt-6 relative z-10">
-                        <h3 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter italic">{todayProcessing}</h3>
-                        <p className="text-[10px] text-slate-400 mt-1 font-bold">Sedang proses</p>
+                    <div>
+                        <p className="text-3xl font-black text-slate-900 tracking-tighter italic">{todayStats.processing}</p>
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Sedang Dikerjakan</p>
                     </div>
                 </Card>
 
-                {/* Selesai */}
-                <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.05)] bg-white p-6 group hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-all overflow-hidden relative">
-                    <div className="flex items-center justify-between relative z-10">
+                <Card className="p-6 border-none shadow-xl bg-white flex flex-col justify-between hover:shadow-2xl transition-all">
+                    <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl">
                             <CheckCircle2 size={22} />
                         </div>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Selesai</p>
+                        <Check size={14} className="text-emerald-500" />
                     </div>
-                    <div className="mt-6 relative z-10">
-                        <h3 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter italic">{todayCompleted}</h3>
-                        <p className="text-[10px] text-slate-400 mt-1 font-bold">Hari ini</p>
+                    <div>
+                        <p className="text-3xl font-black text-slate-900 tracking-tighter italic">{todayStats.completed}</p>
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Selesai Hari Ini</p>
                     </div>
                 </Card>
 
-                {/* Pendapatan Hari Ini */}
-                <Card className="border-none shadow-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-blue-800 p-6 text-white group relative overflow-hidden ring-4 ring-indigo-50/50">
-                    <div className="flex items-center justify-between relative z-10">
-                        <div className="p-3 bg-white/40 rounded-2xl">
+                <Card className="p-6 border-none shadow-2xl bg-slate-900 text-white flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="p-3 bg-white/10 text-white rounded-2xl">
                             <DollarSign size={22} />
                         </div>
-                        <p className="text-[9px] font-black text-indigo-200 uppercase tracking-[0.15em]">Hari Ini</p>
+                        <TrendingUp size={14} className="text-emerald-400" />
                     </div>
-                    <div className="mt-6 relative z-10">
-                        <h3 className="text-lg sm:text-2xl font-black tracking-tighter break-all">
-                            Rp {todayRevenue.toLocaleString('id-ID')}
-                        </h3>
-                        <p className="text-[10px] text-indigo-200 mt-1 font-bold">Pendapatan</p>
-                    </div>
-                    <DollarSign size={120} className="absolute -right-8 -bottom-8 text-white/5 transform -rotate-12" />
-                </Card>
-            </div>
-
-            {/* ===== SECTION 2: Target Bulanan & Revenue ===== */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-                {/* Target Cabang */}
-                <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.05)] bg-white p-8 overflow-hidden">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
-                            <Target size={22} />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-black text-slate-900 tracking-tight">Target Bulanan</h3>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                                {new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="bg-gradient-to-r from-indigo-600 to-blue-700 rounded-2xl p-6 text-white shadow-xl shadow-indigo-100">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 mb-4">
-                            <div>
-                                <p className="text-indigo-100 text-[10px] font-black uppercase tracking-[0.2em]">Pencapaian</p>
-                                <p className="text-lg sm:text-2xl font-black tracking-tight mt-1 break-all">
-                                    Rp {currentMonthRevenue.toLocaleString('id-ID')}
-                                </p>
-                                <p className="text-[10px] text-indigo-200 font-bold mt-0.5">
-                                    dari Rp {branchTarget.toLocaleString('id-ID')}
-                                </p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-2xl sm:text-4xl font-black tracking-tighter italic">{targetPct}%</p>
-                                <p className="text-[9px] text-indigo-200 font-black uppercase tracking-widest mt-1">tercapai</p>
-                            </div>
-                        </div>
-                        <div className="h-3 bg-white/10 rounded-full overflow-hidden border border-white/5">
-                            <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${Math.min(targetPct, 100)}%` }}
-                                transition={{ duration: 1.2, ease: "easeOut" }}
-                                className={cn(
-                                    "h-full rounded-full",
-                                    targetPct >= 100 ? "bg-emerald-400" : "bg-gradient-to-r from-blue-300 to-indigo-200"
-                                )}
-                            />
-                        </div>
-                        {(() => {
-                            let insight = "Bulan baru dimulai, ayo mulai kejar target! 🚀";
-                            const daysPassed = new Date().getDate();
-                            if (targetPct >= 100) insight = "Luar biasa! Target bulan ini sudah tercapai! 🏆";
-                            else if (targetPct >= 70) insight = "Tinggal sedikit lagi, pertahankan! 📈";
-                            else if (daysPassed > 15 && targetPct < 40) insight = "Perlu effort lebih, target masih jauh ⚠️";
-                            else if (daysPassed > 5 && targetPct > 0) insight = "Terus konsisten, ritme sudah bagus 🏁";
-                            return (
-                                <p className="text-[10px] text-indigo-100 font-bold mt-3 bg-white/10 w-fit px-3 py-1 rounded-full">
-                                    💡 {insight}
-                                </p>
-                            );
-                        })()}
-                    </div>
-                </Card>
-
-                {/* Revenue Bulan Ini */}
-                <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.05)] bg-white p-8 overflow-hidden">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl">
-                            <TrendingUp size={22} />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-black text-slate-900 tracking-tight">Revenue Cabang</h3>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                                Bulan ini vs bulan lalu
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="space-y-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 rounded-2xl p-4 sm:p-6 border border-slate-100">
-                            <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Bulan Ini</p>
-                                <p className="text-xl sm:text-3xl font-black text-slate-900 tracking-tighter break-all">
-                                    Rp {currentMonthRevenue.toLocaleString('id-ID')}
-                                </p>
-                            </div>
-                            <div className="text-right">
-                                {lastMonthRevenue > 0 ? (
-                                    <div className={cn(
-                                        "flex items-center gap-1.5 px-3 py-1.5 rounded-xl",
-                                        currentMonthRevenue >= lastMonthRevenue
-                                            ? "bg-emerald-50 text-emerald-600"
-                                            : "bg-rose-50 text-rose-600"
-                                    )}>
-                                        {currentMonthRevenue >= lastMonthRevenue
-                                            ? <TrendingUp size={16} />
-                                            : <TrendingDown size={16} />
-                                        }
-                                        <span className="text-sm font-black">
-                                            {(((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100).toFixed(1)}%
-                                        </span>
-                                    </div>
-                                ) : (
-                                    <span className="text-xs font-bold text-slate-400">N/A</span>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="flex items-center justify-between px-2">
-                            <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bulan Lalu</p>
-                                <p className="text-lg font-black text-slate-600 tracking-tight mt-0.5">
-                                    Rp {lastMonthRevenue.toLocaleString('id-ID')}
-                                </p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Selisih</p>
-                                <p className={cn(
-                                    "text-lg font-black tracking-tight mt-0.5",
-                                    currentMonthRevenue >= lastMonthRevenue ? "text-emerald-600" : "text-rose-600"
-                                )}>
-                                    {currentMonthRevenue >= lastMonthRevenue ? "+" : ""}
-                                    Rp {(currentMonthRevenue - lastMonthRevenue).toLocaleString('id-ID')}
-                                </p>
-                            </div>
-                        </div>
+                    <div>
+                        <p className="text-2xl font-black tracking-tighter italic break-all">Rp {todayStats.revenue.toLocaleString('id-ID')}</p>
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Pendapatan Hari Ini</p>
                     </div>
                 </Card>
             </div>
 
-            {/* ===== SECTION 3: Sales Chart ===== */}
-            <Card className="border-none shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] p-0 overflow-hidden bg-white ring-1 ring-slate-100">
-                <CardHeader className="p-8 border-b border-slate-50 bg-gradient-to-br from-white via-white to-blue-50/30">
-                    <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center justify-between">
+            {/* Monthly Target Mini Card */}
+            <Card className="border-none shadow-2xl bg-white p-8 overflow-hidden relative group">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                    <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-3xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-inner">
+                            <Target size={32} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Target Cabang Bulan Ini</p>
+                            <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+                                Rp {currentMonthRevenue.toLocaleString('id-ID')}
+                                <span className="text-sm font-bold text-slate-400 ml-2">/ Rp {branchTarget.toLocaleString('id-ID')}</span>
+                            </h3>
+                        </div>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-5xl font-black text-indigo-600 tracking-tighter italic">{targetPct}%</p>
+                        <Link href="/analytics/finance" className="text-[9px] font-black text-blue-600 uppercase tracking-widest flex items-center justify-end gap-1 mt-1 hover:underline">
+                            Detail Keuangan <ArrowRight size={10} />
+                        </Link>
+                    </div>
+                </div>
+                <div className="mt-8 h-2.5 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100 shadow-inner">
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min(targetPct, 100)}%` }}
+                        transition={{ duration: 1.5 }}
+                        className={cn(
+                            "h-full rounded-full",
+                            targetPct >= 100 ? "bg-emerald-500" : "bg-indigo-600"
+                        )}
+                    />
+                </div>
+                <Target size={150} className="absolute -left-10 -bottom-10 text-slate-50 opacity-50 transform -rotate-12" />
+            </Card>
+
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                {/* Active Workshop Tracking */}
+                <Card className="xl:col-span-2 border-none shadow-2xl bg-white p-0 overflow-hidden ring-1 ring-slate-100">
+                    <CardHeader className="p-8 border-b border-slate-50 bg-slate-50/30 flex flex-row items-center justify-between space-y-0">
                         <div className="flex items-center gap-4">
-                            <div className="p-3.5 bg-blue-600 rounded-2xl text-white shadow-xl shadow-blue-200">
-                                <BarChart3 size={22} />
+                            <div className="p-3 bg-amber-100 text-amber-600 rounded-2xl">
+                                <Timer size={22} />
                             </div>
                             <div>
-                                <h3 className="text-xl font-black text-slate-900 tracking-tight">Tren Pendapatan</h3>
-                                <p className="text-sm text-slate-500 font-medium leading-none mt-1">
-                                    Data pendapatan cabang {branchName} — {PERIOD_OPTIONS.find(p => p.key === salesPeriod)?.label}
-                                </p>
+                                <h3 className="text-xl font-black text-slate-900 tracking-tight">Workshop Monitor</h3>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Kendaraan aktif & durasi pengerjaan</p>
                             </div>
                         </div>
-                        <div className="flex gap-1.5 sm:gap-2 p-1 sm:p-1.5 bg-slate-100/50 rounded-2xl ring-1 ring-slate-200/50 overflow-x-auto">
-                            {PERIOD_OPTIONS.map(opt => (
-                                <button
-                                    key={opt.key}
-                                    onClick={() => setSalesPeriod(opt.key)}
-                                    className={cn(
-                                        "px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-widest transition-all active:scale-95 whitespace-nowrap",
-                                        salesPeriod === opt.key
-                                            ? "bg-white text-blue-600 shadow-sm ring-1 ring-slate-200"
-                                            : "text-slate-400 hover:text-slate-600"
-                                    )}
-                                >
-                                    {opt.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent className="p-8">
-                    <div className="h-[300px] w-full">
-                        <SalesChart data={salesHistory} height={300} color="#2563eb" />
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* ===== SECTION 4: Durasi Pengerjaan Mobil ===== */}
-            <Card className="border-none shadow-2xl bg-white p-0 overflow-hidden ring-1 ring-slate-100">
-                <div className="px-8 py-5 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <Timer size={20} className="text-amber-600" />
-                        <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Durasi Pengerjaan Mobil</h4>
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-300">
-                        {vehiclesInProgress.length} kendaraan
-                    </span>
-                </div>
-                <CardContent className="p-0">
-                    {vehiclesInProgress.length === 0 ? (
-                        <div className="p-10 text-center">
-                            <CalendarClock size={40} className="text-slate-200 mx-auto mb-3" />
-                            <p className="text-sm text-slate-400 font-bold">Belum ada kendaraan yang dikerjakan hari ini</p>
-                        </div>
-                    ) : (
-                        <div className="divide-y divide-slate-50">
-                            {vehiclesInProgress.map((v) => (
-                                <div key={v.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 px-4 sm:px-8 hover:bg-slate-50 transition-all group gap-3 sm:gap-0">
-                                    <div className="flex items-center gap-5 min-w-0">
-                                        <div className={cn(
-                                            "w-10 h-10 rounded-xl flex items-center justify-center",
-                                            v.status === 'processing'
-                                                ? 'bg-amber-50 text-amber-600'
-                                                : 'bg-emerald-50 text-emerald-600'
-                                        )}>
-                                            {v.status === 'processing' ? <Zap size={18} /> : <CheckCircle2 size={18} />}
-                                        </div>
-                                        <div className="truncate">
-                                            <p className="font-black text-base text-slate-900 truncate leading-none mb-1">
-                                                {v.customer_name}
-                                            </p>
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate">
-                                                {v.car_model} • {v.license_plate}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex-shrink-0 flex items-center gap-2 sm:gap-4 sm:ml-auto">
-                                        <div className={cn(
-                                            "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider",
-                                            v.status === 'processing'
-                                                ? 'bg-amber-100 text-amber-700'
-                                                : 'bg-emerald-100 text-emerald-700'
-                                        )}>
-                                            {v.status === 'processing' ? '⚡ Proses' : '✅ Selesai'}
-                                        </div>
-                                        <div className={cn(
-                                            "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black",
-                                            v.status === 'processing'
-                                                ? 'bg-slate-900 text-white'
-                                                : 'bg-slate-100 text-slate-600'
-                                        )}>
-                                            <Clock size={12} />
-                                            {v.duration}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-
-            {/* ===== SECTION 5: Recent Bookings ===== */}
-            <Card className="border-none shadow-2xl bg-white p-0 overflow-hidden ring-1 ring-slate-100">
-                <div className="px-8 py-5 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
-                    <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Booking Terbaru</h4>
-                    <Link href="/bookings">
-                        <button className="flex items-center gap-2 text-[10px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-colors">
-                            Lihat Semua <ArrowRight size={12} />
-                        </button>
-                    </Link>
-                </div>
-                <CardContent className="p-0">
+                        <Link href="/antrian">
+                            <button className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">Antrean Full</button>
+                        </Link>
+                    </CardHeader>
                     <div className="divide-y divide-slate-50">
-                        {recentBookings.map((bk) => (
-                            <div key={bk.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 px-4 sm:px-8 hover:bg-slate-50 transition-all group gap-2 sm:gap-0">
-                                <div className="flex items-center gap-5 min-w-0">
-                                    <div className="w-2 h-10 bg-slate-50 rounded-full group-hover:bg-blue-100 transition-colors" />
-                                    <div className="truncate">
-                                        <p className="font-black text-base text-slate-900 truncate leading-none mb-1">{bk.customer_name}</p>
-                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate">
-                                            {bk.car_model} • {bk.license_plate || '-'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex-shrink-0 sm:text-right">
-                                    <div className={cn(
-                                        "flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.1em]",
-                                        bk.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
-                                            bk.status === 'processing' ? 'bg-blue-100 text-blue-700' :
-                                                'bg-slate-100 text-slate-600'
-                                    )}>
+                        {vehiclesInProgress.length === 0 ? (
+                            <div className="p-20 text-center text-slate-400 italic">Tidak ada kendaraan aktif saat ini.</div>
+                        ) : (
+                            vehiclesInProgress.slice(0, 5).map(v => (
+                                <div key={v.id} className="p-6 flex items-center justify-between hover:bg-slate-50 transition-all group">
+                                    <div className="flex items-center gap-4">
                                         <div className={cn(
-                                            "w-1.5 h-1.5 rounded-full",
-                                            bk.status === 'completed' ? 'bg-emerald-500' :
-                                                bk.status === 'processing' ? 'bg-blue-500' :
-                                                    'bg-slate-400'
+                                            "w-2 h-10 rounded-full",
+                                            v.status === 'processing' ? 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.3)]' : 'bg-emerald-400'
                                         )} />
-                                        {bk.status}
+                                        <div>
+                                            <p className="font-black text-slate-900 uppercase tracking-tight">{v.customer_name} <span className="text-slate-300 mx-2 tracking-normal font-medium">|</span> {v.license_plate}</p>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{v.car_model}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm font-black text-slate-900 tabular-nums italic">{v.duration}</p>
+                                        <p className="text-[9px] text-slate-400 font-black uppercase tracking-tighter mt-0.5">Waktu Kerja</p>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                        {recentBookings.length === 0 && (
-                            <div className="p-10 text-center">
-                                <p className="text-sm text-slate-400 font-bold">Belum ada booking</p>
-                            </div>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* ===== SECTION 6: Top Services & Inventory Risk ===== */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-                {/* Top Services */}
-                <Card className="border-none shadow-2xl bg-white p-8 ring-1 ring-slate-100">
-                    <div className="flex items-center gap-4 mb-8">
-                        <Trophy size={24} className="text-amber-500" />
-                        <h3 className="text-xl font-black text-slate-900 tracking-tight">Top Services</h3>
-                    </div>
-                    {topServices.length > 0 ? (
-                        <div className="space-y-6">
-                            {topServices.map((service) => (
-                                <div key={service.name} className="space-y-2">
-                                    <div className="flex items-center justify-between px-1">
-                                        <span className="text-sm font-black text-slate-700 uppercase tracking-tight truncate mr-4">{service.name}</span>
-                                        <span className="text-xs font-black text-slate-900 flex-shrink-0">{service.count} unit</span>
-                                    </div>
-                                    <div className="w-full bg-slate-50 h-3 rounded-full overflow-hidden p-0.5 border border-slate-100 shadow-inner">
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${(service.count / Math.max(...topServices.map(s => s.count))) * 100}%` }}
-                                            transition={{ duration: 1.5 }}
-                                            className="h-full rounded-full"
-                                            style={{ backgroundColor: service.color }}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-8">
-                            <Wrench size={36} className="text-slate-200 mx-auto mb-3" />
-                            <p className="text-sm text-slate-400 font-bold">Belum ada data servis</p>
-                        </div>
-                    )}
-                </Card>
-
-                {/* Inventory Risk */}
-                <Card className="border-none shadow-2xl bg-rose-50/30 p-8 border-t-8 border-rose-500">
-                    <div className="flex items-center gap-4 mb-8">
-                        <PackageSearch size={24} className="text-rose-500" />
-                        <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">Inventory Risk</h3>
-                    </div>
-                    <div className="space-y-4">
-                        {lowStockItems.map(item => (
-                            <div key={item.name} className="flex items-center justify-between bg-white p-4 rounded-2xl border border-rose-100 shadow-sm">
-                                <span className="text-xs font-black text-slate-700 uppercase tracking-tight">{item.name}</span>
-                                <Badge variant="danger" className="text-xs font-black">Sisa {item.stock}</Badge>
-                            </div>
-                        ))}
-                        {lowStockItems.length === 0 && (
-                            <div className="text-center py-8">
-                                <CheckCircle2 size={36} className="text-emerald-300 mx-auto mb-3" />
-                                <p className="text-center text-emerald-600 font-black uppercase text-xs">Semua Stok Aman</p>
-                            </div>
+                            ))
                         )}
                     </div>
                 </Card>
-            </div>
 
-            {/* ===== SECTION 7: Analytics ===== */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-10 sm:mb-20">
-                {/* Customer Retention */}
-                <Card className="border-none shadow-2xl bg-white p-8 ring-1 ring-slate-100">
-                    <div className="flex items-center gap-3 mb-8">
-                        <RotateCcw size={22} className="text-blue-600" />
-                        <h3 className="text-xl font-black text-slate-900 tracking-tight">Customer Retention</h3>
-                    </div>
-                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                        <div className="flex items-center justify-between mb-6">
-                            <p className="text-xs font-black text-slate-900 uppercase">Repeat Rate</p>
-                            <span className="text-3xl font-black text-blue-600 italic">
-                                {Math.round((retentionStats.repeat / (retentionStats.new + retentionStats.repeat || 1)) * 100)}%
-                            </span>
-                        </div>
-                        <div className="h-4 w-full bg-white rounded-full overflow-hidden flex p-1 border border-slate-200">
-                            <div
-                                className="h-full bg-emerald-500 rounded-l-full transition-all"
-                                style={{ width: `${(retentionStats.new / (retentionStats.new + retentionStats.repeat || 1)) * 100}%` }}
-                            />
-                            <div
-                                className="h-full bg-blue-500 rounded-r-full transition-all"
-                                style={{ width: `${(retentionStats.repeat / (retentionStats.new + retentionStats.repeat || 1)) * 100}%` }}
-                            />
-                        </div>
-                        <div className="flex items-center justify-between mt-4">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                    Baru ({retentionStats.new})
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                    Repeat ({retentionStats.repeat})
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </Card>
-
-                {/* Avg Handling Time */}
-                <Card className="border-none shadow-2xl bg-slate-900 p-8 text-white relative overflow-hidden">
-                    <div className="relative z-10">
-                        <div className="flex items-center gap-3 mb-8">
-                            <Clock size={22} className="text-slate-400" />
-                            <h3 className="text-xl font-black tracking-tight">Avg. Handling Time</h3>
-                        </div>
-                        <div className="flex flex-col items-center justify-center py-8">
-                            <h4 className="text-4xl sm:text-5xl lg:text-7xl font-black italic text-emerald-400 tracking-tighter">
-                                {avgServiceTime.label}
-                            </h4>
-                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-4">
-                                Rata-rata waktu pengerjaan
+                {/* Quick Actions & Short Menu */}
+                <div className="space-y-6">
+                    <Card className="p-8 border-none shadow-2xl bg-blue-600 text-white relative overflow-hidden group">
+                        <div className="relative z-10">
+                            <h3 className="text-xl font-black tracking-tight mb-2">Butuh Bantuan AI?</h3>
+                            <p className="text-blue-100 text-xs font-medium leading-relaxed mb-6 opacity-80">
+                                Gunakan Montir AI untuk analisa kerusakan kendaraan lebih cepat dan akurat.
                             </p>
+                            <Link href="/montir-ai">
+                                <button className="w-full py-4 bg-white text-blue-600 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-900/20 active:scale-95 transition-all">
+                                    Buka Montir AI
+                                </button>
+                            </Link>
                         </div>
+                        <Bot size={120} className="absolute -right-5 -bottom-5 text-white/10 transform rotate-12" />
+                    </Card>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <Link href="/pos" className="contents">
+                            <div className="p-6 bg-white rounded-3xl shadow-xl flex flex-col items-center justify-center gap-3 hover:bg-slate-50 transition-all border border-slate-50 active:scale-95">
+                                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                                    <TrendingUp size={20} />
+                                </div>
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Buka POS</span>
+                            </div>
+                        </Link>
+                        <Link href="/staff" className="contents">
+                            <div className="p-6 bg-white rounded-3xl shadow-xl flex flex-col items-center justify-center gap-3 hover:bg-slate-50 transition-all border border-slate-50 active:scale-95">
+                                <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                                    <Wrench size={20} />
+                                </div>
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Karyawan</span>
+                            </div>
+                        </Link>
                     </div>
-                    <Clock size={180} className="absolute -right-12 -bottom-12 text-white/[0.03] transform rotate-12" />
-                </Card>
+                </div>
             </div>
         </div>
     );
