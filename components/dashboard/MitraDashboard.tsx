@@ -279,9 +279,9 @@ export default function MitraDashboard() {
                         </p>
                         <div className="mt-auto flex justify-center">
                             <Button
-                                variant="outline"
+                                variant="primary"
                                 className="w-full"
-                                onClick={() => router.push('/settings')}
+                                onClick={() => router.push('/settings/bank')}
                             >
                                 Buka Pengaturan Rekening
                             </Button>

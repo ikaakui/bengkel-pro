@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase-client";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Status step config
 const STATUS_STEPS = [
@@ -70,7 +71,7 @@ export default function CommissionsPage() {
     const totalEarnings = completedBookings.length * DEMO_BOOKING_VALUE * (commissionRate / 100);
     const pendingCommission = pendingBookings.length * DEMO_BOOKING_VALUE * (commissionRate / 100);
     const totalWithdrawn = withdrawals
-        .filter(w => w.status === 'approved')
+        .filter(w => w.status === 'approved' || w.status === 'pending')
         .reduce((sum, w) => sum + w.amount, 0);
     const readyToWithdraw = Math.max(0, totalEarnings - totalWithdrawn);
 
@@ -341,63 +342,77 @@ export default function CommissionsPage() {
                 </div>
 
                 {/* === POPUP TARIK KOMISI === */}
-                {showWithdrawPopup && (
-                    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col overflow-hidden">
-                            <div className="p-5 border-b border-slate-100 bg-slate-50">
-                                <h3 className="text-xl font-bold flex items-center gap-2">
-                                    <CreditCard className="text-primary" />
-                                    Tarik Komisi
-                                </h3>
-                            </div>
-                            <div className="p-6 space-y-5">
-                                <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 text-center">
-                                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">Jumlah Penarikan</p>
-                                    <h3 className="text-3xl font-black text-primary">{formatRp(readyToWithdraw)}</h3>
+                <AnimatePresence>
+                    {showWithdrawPopup && (
+                        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                                transition={{ type: "spring", duration: 0.5 }}
+                                className="bg-white rounded-3xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden border border-slate-100"
+                            >
+                                <div className="p-6 bg-gradient-to-br from-primary/10 to-primary/5 border-b border-primary/10 flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center text-primary">
+                                        <Banknote size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-slate-800">Tarik Komisi</h3>
+                                        <p className="text-sm text-slate-500 font-medium">Cairkan penghasilan Anda ke rekening.</p>
+                                    </div>
                                 </div>
+                                <div className="p-6 space-y-6">
+                                    <div className="flex flex-col items-center">
+                                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-1">Nominal Penarikan</p>
+                                        <h3 className="text-4xl font-black text-slate-900 tracking-tight">{formatRp(readyToWithdraw)}</h3>
+                                    </div>
 
-                                <div className="bg-slate-50 rounded-xl p-4 space-y-2">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-slate-500">Bank Tujuan</span>
-                                        <span className="font-bold">{profile?.bank_name || 'Belum diatur'}</span>
+                                    <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-3 relative overflow-hidden">
+                                        <div className="absolute right-0 top-0 text-slate-200/40 scale-150 translate-x-1/4 -translate-y-1/4">
+                                            <CreditCard size={100} />
+                                        </div>
+                                        <div className="relative z-10 flex flex-col gap-1 text-sm">
+                                            <span className="text-slate-500 font-medium">Bank Tujuan</span>
+                                            <span className="font-bold text-slate-800 text-lg">{profile?.bank_name || 'Belum diatur'}</span>
+                                        </div>
+                                        <div className="relative z-10 flex flex-col gap-1 text-sm mt-2">
+                                            <span className="text-slate-500 font-medium">No. Rekening</span>
+                                            <span className="font-mono font-bold text-slate-800 text-lg break-all">{profile?.bank_account_number || '-'}</span>
+                                        </div>
+                                        <div className="relative z-10 flex flex-col gap-1 text-sm mt-2">
+                                            <span className="text-slate-500 font-medium">Pesanan A.n.</span>
+                                            <span className="font-bold text-slate-800 break-words">{profile?.bank_account_name || '-'}</span>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between text-sm flex-wrap gap-2">
-                                        <span className="text-slate-500">No. Rekening</span>
-                                        <span className="font-bold font-mono break-all text-right">{profile?.bank_account_number || '-'}</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm flex-wrap gap-2">
-                                        <span className="text-slate-500">Atas Nama</span>
-                                        <span className="font-bold break-words text-right">{profile?.bank_account_name || '-'}</span>
-                                    </div>
-                                </div>
 
-                                <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-700">
-                                    <AlertCircle size={18} className="shrink-0 mt-0.5" />
-                                    <p>Permintaan penarikan akan diproses oleh Owner dalam 1-3 hari kerja. Pastikan data rekening bank Anda sudah benar.</p>
+                                    <div className="flex items-start gap-3 bg-amber-50/80 border border-amber-200/60 rounded-2xl p-4 text-sm text-amber-800">
+                                        <AlertCircle size={20} className="shrink-0 text-amber-500 mt-0.5" />
+                                        <p className="leading-relaxed font-medium">Permintaan Anda akan diproses oleh Owner dalam <span className="font-bold">1-3 hari kerja</span>. Pastikan data rekening sudah benar.</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="p-5 border-t border-slate-100 bg-slate-50 flex gap-3">
-                                <Button
-                                    variant="outline"
-                                    className="flex-1"
-                                    onClick={() => setShowWithdrawPopup(false)}
-                                    disabled={isWithdrawing}
-                                >
-                                    Batal
-                                </Button>
-                                <Button
-                                    variant="primary"
-                                    className="flex-1"
-                                    onClick={handleWithdraw}
-                                    disabled={isWithdrawing}
-                                >
-                                    {isWithdrawing ? <Loader2 size={18} className="animate-spin mr-2" /> : null}
-                                    {isWithdrawing ? "Memproses..." : "Konfirmasi Tarik"}
-                                </Button>
-                            </div>
+                                <div className="p-5 border-t border-slate-100 bg-slate-50/50 flex gap-3">
+                                    <Button
+                                        variant="ghost"
+                                        className="flex-1 rounded-xl h-12 font-bold"
+                                        onClick={() => setShowWithdrawPopup(false)}
+                                        disabled={isWithdrawing}
+                                    >
+                                        Batal
+                                    </Button>
+                                    <Button
+                                        variant="primary"
+                                        className="flex-1 shadow-lg shadow-primary/25 rounded-xl h-12 font-bold"
+                                        onClick={handleWithdraw}
+                                        disabled={isWithdrawing}
+                                    >
+                                        {isWithdrawing ? <Loader2 size={18} className="animate-spin mr-2" /> : <Banknote size={18} className="mr-2" />}
+                                        {isWithdrawing ? "Memproses..." : "Konfirmasi Tarik"}
+                                    </Button>
+                                </div>
+                            </motion.div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </AnimatePresence>
             </RoleGuard>
         </DashboardLayout>
     );

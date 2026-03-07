@@ -5,7 +5,7 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 // Models to try, in order of preference (different models have separate quotas)
-const MODELS = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
+const MODELS = ["gemini-2.0-flash", "gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
 
 export async function POST(req: Request) {
     try {
@@ -120,14 +120,14 @@ export async function POST(req: Request) {
         console.error("Montir AI Error:", error);
         const message = error?.message || "";
         if (message.includes("429") || message.includes("quota")) {
-            return NextResponse.json({ error: "Kuota API Gemini habis untuk semua model. Silakan tunggu beberapa menit lalu coba lagi." }, { status: 429 });
+            return NextResponse.json({ error: "Kuota API Gemini habis. Silakan coba beberapa saat lagi." }, { status: 429 });
         }
         if (message.includes("401") || message.includes("403") || message.includes("API key")) {
-            return NextResponse.json({ error: "API Key tidak valid. Pastikan API Key sudah benar." }, { status: 401 });
+            return NextResponse.json({ error: "API Key tidak valid: " + message }, { status: 401 });
         }
-        if (message.includes("404")) {
-            return NextResponse.json({ error: "Model AI tidak ditemukan. Hubungi admin." }, { status: 404 });
+        if (message.includes("404") || message.includes("not found")) {
+            return NextResponse.json({ error: "Gagal memanggil model AI: " + message }, { status: 404 });
         }
-        return NextResponse.json({ error: "Gagal memproses analisa AI" }, { status: 500 });
+        return NextResponse.json({ error: "Gagal memproses analisa AI: " + message }, { status: 500 });
     }
 }
