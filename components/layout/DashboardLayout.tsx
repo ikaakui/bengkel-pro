@@ -100,13 +100,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={() => setSidebarOpen(false)}
-                    className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden"
+                    className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] lg:hidden"
                 />
             )}
 
             {/* Sidebar */}
             <aside className={cn(
-                "fixed inset-y-0 left-0 z-50 w-64 sidebar-glass transition-transform duration-300 transform lg:static lg:translate-x-0 shadow-2xl lg:shadow-none border-r border-slate-200",
+                "fixed inset-y-0 left-0 z-[70] w-64 sidebar-glass transition-transform duration-300 transform lg:static lg:translate-x-0 shadow-2xl lg:shadow-none border-r border-slate-200",
                 sidebarOpen ? "translate-x-0" : "-translate-x-full"
             )}>
                 <div className="flex flex-col h-full">
