@@ -209,7 +209,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             // Also call server-side signout to clear server cookies
             // This prevents middleware from seeing stale session
             try {
-                await fetch('/api/auth/signout', { method: 'POST' });
+                await fetch('/api/auth/signout', { method: 'POST', cache: 'no-store' });
             } catch {
                 // Non-critical, continue with redirect
             }
@@ -226,8 +226,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                     }
                 }
             }
-            // Force a hard navigation to login
-            window.location.href = "/login";
+            // Invalidate Next.js cache and Force a hard navigation to login
+            router.refresh();
+            setTimeout(() => {
+                window.location.href = "/login";
+            }, 100);
         }
     };
 

@@ -17,13 +17,22 @@ export async function POST() {
                     cookieStore.set({ name, value, ...options });
                 },
                 remove(name: string, options: CookieOptions) {
-                    cookieStore.set({ name, value: '', ...options });
+                    cookieStore.set({ name, value: '', ...options, maxAge: 0 });
+                    cookieStore.delete(name);
                 },
             },
         }
     );
 
     await supabase.auth.signOut();
+
+    // Ensure all supabase related cookies are completely removed
+    const allCookies = cookieStore.getAll();
+    allCookies.forEach(cookie => {
+        if (cookie.name.startsWith('sb-')) {
+            cookieStore.delete(cookie.name);
+        }
+    });
 
     return NextResponse.json({ success: true });
 }
