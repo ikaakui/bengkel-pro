@@ -17,8 +17,9 @@ import {
     User,
     Car,
     FileText,
-    ShoppingCart,
     X,
+    Plus,
+    ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -360,14 +361,14 @@ export default function InvoicePage() {
                                 onClick={() => router.push("/pos")}
                                 className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold text-emerald-600 bg-emerald-50 rounded-xl hover:bg-emerald-100 transition-colors"
                             >
-                                <ShoppingCart size={14} />
+                                <Plus size={16} />
                                 <span className="hidden sm:inline">Transaksi Baru</span>
                             </button>
                             <button
                                 onClick={() => router.push("/antrian")}
                                 className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
                             >
-                                <ShoppingCart size={14} />
+                                <ClipboardList size={16} />
                                 <span className="hidden sm:inline">Antrian</span>
                             </button>
                             <button
