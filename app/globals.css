@@ -52,6 +52,16 @@ body {
   background: #94a3b8;
 }
 
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 @layer components {
   .btn-primary {
     @apply px-4 py-2 bg-primary text-white rounded-xl font-medium transition-all hover:bg-primary-dark active:scale-95 disabled:opacity-50;

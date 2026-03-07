@@ -624,14 +624,14 @@ export default function OwnerDashboard() {
     const maxRevenue = Math.max(...branchStats.map(b => b.revenue), 1);
 
     return (
-        <div className="space-y-10">
+        <div className="space-y-6 sm:space-y-10">
             {/* Welcome Section */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                 <div>
-                    <h2 className="text-4xl font-black text-slate-900 tracking-tight">Dashboard Owner</h2>
-                    <p className="text-slate-500 mt-1 font-medium">Monitoring seluruh cabang secara real-time.</p>
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">Dashboard Owner</h2>
+                    <p className="text-slate-500 mt-1 font-medium text-sm sm:text-base">Monitoring seluruh cabang secara real-time.</p>
                 </div>
-                <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm w-fit">
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Live Updates</span>
                     <div className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -641,9 +641,9 @@ export default function OwnerDashboard() {
             </div>
 
             {/* Stats Overview Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mt-6 sm:mt-10">
                 {/* Total Mitra Card */}
-                <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.05)] bg-white p-8 group hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-all overflow-hidden relative">
+                <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.05)] bg-white p-5 sm:p-8 group hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-all overflow-hidden relative">
                     <div className="flex items-center justify-between relative z-10">
                         <div className="p-3.5 bg-indigo-50 text-indigo-600 rounded-2xl">
                             <Users size={24} />
@@ -651,7 +651,7 @@ export default function OwnerDashboard() {
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Total Mitra</p>
                     </div>
                     <div className="mt-8 relative z-10">
-                        <h3 className="text-5xl font-black text-slate-900 tracking-tighter italic">
+                        <h3 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter italic">
                             {mitraCount}
                         </h3>
                         <p className="text-xs text-slate-400 mt-1 font-bold">Affiliate aktif</p>
@@ -661,7 +661,7 @@ export default function OwnerDashboard() {
                 </Card>
 
                 {/* Expenses Card */}
-                <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.05)] bg-white p-8 group hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-all overflow-hidden relative">
+                <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.05)] bg-white p-5 sm:p-8 group hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-all overflow-hidden relative">
                     <div className="flex items-center justify-between relative z-10">
                         <div className="p-3.5 bg-rose-50 text-rose-600 rounded-2xl">
                             <Wallet size={24} />
@@ -669,7 +669,7 @@ export default function OwnerDashboard() {
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Expenses</p>
                     </div>
                     <div className="mt-8 relative z-10">
-                        <h3 className="text-4xl font-black text-slate-900 tracking-tighter italic truncate">
+                        <h3 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tighter italic truncate">
                             Rp {currentMonthExpenses.toLocaleString('id-ID')}
                         </h3>
                         <p className="text-xs text-slate-400 mt-1 font-bold uppercase tracking-widest">Bulan Ini</p>
@@ -679,7 +679,7 @@ export default function OwnerDashboard() {
                 </Card>
 
                 {/* Net Profit Card */}
-                <Card className="border-none shadow-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-blue-800 p-8 text-white group relative overflow-hidden ring-4 ring-indigo-50/50">
+                <Card className="border-none shadow-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-blue-800 p-5 sm:p-8 text-white group relative overflow-hidden ring-4 ring-indigo-50/50">
                     <div className="flex items-center justify-between relative z-10">
                         <div className="p-3.5 bg-white/40 rounded-2xl">
                             <TrendingUp size={24} />
@@ -695,7 +695,7 @@ export default function OwnerDashboard() {
                     </div>
                     <div className="mt-6 relative z-10">
                         <p className="text-indigo-200 text-xs font-black uppercase tracking-[0.2em]">Net Profit (MoM)</p>
-                        <p className="text-2xl font-black text-white mt-2 tracking-tight">Rp {(currentMonthRevenue - currentMonthExpenses).toLocaleString('id-ID')}</p>
+                        <p className="text-xl sm:text-2xl font-black text-white mt-2 tracking-tight">Rp {(currentMonthRevenue - currentMonthExpenses).toLocaleString('id-ID')}</p>
                         <p className="text-xs text-indigo-200 mt-1">Laba bersih bulan ini</p>
                     </div>
                     <DollarSign size={160} className="absolute -right-12 -bottom-12 text-white/5 transform -rotate-12 group-hover:rotate-0 transition-transform duration-700" />
@@ -705,29 +705,29 @@ export default function OwnerDashboard() {
             {/* Per-Branch Target Monitor (Consolidated) */}
             {branchTargets.length > 0 && (
                 <div className="mt-10">
-                    <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.05)] bg-white p-8 overflow-hidden">
-                        <div className="flex items-center justify-between mb-6 px-1">
-                            <div className="flex items-center gap-2">
-                                <Target size={20} className="text-indigo-600" />
-                                <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Target Per Cabang</span>
-                                <span className="text-[10px] font-bold text-slate-300 ml-2">
+                    <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.05)] bg-white p-4 sm:p-6 lg:p-8 overflow-hidden">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6 px-1">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <Target size={20} className="text-indigo-600 shrink-0" />
+                                <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-slate-400 truncate">Target Per Cabang</span>
+                                <span className="text-[10px] font-bold text-slate-300 ml-1 hidden sm:inline">
                                     ({new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })})
                                 </span>
                             </div>
                             {/* Growth Index inline */}
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Bulan Lalu</span>
-                                    <span className="text-xs font-black text-slate-700">Rp {lastMonthRevenue.toLocaleString('id-ID')}</span>
+                            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+                                <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-50 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-100">
+                                    <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest">Bulan Lalu</span>
+                                    <span className="text-[10px] sm:text-xs font-black text-slate-700">Rp {lastMonthRevenue.toLocaleString('id-ID')}</span>
                                 </div>
-                                <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                                <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-100">
                                     {currentMonthRevenue >= lastMonthRevenue ? (
                                         <TrendingUp size={14} className="text-emerald-500" />
                                     ) : (
                                         <TrendingDown size={14} className="text-rose-500" />
                                     )}
                                     <span className={cn(
-                                        "text-xs font-black border-none",
+                                        "text-[10px] sm:text-xs font-black border-none",
                                         currentMonthRevenue >= lastMonthRevenue ? "text-emerald-600" : "text-rose-600"
                                     )}>
                                         {lastMonthRevenue > 0
@@ -739,13 +739,13 @@ export default function OwnerDashboard() {
                         </div>
 
                         {/* Total Combined Summary Content */}
-                        <div className="bg-gradient-to-r from-indigo-600 to-blue-700 rounded-2xl p-8 text-white mb-10 shadow-xl shadow-indigo-100">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                <div>
+                        <div className="bg-gradient-to-r from-indigo-600 to-blue-700 rounded-2xl p-5 sm:p-6 lg:p-8 text-white mb-6 sm:mb-10 shadow-xl shadow-indigo-100">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+                                <div className="min-w-0">
                                     <p className="text-indigo-100 text-[10px] font-black uppercase tracking-[0.25em] mb-1">Total Target Gabungan</p>
-                                    <h3 className="text-4xl font-black tracking-tighter mt-1 flex items-baseline gap-2">
+                                    <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tighter mt-1 flex flex-wrap items-baseline gap-1 sm:gap-2">
                                         Rp {currentMonthRevenue.toLocaleString('id-ID')}
-                                        <span className="text-lg font-bold text-indigo-200 ml-1">/ Rp {monthlyTarget.toLocaleString('id-ID')}</span>
+                                        <span className="text-sm sm:text-lg font-bold text-indigo-200">/ Rp {monthlyTarget.toLocaleString('id-ID')}</span>
                                     </h3>
                                     {(() => {
                                         const overallPct = Math.round((currentMonthRevenue / (monthlyTarget || 1)) * 100);
@@ -756,12 +756,12 @@ export default function OwnerDashboard() {
                                         else if (daysPassed > 15 && overallPct < 40) insight = "Waspada! Performa di bawah rata-rata untuk pertengahan bulan. ⚠️";
                                         else if (daysPassed > 5 && overallPct > 0) insight = "Terus konsisten, pertahankan ritme kerja cabang. 🏁";
 
-                                        return <p className="text-[11px] text-indigo-100 font-black mt-2 tracking-wide opacity-90 flex items-center gap-2 bg-white/10 w-fit px-3 py-1 rounded-full border border-white/5">💡 {insight}</p>;
+                                        return <p className="text-[10px] sm:text-[11px] text-indigo-100 font-black mt-2 tracking-wide opacity-90 flex items-center gap-2 bg-white/10 w-fit px-3 py-1 rounded-full border border-white/5">💡 {insight}</p>;
                                     })()}
                                 </div>
                                 <div className="text-right flex flex-col items-end">
                                     <div className="relative p-2">
-                                        <p className="text-5xl font-black tracking-tighter italic">
+                                        <p className="text-4xl sm:text-5xl font-black tracking-tighter italic">
                                             {Math.round((currentMonthRevenue / (monthlyTarget || 1)) * 100)}%
                                         </p>
                                         <div className="absolute -top-1 -right-4 w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-glow" />
@@ -769,7 +769,7 @@ export default function OwnerDashboard() {
                                     <p className="text-[10px] text-indigo-100 font-extrabold uppercase tracking-widest mt-1">Global Achievement</p>
                                 </div>
                             </div>
-                            <div className="mt-8 h-3.5 bg-white/10 rounded-full overflow-hidden border border-white/5 shadow-inner">
+                            <div className="mt-5 sm:mt-8 h-3 sm:h-3.5 bg-white/10 rounded-full overflow-hidden border border-white/5 shadow-inner">
                                 <motion.div
                                     initial={{ width: 0 }}
                                     animate={{ width: `${Math.min((currentMonthRevenue / (monthlyTarget || 1)) * 100, 100)}%` }}
@@ -782,7 +782,7 @@ export default function OwnerDashboard() {
                         </div>
 
                         {/* Per Branch Cards */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
                             {branchTargets.map((bt, i) => {
                                 const pct = Math.round((bt.revenue / (bt.target || 1)) * 100);
                                 const daysPassed = new Date().getDate();
@@ -796,7 +796,7 @@ export default function OwnerDashboard() {
                                 const colors = ['blue', 'emerald', 'purple', 'amber'];
                                 const c = colors[i % colors.length];
                                 return (
-                                    <div key={bt.branchId} className="p-8 bg-slate-50/50 rounded-3xl border border-slate-100 hover:shadow-xl transition-all group relative overflow-hidden">
+                                    <div key={bt.branchId} className="p-5 sm:p-6 lg:p-8 bg-slate-50/50 rounded-2xl sm:rounded-3xl border border-slate-100 hover:shadow-xl transition-all group relative overflow-hidden">
                                         {/* Status Badge Positioned at Top Right */}
                                         {status && (
                                             <div className={cn(
@@ -822,7 +822,7 @@ export default function OwnerDashboard() {
 
                                         <div className="space-y-4 mb-6 relative z-10">
                                             <div className="flex justify-between items-baseline">
-                                                <p className="text-2xl font-black text-slate-900">
+                                                <p className="text-xl sm:text-2xl font-black text-slate-900 truncate">
                                                     Rp {bt.revenue.toLocaleString('id-ID')}
                                                 </p>
                                                 {editingBranchTarget !== bt.branchId && (
@@ -904,27 +904,28 @@ export default function OwnerDashboard() {
             )}
 
             {/* Consolidated Sales Analysis Card */}
-            <Card className="border-none shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] p-0 overflow-hidden bg-white mt-12 ring-1 ring-slate-100">
-                <CardHeader className="p-10 border-b border-slate-50 flex flex-col gap-6 bg-gradient-to-br from-white via-white to-blue-50/30">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                        <div className="flex items-center gap-5">
-                            <div className="p-4 bg-blue-600 rounded-2xl text-white shadow-xl shadow-blue-200">
-                                <BarChart3 size={24} />
+            <Card className="border-none shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] p-0 overflow-hidden bg-white mt-8 sm:mt-12 ring-1 ring-slate-100">
+                <CardHeader className="p-4 sm:p-6 lg:p-10 border-b border-slate-50 flex flex-col gap-4 sm:gap-6 bg-gradient-to-br from-white via-white to-blue-50/30">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
+                        <div className="flex items-center gap-3 sm:gap-5">
+                            <div className="p-3 sm:p-4 bg-blue-600 rounded-xl sm:rounded-2xl text-white shadow-xl shadow-blue-200 shrink-0">
+                                <BarChart3 size={20} className="sm:hidden" />
+                                <BarChart3 size={24} className="hidden sm:block" />
                             </div>
-                            <div>
-                                <h3 className="text-2xl font-black text-slate-900 tracking-tight">Analisis Sales</h3>
-                                <p className="text-sm text-slate-500 font-medium leading-none mt-1">
+                            <div className="min-w-0">
+                                <h3 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">Analisis Sales</h3>
+                                <p className="text-xs sm:text-sm text-slate-500 font-medium leading-snug mt-0.5 sm:mt-1 line-clamp-2">
                                     {salesTab === 'all' ? 'Tren pendapatan konsolidasi' : salesTab === 'comparison' ? 'Perbandingan antar cabang' : 'Detail performa per cabang'} — {PERIOD_OPTIONS.find(p => p.key === salesPeriod)?.label}.
                                 </p>
                             </div>
                         </div>
-                        <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100/50 rounded-2xl ring-1 ring-slate-200/50">
+                        <div className="flex gap-1.5 sm:gap-2 p-1 sm:p-1.5 bg-slate-100/50 rounded-xl sm:rounded-2xl ring-1 ring-slate-200/50 overflow-x-auto no-scrollbar">
                             {PERIOD_OPTIONS.map(opt => (
                                 <button
                                     key={opt.key}
                                     onClick={() => { setSalesPeriod(opt.key); setComparisonPeriod(opt.key); }}
                                     className={cn(
-                                        "px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95",
+                                        "px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 whitespace-nowrap shrink-0",
                                         salesPeriod === opt.key
                                             ? "bg-white text-blue-600 shadow-sm ring-1 ring-slate-200"
                                             : "text-slate-400 hover:text-slate-600"
@@ -936,7 +937,7 @@ export default function OwnerDashboard() {
                         </div>
                     </div>
                     {/* Tab Bar */}
-                    <div className="flex gap-1 p-1 bg-slate-100/60 rounded-2xl w-fit">
+                    <div className="flex gap-1 p-1 bg-slate-100/60 rounded-xl sm:rounded-2xl overflow-x-auto no-scrollbar w-full sm:w-fit">
                         {[
                             { key: 'all' as const, label: 'All Cabang', icon: <History size={14} /> },
                             { key: 'comparison' as const, label: 'Perbandingan', icon: <Building2 size={14} /> },
@@ -947,7 +948,7 @@ export default function OwnerDashboard() {
                                 key={tab.key}
                                 onClick={() => setSalesTab(tab.key)}
                                 className={cn(
-                                    "flex items-center gap-2 px-5 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all",
+                                    "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-widest transition-all whitespace-nowrap shrink-0",
                                     salesTab === tab.key
                                         ? "bg-white text-blue-600 shadow-sm ring-1 ring-slate-200"
                                         : "text-slate-400 hover:text-slate-600"
@@ -958,10 +959,10 @@ export default function OwnerDashboard() {
                         ))}
                     </div>
                 </CardHeader>
-                <CardContent className="p-10">
+                <CardContent className="p-4 sm:p-6 lg:p-10">
                     {/* Tab: All Cabang */}
                     {salesTab === 'all' && (
-                        <div className="h-[350px] w-full mt-2">
+                        <div className="h-[250px] sm:h-[350px] w-full mt-2">
                             <SalesChart data={salesHistory} height={350} color="#2563eb" />
                         </div>
                     )}
@@ -1010,7 +1011,7 @@ export default function OwnerDashboard() {
                                             />
                                         </div>
 
-                                        <div className="flex flex-col items-end gap-2 w-48">
+                                        <div className="flex flex-col items-end gap-2 w-full md:w-48">
                                             <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
                                                 <motion.div
                                                     initial={{ width: 0 }}
@@ -1115,40 +1116,40 @@ export default function OwnerDashboard() {
             </Card>
 
             {/* Live Operations Tracker */}
-            <div className="mt-12">
-                <div className="flex items-center justify-between mb-8 px-2">
-                    <div className="flex items-center gap-4">
-                        <div className="relative">
+            <div className="mt-8 sm:mt-12">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-5 sm:mb-8 px-1 sm:px-2">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        <div className="relative shrink-0">
                             <div className="w-3 h-3 bg-rose-500 rounded-full animate-ping" />
                             <div className="w-3 h-3 bg-rose-500 rounded-full absolute inset-0" />
                         </div>
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Live Bengkel Status</h3>
+                        <h3 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight uppercase">Live Bengkel Status</h3>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border px-3 py-1.5 rounded-xl border-slate-100 bg-white">
-                            {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    <div className="flex items-center gap-2 sm:gap-4">
+                        <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider sm:tracking-widest border px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border-slate-100 bg-white">
+                            {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                         <Link href="/bookings">
-                            <button className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95">
+                            <button className="px-3 sm:px-5 py-2 sm:py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95">
                                 Semua Booking
                             </button>
                         </Link>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 mb-5 sm:mb-8">
                     {/* Processing Card */}
-                    <Card className="border-none shadow-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-10 text-white relative overflow-hidden group">
+                    <Card className="border-none shadow-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-6 sm:p-8 lg:p-10 text-white relative overflow-hidden group">
                         <div className="relative z-10">
                             <div className="flex items-center justify-between mb-8">
                                 <span className="text-[11px] font-black text-blue-100 uppercase tracking-[0.25em]">Sedang Dikerjakan</span>
                                 <Zap size={24} className="text-blue-200 animate-pulse" />
                             </div>
-                            <div className="flex items-baseline gap-3">
-                                <h4 className="text-7xl font-black tracking-tighter italic">
+                            <div className="flex items-baseline gap-2 sm:gap-3">
+                                <h4 className="text-5xl sm:text-7xl font-black tracking-tighter italic">
                                     {todayOps.processing.total}
                                 </h4>
-                                <span className="text-xl font-black text-blue-200 uppercase tracking-widest">Mobil</span>
+                                <span className="text-base sm:text-xl font-black text-blue-200 uppercase tracking-widest">Mobil</span>
                             </div>
                             <div className="mt-4 mb-10 flex flex-wrap gap-2">
                                 {todayOps.processing.branches.length > 0 ? todayOps.processing.branches.map((br) => (
@@ -1160,7 +1161,7 @@ export default function OwnerDashboard() {
                                     <span className="text-[11px] font-black text-blue-200 italic opacity-60">No active processings...</span>
                                 )}
                             </div>
-                            <div className="flex items-center gap-12 pt-6 border-t border-white/10">
+                            <div className="flex items-center gap-8 sm:gap-12 pt-4 sm:pt-6 border-t border-white/10">
                                 <div className="space-y-1">
                                     <p className="text-[9px] font-black text-blue-200 uppercase tracking-widest opacity-70">Direct</p>
                                     <p className="text-2xl font-black">{todayOps.processing.direct}</p>
@@ -1175,17 +1176,17 @@ export default function OwnerDashboard() {
                     </Card>
 
                     {/* Completed Card */}
-                    <Card className="border-none shadow-2xl bg-white p-10 border-l-8 border-emerald-500 relative overflow-hidden group">
+                    <Card className="border-none shadow-2xl bg-white p-6 sm:p-8 lg:p-10 border-l-4 sm:border-l-8 border-emerald-500 relative overflow-hidden group">
                         <div className="relative z-10">
                             <div className="flex items-center justify-between mb-8">
                                 <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em]">Selesai & Bayar</span>
                                 <Trophy size={24} className="text-emerald-500" />
                             </div>
-                            <div className="flex items-baseline gap-3">
-                                <h4 className="text-7xl font-black tracking-tighter text-slate-900 tabular-nums">
+                            <div className="flex items-baseline gap-2 sm:gap-3">
+                                <h4 className="text-5xl sm:text-7xl font-black tracking-tighter text-slate-900 tabular-nums">
                                     {todayOps.completed.total}
                                 </h4>
-                                <span className="text-xl font-black text-slate-400 uppercase tracking-widest">Mobil</span>
+                                <span className="text-base sm:text-xl font-black text-slate-400 uppercase tracking-widest">Mobil</span>
                             </div>
                             <div className="mt-4 mb-10 flex flex-wrap gap-2">
                                 {todayOps.completed.branches.map((br) => (
@@ -1195,7 +1196,7 @@ export default function OwnerDashboard() {
                                     </span>
                                 ))}
                             </div>
-                            <div className="flex items-center gap-12 pt-6 border-t border-slate-50">
+                            <div className="flex items-center gap-8 sm:gap-12 pt-4 sm:pt-6 border-t border-slate-50">
                                 <div className="space-y-1">
                                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Direct</p>
                                     <p className="text-2xl font-black text-slate-800">{todayOps.completed.direct}</p>
@@ -1212,19 +1213,19 @@ export default function OwnerDashboard() {
 
                 {/* Recent Bookings List */}
                 <Card className="border-none shadow-2xl bg-white p-0 overflow-hidden ring-1 ring-slate-100">
-                    <div className="px-8 py-5 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
+                    <div className="px-4 sm:px-8 py-4 sm:py-5 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
                         <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Daftar Aktivitas Terkini</h4>
                     </div>
                     <CardContent className="p-0">
                         <div className="divide-y divide-slate-50">
                             {recentBookings.map((bk) => (
-                                <div key={bk.id} className="flex items-center justify-between p-6 px-10 hover:bg-slate-50 transition-all group">
-                                    <div className="flex items-center gap-6 min-w-0">
-                                        <div className="w-2 h-10 bg-slate-50 rounded-full group-hover:bg-blue-100 transition-colors" />
-                                        <div className="truncate">
-                                            <p className="font-black text-lg text-slate-900 truncate leading-none mb-1.5">{bk.customer_name}</p>
-                                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest truncate">
-                                                {bk.car_model} <span className="mx-2 opacity-30">•</span> <span className="text-blue-600 font-black">{bk.branch_name}</span>
+                                <div key={bk.id} className="flex items-center justify-between p-4 sm:p-6 sm:px-8 lg:px-10 hover:bg-slate-50 transition-all group gap-3">
+                                    <div className="flex items-center gap-3 sm:gap-6 min-w-0 flex-1">
+                                        <div className="w-1.5 sm:w-2 h-8 sm:h-10 bg-slate-50 rounded-full group-hover:bg-blue-100 transition-colors shrink-0" />
+                                        <div className="min-w-0">
+                                            <p className="font-black text-sm sm:text-lg text-slate-900 truncate leading-none mb-1 sm:mb-1.5">{bk.customer_name}</p>
+                                            <p className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider sm:tracking-widest truncate">
+                                                {bk.car_model} <span className="mx-1 sm:mx-2 opacity-30">•</span> <span className="text-blue-600 font-black">{bk.branch_name}</span>
                                             </p>
                                         </div>
                                     </div>
@@ -1248,15 +1249,15 @@ export default function OwnerDashboard() {
             </div>
 
             {/* Reports Section */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-12 mt-12 mb-20">
-                <Card className="border-none shadow-2xl bg-white p-10 ring-1 ring-slate-100">
-                    <div className="flex items-center justify-between mb-10">
-                        <div className="flex items-center gap-4">
-                            <Trophy size={24} className="text-amber-500" />
-                            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Top Services</h3>
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 mt-8 sm:mt-12 mb-10 sm:mb-20">
+                <Card className="border-none shadow-2xl bg-white p-5 sm:p-8 lg:p-10 ring-1 ring-slate-100">
+                    <div className="flex items-center justify-between mb-6 sm:mb-10">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <Trophy size={22} className="text-amber-500" />
+                            <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Top Services</h3>
                         </div>
                     </div>
-                    <div className="space-y-8">
+                    <div className="space-y-5 sm:space-y-8">
                         {bestServices.map((service) => (
                             <div key={service.name} className="space-y-3">
                                 <div className="flex items-center justify-between px-1">
@@ -1275,24 +1276,24 @@ export default function OwnerDashboard() {
                             </div>
                         ))}
                     </div>
-                    <div className="mt-14 pt-10 border-t-2 border-slate-50 border-dashed">
-                        <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white relative overflow-hidden group shadow-2xl">
+                    <div className="mt-8 sm:mt-14 pt-6 sm:pt-10 border-t-2 border-slate-50 border-dashed">
+                        <div className="bg-slate-900 rounded-2xl sm:rounded-[2.5rem] p-6 sm:p-10 text-white relative overflow-hidden group shadow-2xl">
                             <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3">Avg. Transaction</p>
-                            <h4 className="text-5xl font-black italic tracking-tighter">
+                            <h4 className="text-3xl sm:text-5xl font-black italic tracking-tighter">
                                 Rp {(totalRevenue / (totalBookings || 1)).toLocaleString('id-ID')}
                             </h4>
-                            <DollarSign className="absolute -right-8 -bottom-8 w-40 h-40 text-white/5 transform rotate-12" />
+                            <DollarSign className="absolute -right-8 -bottom-8 w-28 sm:w-40 h-28 sm:h-40 text-white/5 transform rotate-12" />
                         </div>
                     </div>
                 </Card>
 
                 <div className="grid grid-cols-1 gap-12">
-                    <Card className="border-none shadow-2xl bg-white p-10 ring-1 ring-slate-100">
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase mb-8">Analytical Insights</h3>
-                        <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100">
-                            <div className="flex items-center justify-between mb-8">
+                    <Card className="border-none shadow-2xl bg-white p-5 sm:p-8 lg:p-10 ring-1 ring-slate-100">
+                        <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight uppercase mb-5 sm:mb-8">Analytical Insights</h3>
+                        <div className="bg-slate-50 p-5 sm:p-8 rounded-2xl sm:rounded-[2rem] border border-slate-100">
+                            <div className="flex items-center justify-between mb-5 sm:mb-8">
                                 <p className="text-xs font-black text-slate-900 uppercase">Customer Retention</p>
-                                <span className="text-3xl font-black text-blue-600 italic">
+                                <span className="text-2xl sm:text-3xl font-black text-blue-600 italic">
                                     {Math.round((retentionStats.repeat / (retentionStats.new + retentionStats.repeat || 1)) * 100)}%
                                 </span>
                             </div>
@@ -1301,16 +1302,16 @@ export default function OwnerDashboard() {
                                 <div className="h-full bg-blue-500" style={{ width: `${(retentionStats.repeat / (retentionStats.new + retentionStats.repeat || 1)) * 100}%` }} />
                             </div>
                         </div>
-                        <div className="bg-slate-900 p-8 rounded-[2rem] text-white mt-8 flex flex-col items-center">
-                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Handling Time</p>
-                            <h4 className="text-6xl font-black italic text-emerald-400">{avgServiceTime.label}</h4>
+                        <div className="bg-slate-900 p-5 sm:p-8 rounded-2xl sm:rounded-[2rem] text-white mt-5 sm:mt-8 flex flex-col items-center">
+                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 sm:mb-4">Handling Time</p>
+                            <h4 className="text-4xl sm:text-6xl font-black italic text-emerald-400">{avgServiceTime.label}</h4>
                         </div>
                     </Card>
 
-                    <Card className="border-none shadow-2xl bg-rose-50/30 p-10 border-t-8 border-rose-500">
-                        <div className="flex items-center gap-4 mb-8">
-                            <PackageSearch size={28} className="text-rose-500" />
-                            <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Inventory Risk</h3>
+                    <Card className="border-none shadow-2xl bg-rose-50/30 p-5 sm:p-8 lg:p-10 border-t-4 sm:border-t-8 border-rose-500">
+                        <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-8">
+                            <PackageSearch size={24} className="text-rose-500" />
+                            <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight uppercase">Inventory Risk</h3>
                         </div>
                         <div className="space-y-4">
                             {lowStockItems.map(item => (

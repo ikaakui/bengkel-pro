@@ -213,7 +213,7 @@ export default function ExpensesPage() {
                             className="w-full pl-16 pr-6 py-5 bg-white rounded-3xl border-none shadow-xl text-slate-900 font-medium placeholder:text-slate-300 focus:ring-2 focus:ring-blue-100 transition-all"
                         />
                     </div>
-                    <div className="flex gap-2 p-1.5 bg-white rounded-3xl shadow-xl overflow-x-auto scrollbar-hide">
+                    <div className="flex gap-2 p-1.5 bg-white rounded-3xl shadow-xl overflow-x-auto no-scrollbar">
                         <button
                             onClick={() => setFilterCategory('all')}
                             className={cn(
@@ -244,32 +244,32 @@ export default function ExpensesPage() {
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 border-b border-slate-100">
                                 <tr>
-                                    <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tanggal</th>
-                                    <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cabang</th>
-                                    <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Kategori</th>
-                                    <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Keterangan</th>
-                                    <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Jumlah</th>
-                                    <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Aksi</th>
+                                    <th className="px-4 sm:px-8 py-4 sm:py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tanggal</th>
+                                    <th className="px-4 sm:px-8 py-4 sm:py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cabang</th>
+                                    <th className="px-4 sm:px-8 py-4 sm:py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Kategori</th>
+                                    <th className="px-4 sm:px-8 py-4 sm:py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Keterangan</th>
+                                    <th className="px-4 sm:px-8 py-4 sm:py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Jumlah</th>
+                                    <th className="px-4 sm:px-8 py-4 sm:py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={6} className="px-8 py-20 text-center">
+                                        <td colSpan={6} className="px-4 sm:px-8 py-20 text-center">
                                             <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
                                             <p className="text-slate-400 font-medium italic">Menyelaraskan data...</p>
                                         </td>
                                     </tr>
                                 ) : filteredExpenses.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="px-8 py-20 text-center">
+                                        <td colSpan={6} className="px-4 sm:px-8 py-20 text-center">
                                             <AlertCircle size={40} className="text-slate-200 mx-auto mb-4" />
                                             <p className="text-slate-400 font-medium tracking-tight">Belum ada catatan pengeluaran.</p>
                                         </td>
                                     </tr>
                                 ) : filteredExpenses.map((e) => (
                                     <tr key={e.id} className="group hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-8 py-6">
+                                        <td className="px-4 sm:px-8 py-4 sm:py-6">
                                             <div className="flex items-center gap-3">
                                                 <div className="p-2 bg-slate-100 text-slate-500 rounded-lg group-hover:bg-white group-hover:shadow-sm transition-all">
                                                     <Calendar size={14} />
@@ -279,13 +279,13 @@ export default function ExpensesPage() {
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-8 py-6">
+                                        <td className="px-4 sm:px-8 py-4 sm:py-6">
                                             <div className="flex items-center gap-2">
                                                 <Building2 size={12} className="text-blue-500" />
                                                 <span className="text-xs font-black uppercase text-slate-600">{e.branch_name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-8 py-6">
+                                        <td className="px-4 sm:px-8 py-4 sm:py-6">
                                             <div className="flex items-center gap-2">
                                                 <div className={cn("w-2 h-2 rounded-full", CATEGORIES.find(c => c.value === e.category)?.color || 'bg-slate-400')} />
                                                 <span className="text-xs font-bold text-slate-600">
@@ -293,15 +293,15 @@ export default function ExpensesPage() {
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-8 py-6">
+                                        <td className="px-4 sm:px-8 py-4 sm:py-6">
                                             <p className="text-sm font-medium text-slate-600 max-w-xs">{e.description || '-'}</p>
                                         </td>
-                                        <td className="px-8 py-6 text-right">
+                                        <td className="px-4 sm:px-8 py-4 sm:py-6 text-right">
                                             <span className="text-sm font-black text-rose-600">
                                                 Rp {e.amount.toLocaleString('id-ID')}
                                             </span>
                                         </td>
-                                        <td className="px-8 py-6 text-center">
+                                        <td className="px-4 sm:px-8 py-4 sm:py-6 text-center">
                                             <button
                                                 onClick={() => handleDelete(e.id)}
                                                 className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all active:scale-95"
