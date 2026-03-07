@@ -27,6 +27,7 @@ import {
     Phone as PhoneIcon,
     TrendingDown,
     ClipboardList,
+    Activity,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
@@ -44,7 +45,7 @@ const navigation = [
     { name: 'Retensi & Servis', href: '/analytics/customers', icon: PieChart, roles: ['owner'], group: 'Analisis' },
     { name: 'Status Inventori', href: '/analytics/inventory', icon: Package, roles: ['owner'], group: 'Analisis' },
     // Admin Analytics
-    { name: 'Operasional Live', href: '/analytics/operations', icon: Bot, roles: ['admin'], group: 'Analisis' },
+    { name: 'Operasional Live', href: '/analytics/operations', icon: Activity, roles: ['admin'], group: 'Analisis' },
     { name: 'Keuangan Cabang', href: '/analytics/finance', icon: Banknote, roles: ['admin'], group: 'Analisis' },
 
     { name: 'POS (Kasir)', href: '/pos', icon: ShoppingCart, roles: ['admin'], group: 'Utama' },

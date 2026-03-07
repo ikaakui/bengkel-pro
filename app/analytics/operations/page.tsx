@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import {
-    Bot,
     ClipboardList,
     Clock,
     UserCheck,
@@ -75,7 +74,7 @@ export default function AdminOperationsPage() {
             <div className="space-y-10">
                 <div>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                        <Bot className="text-blue-600" /> Operasional Live
+                        <Activity className="text-blue-600" /> Operasional Live
                     </h2>
                     <p className="text-slate-500 mt-1 font-medium">Monitoring pengerjaan servis dan ketersediaan teknisi.</p>
                 </div>
@@ -115,7 +114,7 @@ export default function AdminOperationsPage() {
                                                 <p className="text-xs font-black text-slate-900 uppercase">{b.status.replace('_', ' ')}</p>
                                                 <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{new Date(b.created_at).toLocaleTimeString()}</p>
                                             </div>
-                                            <button className="p-2 hover:bg-white rounded-xl transition-all"><Bot size={18} className="text-slate-200 hover:text-blue-600" /></button>
+                                            <button className="p-2 hover:bg-white rounded-xl transition-all"><Activity size={18} className="text-slate-200 hover:text-blue-600" /></button>
                                         </div>
                                     </div>
                                 ))
