@@ -52,13 +52,21 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-export default function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [profile, setProfile] = useState<UserProfile | null>(null);
+export default function AuthProvider({
+    children,
+    initialUser = null,
+    initialProfile = null
+}: {
+    children: React.ReactNode,
+    initialUser?: User | null,
+    initialProfile?: UserProfile | null
+}) {
+    const [user, setUser] = useState<User | null>(initialUser);
+    const [profile, setProfile] = useState<UserProfile | null>(initialProfile);
     const [branchName, setBranchName] = useState<string | null>(null);
     const [globalLogoUrl, setGlobalLogoUrl] = useState<string | null>(null);
     const [logoLoading, setLogoLoading] = useState(true);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!initialUser);
     const router = useRouter();
     const supabase = useMemo(() => createClient(), []);
 
@@ -136,7 +144,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
         const getSessionWithTimeout = async () => {
             const timeoutPromise = new Promise<void>((_, reject) => {
-                setTimeout(() => reject(new Error("Session check timed out")), 7000);
+                setTimeout(() => reject(new Error("Session check timed out")), 2000);
             });
 
             try {
@@ -158,7 +166,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                         try {
                             const fetchPromise = fetchProfile(session.user.id);
                             const fetchTimeout = new Promise<void>((_, reject) => {
-                                setTimeout(() => reject(new Error("Profile fetch timed out")), 5000);
+                                setTimeout(() => reject(new Error("Profile fetch timed out")), 2000);
                             });
                             await Promise.race([fetchPromise, fetchTimeout]);
                         } catch (profileErr) {

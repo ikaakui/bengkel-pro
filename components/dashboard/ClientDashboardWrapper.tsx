@@ -31,17 +31,17 @@ function DashboardLoading({ message }: { message: string }) {
 }
 
 interface ClientDashboardWrapperProps {
-    initialUser: User | null;
-    initialProfile: UserProfile | null;
+    initialUser?: User | null;
+    initialProfile?: UserProfile | null;
 }
 
 export default function ClientDashboardWrapper({ initialUser, initialProfile }: ClientDashboardWrapperProps) {
     const { role, profile, loading, setInitialData } = useAuth();
 
-    // Sync initial data from server to auth provider
+    // Sync initial data from server to auth provider if provided
     useEffect(() => {
-        if (setInitialData) {
-            setInitialData(initialUser, initialProfile);
+        if (setInitialData && initialUser) {
+            setInitialData(initialUser, initialProfile || null);
         }
     }, [initialUser, initialProfile, setInitialData]);
 
