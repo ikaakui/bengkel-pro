@@ -212,7 +212,7 @@ export default function OwnerDashboard() {
                 <Building2 size={240} className="absolute -right-20 -bottom-20 text-white/5 transform rotate-12" />
             </Card>
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 items-start">
                 {/* Branch Quick Cards */}
                 <div className="xl:col-span-2 space-y-4">
                     <div className="flex items-center justify-between px-2 mb-2">
@@ -252,7 +252,7 @@ export default function OwnerDashboard() {
                     </div>
                     <div className="divide-y divide-slate-50">
                         {recentBookings.map(rb => (
-                            <div key={rb.id} className="p-5 hover:bg-slate-50 transition-all group">
+                            <div key={rb.id} className="p-4 hover:bg-slate-50 transition-all group">
                                 <p className="font-black text-slate-900 uppercase text-xs truncate">{rb.customer_name}</p>
                                 <div className="flex items-center justify-between mt-1">
                                     <p className="text-[10px] text-slate-400 font-bold truncate max-w-[120px]">{rb.car_model}</p>
