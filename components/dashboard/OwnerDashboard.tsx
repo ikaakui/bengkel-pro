@@ -169,14 +169,14 @@ export default function OwnerDashboard() {
                     </div>
                 </Card>
 
-                <Card className="p-6 border-none shadow-xl bg-slate-900 text-white flex flex-col justify-between">
+                <Card className="p-6 border-none shadow-xl bg-white flex flex-col justify-between hover:shadow-blue-50/50 transition-all border-l-4 border-blue-500">
                     <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-white/10 text-white rounded-2xl">
+                        <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
                             <ShieldCheck size={24} />
                         </div>
                     </div>
                     <div>
-                        <p className="text-2xl font-black tracking-tighter italic">{quickStats.pendingWD}</p>
+                        <p className="text-3xl font-black text-slate-900 tracking-tighter italic">{quickStats.pendingWD}</p>
                         <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Pending Withdrawals</p>
                     </div>
                 </Card>

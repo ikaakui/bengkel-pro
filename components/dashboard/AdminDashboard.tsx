@@ -191,15 +191,15 @@ export default function AdminDashboard() {
                     </div>
                 </Card>
 
-                <Card className="p-6 border-none shadow-2xl bg-slate-900 text-white flex flex-col justify-between">
+                <Card className="p-6 border-none shadow-2xl bg-white flex flex-col justify-between hover:shadow-emerald-50/50 transition-all border-l-4 border-emerald-500">
                     <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-white/10 text-white rounded-2xl">
+                        <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl">
                             <DollarSign size={22} />
                         </div>
-                        <TrendingUp size={14} className="text-emerald-400" />
+                        <TrendingUp size={14} className="text-emerald-500" />
                     </div>
                     <div>
-                        <p className="text-2xl font-black tracking-tighter italic break-all">Rp {todayStats.revenue.toLocaleString('id-ID')}</p>
+                        <p className="text-3xl font-black text-slate-900 tracking-tighter italic">Rp {todayStats.revenue.toLocaleString('id-ID')}</p>
                         <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Pendapatan Hari Ini</p>
                     </div>
                 </Card>

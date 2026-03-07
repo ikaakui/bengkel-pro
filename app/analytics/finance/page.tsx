@@ -110,17 +110,23 @@ export default function AdminFinancePage() {
                     </Card>
 
                     {/* Net Profit Card */}
-                    <Card className="p-8 border-none shadow-2xl bg-slate-900 text-white relative overflow-hidden md:col-span-2 lg:col-span-1 border-l-4 border-blue-500">
+                    <Card className="p-8 border-none shadow-2xl bg-white relative overflow-hidden md:col-span-2 lg:col-span-1 border-l-4 border-indigo-500 hover:shadow-indigo-50/50 transition-all">
                         <div className="relative z-10">
-                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-6 flex items-center gap-2">
-                                Laba Bersih Estimasi <TrendingUp size={12} className="text-blue-400" />
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="p-3.5 bg-indigo-50 text-indigo-600 rounded-2xl shadow-inner">
+                                    <TrendingUp size={24} />
+                                </div>
+                                <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-100/50 px-3 py-1 rounded-full italic">Estimasi</span>
+                            </div>
+                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 flex items-center gap-2">
+                                Laba Bersih
                             </p>
-                            <h3 className="text-4xl font-black tracking-tighter italic">Rp {netProfit.toLocaleString('id-ID')}</h3>
+                            <h3 className="text-4xl font-black text-slate-900 tracking-tighter italic">Rp {netProfit.toLocaleString('id-ID')}</h3>
                             <p className="mt-4 text-xs font-bold text-slate-500 uppercase tracking-widest leading-relaxed">
                                 Berdasarkan transaksi yang sudah lunas dan pengeluaran yang tercatat.
                             </p>
                         </div>
-                        <Banknote size={150} className="absolute -right-10 -bottom-10 text-white/5" />
+                        <TrendingUp size={150} className="absolute -right-10 -bottom-10 text-slate-50" />
                     </Card>
                 </div>
 

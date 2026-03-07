@@ -599,16 +599,21 @@ function PLRow({ label, value, isNeg, isBold, isSub }: { label: string; value: n
 
 function ReportStat({ label, value, trend, isUp, isMain, isPercentage }: any) {
     return (
-        <Card noGlass={isMain} className={cn("p-5 transition-all hover:scale-[1.02] border-slate-200/60 shadow-sm print:shadow-none",
-            isMain ? "bg-primary text-white border-transparent shadow-xl shadow-primary/30" : "")}>
-            <p className={cn("font-bold uppercase tracking-widest text-[10px]", isMain ? "text-white/70" : "text-slate-400")}>{label}</p>
+        <Card className={cn(
+            "p-5 transition-all hover:scale-[1.02] border-slate-200/60 shadow-xl",
+            isMain ? "border-l-4 border-indigo-500 hover:shadow-indigo-50/50" : ""
+        )}>
+            <p className="font-black uppercase tracking-widest text-[10px] text-slate-400">{label}</p>
             <div className="flex items-end justify-between mt-3">
-                <h4 className={cn("text-lg sm:text-xl font-black", isMain ? "text-white" : "text-slate-900")}>
+                <h4 className={cn(
+                    "text-xl sm:text-2xl font-black italic tracking-tighter",
+                    isMain ? "text-indigo-600" : "text-slate-900"
+                )}>
                     {!isPercentage && "Rp "}
                     {typeof value === 'number' ? value.toLocaleString('id-ID') : value}
                 </h4>
-                <div className={cn("flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-lg",
-                    isMain ? "text-white bg-white/20" : (isUp ? "text-emerald-600 bg-emerald-50" : "text-red-600 bg-red-50"))}>
+                <div className={cn("flex items-center gap-0.5 text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm",
+                    isUp ? "text-emerald-600 bg-emerald-50" : "text-red-600 bg-red-50")}>
                     {isUp ? <ArrowUp size={10} /> : <ArrowDown size={10} />}
                     {trend}
                 </div>

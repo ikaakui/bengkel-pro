@@ -165,14 +165,16 @@ export default function ExpensesPage() {
 
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white border-none p-8">
+                    <Card className="bg-white border-l-4 border-rose-500 shadow-2xl p-8 hover:shadow-rose-50/50 transition-all">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Total Periode Ini</p>
-                        <h4 className="text-3xl sm:text-4xl font-black italic tracking-tighter">
+                        <h4 className="text-3xl sm:text-4xl font-black italic tracking-tighter text-slate-900">
                             Rp {totalFiltered.toLocaleString('id-ID')}
                         </h4>
-                        <div className="mt-4 flex items-center gap-2 text-rose-400">
-                            <TrendingDown size={16} />
-                            <span className="text-xs font-bold uppercase tracking-widest">Pengurangan Saldo</span>
+                        <div className="mt-4 flex items-center gap-2 text-rose-600">
+                            <div className="p-1.5 bg-rose-50 rounded-lg">
+                                <TrendingDown size={14} />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest">Pengurangan Saldo</span>
                         </div>
                     </Card>
 
