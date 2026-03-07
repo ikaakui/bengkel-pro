@@ -262,9 +262,9 @@ export default function CatalogPage() {
                     {/* Header Section */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>
-                            <h2 className="text-3xl font-bold text-slate-900">Katalog Bengkel</h2>
+                            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Katalog Bengkel</h2>
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex flex-wrap gap-2 sm:gap-3">
                             <Button variant="outline" onClick={() => setShowBulkUpdate(!showBulkUpdate)} className={`h-12 px-6 ${showBulkUpdate ? "bg-amber-50 border-amber-500 text-amber-600" : ""}`}>
                                 <Coins size={20} className="mr-2" />
                                 Update Harga Massal
@@ -485,7 +485,7 @@ export default function CatalogPage() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-4">
+                                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                                                 <Button
                                                     type="button"
                                                     variant="outline"
@@ -512,12 +512,12 @@ export default function CatalogPage() {
 
                     {/* Filters & Search */}
                     <div className="flex flex-col lg:flex-row gap-4 items-center justify-between border-b border-slate-100 pb-6">
-                        <div className="flex bg-slate-100 p-1.5 rounded-2xl w-full lg:w-fit shadow-inner">
+                        <div className="flex bg-slate-100 p-1.5 rounded-2xl w-full lg:w-fit shadow-inner overflow-x-auto scrollbar-hide">
                             {['All', 'Service', 'Spare Part'].map((tab) => (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab as any)}
-                                    className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === tab
+                                    className={`px-6 sm:px-8 py-2.5 rounded-xl text-xs sm:text-sm font-bold min-w-max transition-all ${activeTab === tab
                                         ? "bg-white text-primary shadow-md"
                                         : "text-slate-500 hover:text-slate-800"
                                         }`}

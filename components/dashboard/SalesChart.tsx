@@ -75,10 +75,10 @@ export default function SalesChart({
             {/* Tooltip */}
             {hoveredPoint !== null && (
                 <div
-                    className="absolute z-50 pointer-events-none bg-white/90 backdrop-blur-md border border-slate-100 shadow-2xl rounded-xl p-3 transform -translate-x-1/2 -translate-y-full mb-4 transition-all duration-200"
+                    className="absolute z-50 pointer-events-none bg-white/90 backdrop-blur-md border border-slate-100 shadow-2xl rounded-xl p-2 sm:p-3 transform -translate-x-1/2 -translate-y-full mb-4 transition-all duration-200 max-w-[180px]"
                     style={{
-                        left: `${(points[hoveredPoint].x / width) * 100}%`,
-                        top: `${(points[hoveredPoint].y / height) * height}px`
+                        left: `${Math.min(Math.max((points[hoveredPoint].x / width) * 100, 10), 90)}%`,
+                        top: `${(points[hoveredPoint].y / height) * 100}%`
                     }}
                 >
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">

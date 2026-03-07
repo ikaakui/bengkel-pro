@@ -148,7 +148,7 @@ export default function ExpensesPage() {
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
-                        <h2 className="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-4">
+                        <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3 sm:gap-4">
                             Expense Tracker
                             <Badge variant="danger" className="text-[10px] py-1 px-3">OUTFLOW</Badge>
                         </h2>
@@ -167,7 +167,7 @@ export default function ExpensesPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white border-none p-8">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Total Periode Ini</p>
-                        <h4 className="text-4xl font-black italic tracking-tighter">
+                        <h4 className="text-3xl sm:text-4xl font-black italic tracking-tighter">
                             Rp {totalFiltered.toLocaleString('id-ID')}
                         </h4>
                         <div className="mt-4 flex items-center gap-2 text-rose-400">
@@ -213,7 +213,7 @@ export default function ExpensesPage() {
                             className="w-full pl-16 pr-6 py-5 bg-white rounded-3xl border-none shadow-xl text-slate-900 font-medium placeholder:text-slate-300 focus:ring-2 focus:ring-blue-100 transition-all"
                         />
                     </div>
-                    <div className="flex gap-2 p-1.5 bg-white rounded-3xl shadow-xl overflow-x-auto">
+                    <div className="flex gap-2 p-1.5 bg-white rounded-3xl shadow-xl overflow-x-auto scrollbar-hide">
                         <button
                             onClick={() => setFilterCategory('all')}
                             className={cn(

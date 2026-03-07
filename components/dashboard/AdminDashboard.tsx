@@ -334,18 +334,18 @@ export default function AdminDashboard() {
     const targetPct = Math.round((currentMonthRevenue / (branchTarget || 1)) * 100);
 
     return (
-        <div className="space-y-10">
+        <div className="space-y-6 sm:space-y-8 lg:space-y-10">
             {/* Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-4xl font-black text-slate-900 tracking-tight">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                <div className="min-w-0">
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
                         Dashboard Admin
                     </h2>
-                    <p className="text-slate-500 mt-1 font-medium">
+                    <p className="text-slate-500 mt-1 font-medium text-sm sm:text-base truncate">
                         Monitoring cabang <span className="text-blue-600 font-black">{branchName || 'Cabang'}</span> secara real-time.
                     </p>
                 </div>
-                <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm self-start sm:self-auto shrink-0">
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Live</span>
                     <div className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -355,17 +355,17 @@ export default function AdminDashboard() {
             </div>
 
             {/* ===== SECTION 1: Today Stats ===== */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
                 {/* Mobil Masuk */}
                 <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.05)] bg-white p-6 group hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-all overflow-hidden relative">
                     <div className="flex items-center justify-between relative z-10">
                         <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
                             <Car size={22} />
                         </div>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Masuk Hari Ini</p>
+                        <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] sm:tracking-[0.15em] truncate">Masuk Hari Ini</p>
                     </div>
                     <div className="mt-6 relative z-10">
-                        <h3 className="text-4xl font-black text-slate-900 tracking-tighter italic">{todayBookingsIn}</h3>
+                        <h3 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter italic">{todayBookingsIn}</h3>
                         <p className="text-[10px] text-slate-400 mt-1 font-bold">Unit kendaraan</p>
                     </div>
                 </Card>
@@ -379,7 +379,7 @@ export default function AdminDashboard() {
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Dikerjakan</p>
                     </div>
                     <div className="mt-6 relative z-10">
-                        <h3 className="text-4xl font-black text-slate-900 tracking-tighter italic">{todayProcessing}</h3>
+                        <h3 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter italic">{todayProcessing}</h3>
                         <p className="text-[10px] text-slate-400 mt-1 font-bold">Sedang proses</p>
                     </div>
                 </Card>
@@ -393,7 +393,7 @@ export default function AdminDashboard() {
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Selesai</p>
                     </div>
                     <div className="mt-6 relative z-10">
-                        <h3 className="text-4xl font-black text-slate-900 tracking-tighter italic">{todayCompleted}</h3>
+                        <h3 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter italic">{todayCompleted}</h3>
                         <p className="text-[10px] text-slate-400 mt-1 font-bold">Hari ini</p>
                     </div>
                 </Card>
@@ -407,7 +407,7 @@ export default function AdminDashboard() {
                         <p className="text-[9px] font-black text-indigo-200 uppercase tracking-[0.15em]">Hari Ini</p>
                     </div>
                     <div className="mt-6 relative z-10">
-                        <h3 className="text-2xl font-black tracking-tighter">
+                        <h3 className="text-lg sm:text-2xl font-black tracking-tighter break-all">
                             Rp {todayRevenue.toLocaleString('id-ID')}
                         </h3>
                         <p className="text-[10px] text-indigo-200 mt-1 font-bold">Pendapatan</p>
@@ -417,7 +417,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* ===== SECTION 2: Target Bulanan & Revenue ===== */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
                 {/* Target Cabang */}
                 <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.05)] bg-white p-8 overflow-hidden">
                     <div className="flex items-center gap-3 mb-6">
@@ -433,10 +433,10 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="bg-gradient-to-r from-indigo-600 to-blue-700 rounded-2xl p-6 text-white shadow-xl shadow-indigo-100">
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 mb-4">
                             <div>
                                 <p className="text-indigo-100 text-[10px] font-black uppercase tracking-[0.2em]">Pencapaian</p>
-                                <p className="text-2xl font-black tracking-tight mt-1">
+                                <p className="text-lg sm:text-2xl font-black tracking-tight mt-1 break-all">
                                     Rp {currentMonthRevenue.toLocaleString('id-ID')}
                                 </p>
                                 <p className="text-[10px] text-indigo-200 font-bold mt-0.5">
@@ -444,7 +444,7 @@ export default function AdminDashboard() {
                                 </p>
                             </div>
                             <div className="text-right">
-                                <p className="text-4xl font-black tracking-tighter italic">{targetPct}%</p>
+                                <p className="text-2xl sm:text-4xl font-black tracking-tighter italic">{targetPct}%</p>
                                 <p className="text-[9px] text-indigo-200 font-black uppercase tracking-widest mt-1">tercapai</p>
                             </div>
                         </div>
@@ -490,10 +490,10 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="space-y-6">
-                        <div className="flex items-center justify-between bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 rounded-2xl p-4 sm:p-6 border border-slate-100">
                             <div>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Bulan Ini</p>
-                                <p className="text-3xl font-black text-slate-900 tracking-tighter">
+                                <p className="text-xl sm:text-3xl font-black text-slate-900 tracking-tighter break-all">
                                     Rp {currentMonthRevenue.toLocaleString('id-ID')}
                                 </p>
                             </div>
@@ -544,7 +544,7 @@ export default function AdminDashboard() {
             {/* ===== SECTION 3: Sales Chart ===== */}
             <Card className="border-none shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] p-0 overflow-hidden bg-white ring-1 ring-slate-100">
                 <CardHeader className="p-8 border-b border-slate-50 bg-gradient-to-br from-white via-white to-blue-50/30">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center justify-between">
                         <div className="flex items-center gap-4">
                             <div className="p-3.5 bg-blue-600 rounded-2xl text-white shadow-xl shadow-blue-200">
                                 <BarChart3 size={22} />
@@ -556,13 +556,13 @@ export default function AdminDashboard() {
                                 </p>
                             </div>
                         </div>
-                        <div className="flex gap-2 p-1.5 bg-slate-100/50 rounded-2xl ring-1 ring-slate-200/50">
+                        <div className="flex gap-1.5 sm:gap-2 p-1 sm:p-1.5 bg-slate-100/50 rounded-2xl ring-1 ring-slate-200/50 overflow-x-auto">
                             {PERIOD_OPTIONS.map(opt => (
                                 <button
                                     key={opt.key}
                                     onClick={() => setSalesPeriod(opt.key)}
                                     className={cn(
-                                        "px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95",
+                                        "px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-widest transition-all active:scale-95 whitespace-nowrap",
                                         salesPeriod === opt.key
                                             ? "bg-white text-blue-600 shadow-sm ring-1 ring-slate-200"
                                             : "text-slate-400 hover:text-slate-600"
@@ -601,7 +601,7 @@ export default function AdminDashboard() {
                     ) : (
                         <div className="divide-y divide-slate-50">
                             {vehiclesInProgress.map((v) => (
-                                <div key={v.id} className="flex items-center justify-between p-5 px-8 hover:bg-slate-50 transition-all group">
+                                <div key={v.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 px-4 sm:px-8 hover:bg-slate-50 transition-all group gap-3 sm:gap-0">
                                     <div className="flex items-center gap-5 min-w-0">
                                         <div className={cn(
                                             "w-10 h-10 rounded-xl flex items-center justify-center",
@@ -620,7 +620,7 @@ export default function AdminDashboard() {
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="text-right flex-shrink-0 flex items-center gap-4">
+                                    <div className="flex-shrink-0 flex items-center gap-2 sm:gap-4 sm:ml-auto">
                                         <div className={cn(
                                             "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider",
                                             v.status === 'processing'
@@ -659,7 +659,7 @@ export default function AdminDashboard() {
                 <CardContent className="p-0">
                     <div className="divide-y divide-slate-50">
                         {recentBookings.map((bk) => (
-                            <div key={bk.id} className="flex items-center justify-between p-5 px-8 hover:bg-slate-50 transition-all group">
+                            <div key={bk.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 px-4 sm:px-8 hover:bg-slate-50 transition-all group gap-2 sm:gap-0">
                                 <div className="flex items-center gap-5 min-w-0">
                                     <div className="w-2 h-10 bg-slate-50 rounded-full group-hover:bg-blue-100 transition-colors" />
                                     <div className="truncate">
@@ -669,7 +669,7 @@ export default function AdminDashboard() {
                                         </p>
                                     </div>
                                 </div>
-                                <div className="text-right flex-shrink-0">
+                                <div className="flex-shrink-0 sm:text-right">
                                     <div className={cn(
                                         "flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.1em]",
                                         bk.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
@@ -697,7 +697,7 @@ export default function AdminDashboard() {
             </Card>
 
             {/* ===== SECTION 6: Top Services & Inventory Risk ===== */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
                 {/* Top Services */}
                 <Card className="border-none shadow-2xl bg-white p-8 ring-1 ring-slate-100">
                     <div className="flex items-center gap-4 mb-8">
@@ -756,7 +756,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* ===== SECTION 7: Analytics ===== */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-20">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-10 sm:mb-20">
                 {/* Customer Retention */}
                 <Card className="border-none shadow-2xl bg-white p-8 ring-1 ring-slate-100">
                     <div className="flex items-center gap-3 mb-8">
@@ -805,7 +805,7 @@ export default function AdminDashboard() {
                             <h3 className="text-xl font-black tracking-tight">Avg. Handling Time</h3>
                         </div>
                         <div className="flex flex-col items-center justify-center py-8">
-                            <h4 className="text-7xl font-black italic text-emerald-400 tracking-tighter">
+                            <h4 className="text-4xl sm:text-5xl lg:text-7xl font-black italic text-emerald-400 tracking-tighter">
                                 {avgServiceTime.label}
                             </h4>
                             <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-4">

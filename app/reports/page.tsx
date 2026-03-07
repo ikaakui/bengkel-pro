@@ -335,10 +335,10 @@ export default function ReportsPage() {
             <RoleGuard allowedRoles={["owner", "admin"]}>
                 <div className="space-y-8 pb-10 print:space-y-4">
                     {/* Header */}
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
                         <div className="shrink-0">
                             <div className="flex items-center gap-3">
-                                <h2 className="text-3xl font-bold text-slate-900">Laporan Owner</h2>
+                                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Laporan Owner</h2>
                                 <div className={cn("px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 hidden md:flex", health.bg, health.color, health.border)}>
                                     <div className={cn("w-2 h-2 rounded-full animate-pulse", health.color.replace('text', 'bg'))} />
                                     Status: {health.label}
@@ -415,14 +415,14 @@ export default function ReportsPage() {
                     ) : (
                         <>
                             {/* Top Stats */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                                 <ReportStat label="Penjualan Kotor" value={revenue} trend={revenueTrend.pct} isUp={revenueTrend.isUp} />
                                 <ReportStat label="Gross Margin" value={`${grossMargin.toFixed(1)}%`} trend={gmTrend.pct} isUp={gmTrend.isUp} isPercentage />
                                 <ReportStat label="Net Margin" value={`${netMargin.toFixed(1)}%`} trend={nmTrend.pct} isUp={nmTrend.isUp} isPercentage />
                                 <ReportStat label="Net Profit (Laba)" value={netProfit} trend={npTrend.pct} isUp={npTrend.isUp} isMain />
                             </div>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                                 {/* P&L Breakdown */}
                                 <Card className="lg:col-span-2 p-0 overflow-hidden border-slate-200/60 shadow-sm">
                                     <CardHeader className="p-6 border-b border-slate-100 bg-slate-50/50">
@@ -455,7 +455,7 @@ export default function ReportsPage() {
                                                 <div className="flex justify-between items-center relative z-10">
                                                     <div>
                                                         <p className="text-white/60 font-bold uppercase tracking-widest text-[10px]">Net Profit (Laba Bersih Akhir)</p>
-                                                        <h4 className={cn("text-4xl font-black mt-2", netProfit < 0 ? "text-red-400" : "text-white")}>
+                                                        <h4 className={cn("text-2xl sm:text-4xl font-black mt-2", netProfit < 0 ? "text-red-400" : "text-white")}>
                                                             Rp {netProfit.toLocaleString('id-ID')}
                                                         </h4>
                                                     </div>
@@ -528,7 +528,7 @@ export default function ReportsPage() {
                             </div>
 
                             {/* Monthly Trend Chart + Insights */}
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                                 <Card className="lg:col-span-2 p-0 overflow-hidden border-slate-200/60">
                                     <CardHeader className="p-6 border-b border-slate-100 bg-slate-50/50">
                                         <h3 className="text-lg font-bold flex items-center gap-2">
@@ -603,7 +603,7 @@ function ReportStat({ label, value, trend, isUp, isMain, isPercentage }: any) {
             isMain ? "bg-primary text-white border-transparent shadow-xl shadow-primary/30" : "")}>
             <p className={cn("font-bold uppercase tracking-widest text-[10px]", isMain ? "text-white/70" : "text-slate-400")}>{label}</p>
             <div className="flex items-end justify-between mt-3">
-                <h4 className={cn("text-xl font-black", isMain ? "text-white" : "text-slate-900")}>
+                <h4 className={cn("text-lg sm:text-xl font-black", isMain ? "text-white" : "text-slate-900")}>
                     {!isPercentage && "Rp "}
                     {typeof value === 'number' ? value.toLocaleString('id-ID') : value}
                 </h4>

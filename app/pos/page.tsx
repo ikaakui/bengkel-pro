@@ -779,7 +779,7 @@ function POSContent() {
                     )}
 
                     {/* Main POS Layout */}
-                    <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 lg:h-[calc(100vh-10rem)] lg:min-h-[650px] pb-4">
+                    <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 lg:h-[calc(100vh-10rem)] lg:min-h-[650px] pb-20 lg:pb-4">
                         {/* Left: Product Selection */}
                         <div className="flex-1 flex flex-col gap-4 lg:gap-6 min-h-0 min-w-0">
                             {/* Customer Info Form (moved from right panel) */}
@@ -939,7 +939,7 @@ function POSContent() {
                                         <p className="text-sm font-bold uppercase tracking-widest">Memuat Katalog...</p>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4 p-1 pb-24">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-3 sm:gap-4 p-1 pb-4">
                                         {filteredItems.map((item) => (
                                             <Card key={item.id} className="p-4 cursor-pointer hover:border-primary/50 group" onClick={() => addToCart(item)}>
                                                 <div className="flex justify-between items-start mb-2">
@@ -966,7 +966,7 @@ function POSContent() {
                         </div>
 
                         {/* Right: Cart and Checkout */}
-                        <Card className="w-full lg:w-[350px] xl:w-[400px] 2xl:w-[450px] shrink-0 lg:h-full flex flex-col p-0 overflow-visible lg:overflow-hidden shadow-xl border-primary/10 mb-2 lg:mb-0">
+                        <Card className="w-full lg:w-[350px] xl:w-[400px] 2xl:w-[450px] shrink-0 lg:h-full flex flex-col p-0 overflow-visible lg:overflow-hidden shadow-xl border-primary/10 mb-2 lg:mb-0 max-h-[80vh] lg:max-h-none">
                             <CardHeader className="p-5 mb-0 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
                                 <h3 className="text-xl font-bold flex items-center gap-2">
                                     <ShoppingBag className="text-primary" />
@@ -1012,7 +1012,7 @@ function POSContent() {
                                 )}
                             </CardContent>
 
-                            <CardFooter className="p-4 lg:p-6 lg:pb-12 mt-0 bg-slate-50/50 border-t border-slate-200 flex flex-col gap-4 shrink-0">
+                            <CardFooter className="p-4 lg:p-6 lg:pb-8 mt-0 bg-slate-50/50 border-t border-slate-200 flex flex-col gap-3 sm:gap-4 shrink-0">
 
                                 <div className="space-y-1.5">
                                     <div className="flex justify-between text-slate-500 text-xs sm:text-sm">

@@ -264,7 +264,7 @@ export default function AntrianServicePage() {
                                                     </div>
 
                                                     {/* Vehicle + Items info */}
-                                                    <div className="flex flex-wrap items-center gap-2 ml-[52px]">
+                                                    <div className="flex flex-wrap items-center gap-2 sm:ml-[52px]">
                                                         {item.booking && (
                                                             <div className="flex items-center gap-1.5 text-xs bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg font-bold">
                                                                 <Car size={14} />
@@ -285,7 +285,7 @@ export default function AntrianServicePage() {
 
                                                     {/* Items preview */}
                                                     {serviceCount > 0 && (
-                                                        <div className="ml-[52px] mt-2 flex flex-wrap gap-1.5">
+                                                        <div className="sm:ml-[52px] mt-2 flex flex-wrap gap-1.5">
                                                             {item.transaction_items.slice(0, 3).map((ti) => (
                                                                 <span key={ti.id} className="text-[11px] bg-white border border-slate-200 px-2 py-1 rounded-md text-slate-600">
                                                                     {ti.catalog?.name || "Item"} x{ti.qty}
@@ -301,7 +301,7 @@ export default function AntrianServicePage() {
                                                 </div>
 
                                                 {/* Right: Price + Actions */}
-                                                <div className="flex flex-row lg:flex-col items-center lg:items-end gap-3 lg:gap-2 shrink-0 ml-[52px] lg:ml-0">
+                                                <div className="flex flex-col sm:flex-row items-start sm:items-center lg:items-end gap-3 lg:gap-2 shrink-0 sm:ml-[52px] lg:ml-0 w-full sm:w-auto">
                                                     <div className="text-right">
                                                         <p className="text-xs text-slate-400 font-bold uppercase">Total</p>
                                                         <p className="text-xl font-black text-primary">
@@ -309,7 +309,7 @@ export default function AntrianServicePage() {
                                                         </p>
                                                     </div>
 
-                                                    <div className="flex gap-2">
+                                                    <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                                                         {item.status === "Draft" && (
                                                             <>
                                                                 <Button

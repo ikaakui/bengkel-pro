@@ -482,7 +482,7 @@ export default function UsersPage() {
                                                             </p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-4">
+                                                    <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                                                         {user.referral_code && (
                                                             <button
                                                                 onClick={() => copyReferralCode(user.referral_code!)}
@@ -503,7 +503,7 @@ export default function UsersPage() {
                                                                 {branchNames[user.branch_id]}
                                                             </span>
                                                         )}
-                                                        <div className="flex gap-2">
+                                                        <div className="flex gap-1.5 sm:gap-2 ml-auto sm:ml-0">
                                                             <button
                                                                 onClick={() => handleViewDetails(user)}
                                                                 className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
@@ -623,24 +623,25 @@ export default function UsersPage() {
                         className="bg-white rounded-[2.5rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.15)] w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col border border-white/40"
                     >
                         {/* Header Section */}
-                        <div className="p-8 pb-10 sm:p-10 sm:pb-12 bg-gradient-to-br from-indigo-600 via-blue-600 to-indigo-700 text-white relative shrink-0">
+                        <div className="p-5 sm:p-8 pb-8 sm:pb-10 bg-gradient-to-br from-indigo-600 via-blue-600 to-indigo-700 text-white relative shrink-0">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 blur-3xl" />
                             <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-400/20 rounded-full translate-y-24 -translate-x-24 blur-3xl" />
 
                             <div className="relative flex items-center justify-between">
-                                <div className="flex items-center gap-6">
-                                    <div className="w-20 h-20 rounded-[2rem] bg-white/20 backdrop-blur-md flex items-center justify-center shadow-2xl border border-white/30 ring-4 ring-white/10">
-                                        <User size={40} className="text-white drop-shadow-md" />
+                                <div className="flex items-start sm:items-center gap-4 sm:gap-6">
+                                    <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl sm:rounded-[2rem] bg-white/20 backdrop-blur-md flex items-center justify-center shadow-2xl border border-white/30 ring-4 ring-white/10 shrink-0">
+                                        <User size={28} className="text-white drop-shadow-md sm:hidden" />
+                                        <User size={40} className="text-white drop-shadow-md hidden sm:block" />
                                     </div>
                                     <div>
-                                        <div className="flex items-center gap-2 mb-1">
+                                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                                             <Badge className="bg-white/20 text-white border-0 text-[10px] font-black uppercase tracking-[0.2em] py-1 px-3">
                                                 {selectedMitra.role}
                                             </Badge>
                                             <span className="text-[10px] text-blue-100/60 font-black uppercase tracking-widest bg-black/10 px-2 py-1 rounded-lg">ID: {selectedMitra.id.slice(0, 8)}</span>
                                         </div>
-                                        <h3 className="text-3xl font-black tracking-tighter leading-none mb-2">{selectedMitra.full_name}</h3>
-                                        <div className="flex items-center gap-4 text-blue-50/70 text-sm font-bold">
+                                        <h3 className="text-xl sm:text-3xl font-black tracking-tighter leading-none mb-2 break-words">{selectedMitra.full_name}</h3>
+                                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-blue-50/70 text-xs sm:text-sm font-bold">
                                             <div className="flex items-center gap-1.5">
                                                 <Phone size={14} />
                                                 {selectedMitra.phone || "No phone"}
@@ -663,7 +664,7 @@ export default function UsersPage() {
                         </div>
 
                         {/* Content Area - Rounded Top to overlap header slightly */}
-                        <div className="flex-1 overflow-y-auto p-8 sm:p-10 -mt-6 bg-white rounded-t-[3rem] relative z-10 space-y-12 custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto p-5 sm:p-8 lg:p-10 -mt-6 bg-white rounded-t-[2rem] sm:rounded-t-[3rem] relative z-10 space-y-8 sm:space-y-12 custom-scrollbar">
                             {/* Summary Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 {/* Bank Info Card */}
