@@ -352,14 +352,20 @@ export default function BranchesPage() {
                             <h2 className="text-3xl font-black text-slate-900 tracking-tight">Manajemen Organisasi</h2>
                             <p className="text-slate-500 mt-1 font-medium">Kelola cabang, admin, dan struktur kepemilikan bengkel.</p>
                         </div>
-                        <div className="flex gap-2">
-                            <Button variant="outline" onClick={() => { setStaffRole("owner"); setShowStaffForm(true); }} className="h-12 px-6 rounded-2xl">
-                                <Crown size={18} className="mr-2 text-purple-500" />
-                                Pemilik Baru
+                        <div className="grid grid-cols-2 sm:flex gap-3 w-full sm:w-auto">
+                            <Button
+                                onClick={() => { setStaffRole("owner"); setShowStaffForm(true); }}
+                                className="h-14 px-4 sm:px-8 rounded-2xl bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/25 text-white border-0 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 transition-all duration-300"
+                            >
+                                <Crown size={20} className="sm:mr-1" />
+                                <span className="whitespace-nowrap font-black text-[13px] sm:text-base tracking-tight">Pemilik Baru</span>
                             </Button>
-                            <Button onClick={() => { resetBranchForm(); setShowBranchForm(true); }} className="h-12 px-6 rounded-2xl shadow-lg shadow-primary/20">
-                                <Plus size={20} className="mr-2" />
-                                Tambah Cabang
+                            <Button
+                                onClick={() => { resetBranchForm(); setShowBranchForm(true); }}
+                                className="h-14 px-4 sm:px-8 rounded-2xl bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/25 text-white border-0 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 transition-all duration-300"
+                            >
+                                <Plus size={22} className="sm:mr-1" />
+                                <span className="whitespace-nowrap font-black text-[13px] sm:text-base tracking-tight">Tambah Cabang</span>
                             </Button>
                         </div>
                     </div>
