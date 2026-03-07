@@ -134,23 +134,40 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     useEffect(() => {
         let mounted = true;
 
-        const getSession = async () => {
+        const getSessionWithTimeout = async () => {
+            const timeoutPromise = new Promise<void>((_, reject) => {
+                setTimeout(() => reject(new Error("Session check timed out")), 7000);
+            });
+
             try {
                 // Fetch global logo independently
                 refreshGlobalLogo();
 
-                const { data: { session } } = await supabase.auth.getSession();
+                // Wrapping getSession in a Promise.race
+                const sessionPromise = supabase.auth.getSession();
+                const sessionResult = await Promise.race([sessionPromise, timeoutPromise]) as { data: { session: Session | null } };
+
                 if (!mounted) return;
+
+                const session = sessionResult?.data?.session;
 
                 if (session?.user) {
                     setUser(session.user);
                     // Only fetch if profile isn't already set via setInitialData
                     if (!profile) {
-                        await fetchProfile(session.user.id);
+                        try {
+                            const fetchPromise = fetchProfile(session.user.id);
+                            const fetchTimeout = new Promise<void>((_, reject) => {
+                                setTimeout(() => reject(new Error("Profile fetch timed out")), 5000);
+                            });
+                            await Promise.race([fetchPromise, fetchTimeout]);
+                        } catch (profileErr) {
+                            console.error("Profile fetch timeout inside session check:", profileErr);
+                        }
                     }
                 }
             } catch (err) {
-                console.error("Session check error:", err);
+                console.error("Session check error or timeout:", err);
             } finally {
                 if (mounted) {
                     setLoading(false);
@@ -158,7 +175,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             }
         };
 
-        getSession();
+        getSessionWithTimeout();
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
