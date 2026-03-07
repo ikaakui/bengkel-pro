@@ -11,6 +11,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 const ISSUES_OPTIONS = [
     "Bunyi gluduk-gluduk",
@@ -30,6 +33,15 @@ const ROAD_CONDITIONS = [
 ];
 
 export default function MontirAIPage() {
+    const { role, loading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!loading && role !== 'mitra') {
+            router.push('/');
+        }
+    }, [role, loading, router]);
+
     const [step, setStep] = useState<"form" | "result">("form");
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<any>(null);

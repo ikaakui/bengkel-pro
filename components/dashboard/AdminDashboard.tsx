@@ -286,39 +286,35 @@ export default function AdminDashboard() {
 
                 {/* Quick Actions & Short Menu */}
                 <div className="space-y-6">
-                    <Card className="p-8 border-none shadow-2xl bg-blue-600 text-white relative overflow-hidden group">
-                        <div className="relative z-10">
-                            <h3 className="text-xl font-black tracking-tight mb-2">Butuh Bantuan AI?</h3>
-                            <p className="text-blue-100 text-xs font-medium leading-relaxed mb-6 opacity-80">
-                                Gunakan Montir AI untuk analisa kerusakan kendaraan lebih cepat dan akurat.
-                            </p>
-                            <Link href="/montir-ai">
-                                <button className="w-full py-4 bg-white text-blue-600 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-900/20 active:scale-95 transition-all">
-                                    Buka Montir AI
-                                </button>
-                            </Link>
+                    <Link href="/pos" className="block">
+                        <div className="p-8 bg-white rounded-3xl shadow-xl flex items-center justify-between hover:bg-slate-50 transition-all border border-slate-50 active:scale-95 group">
+                            <div className="flex items-center gap-5">
+                                <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl group-hover:scale-110 transition-transform">
+                                    <TrendingUp size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Buka POS</h3>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Sistem Kasir Utama</p>
+                                </div>
+                            </div>
+                            <ArrowRight size={20} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
                         </div>
-                        <Bot size={120} className="absolute -right-5 -bottom-5 text-white/10 transform rotate-12" />
-                    </Card>
+                    </Link>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <Link href="/pos" className="contents">
-                            <div className="p-6 bg-white rounded-3xl shadow-xl flex flex-col items-center justify-center gap-3 hover:bg-slate-50 transition-all border border-slate-50 active:scale-95">
-                                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-                                    <TrendingUp size={20} />
+                    <Link href="/staff" className="block">
+                        <div className="p-8 bg-white rounded-3xl shadow-xl flex items-center justify-between hover:bg-slate-50 transition-all border border-slate-50 active:scale-95 group">
+                            <div className="flex items-center gap-5">
+                                <div className="p-4 bg-indigo-50 text-indigo-600 rounded-2xl group-hover:scale-110 transition-transform">
+                                    <Wrench size={24} />
                                 </div>
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Buka POS</span>
-                            </div>
-                        </Link>
-                        <Link href="/staff" className="contents">
-                            <div className="p-6 bg-white rounded-3xl shadow-xl flex flex-col items-center justify-center gap-3 hover:bg-slate-50 transition-all border border-slate-50 active:scale-95">
-                                <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
-                                    <Wrench size={20} />
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Karyawan</h3>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Manajemen Tim</p>
                                 </div>
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Karyawan</span>
                             </div>
-                        </Link>
-                    </div>
+                            <ArrowRight size={20} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                        </div>
+                    </Link>
                 </div>
             </div>
         </div>
