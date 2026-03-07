@@ -22,7 +22,8 @@ import {
     Bot,
     UserPlus,
     Wrench,
-    Activity
+    Activity,
+    Check,
 } from "lucide-react";
 
 interface VehicleInProgress {
