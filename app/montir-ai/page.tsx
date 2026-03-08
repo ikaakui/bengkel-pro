@@ -13,7 +13,8 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
+import { X, Lock } from "lucide-react";
 
 const ISSUES_OPTIONS = [
     "Bunyi gluduk-gluduk",
@@ -45,6 +46,8 @@ export default function MontirAIPage() {
     const [step, setStep] = useState<"form" | "result">("form");
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<any>(null);
+    const [showLimitModal, setShowLimitModal] = useState(false);
+    const [limitMessage, setLimitMessage] = useState("");
 
     const [formData, setFormData] = useState({
         carType: "",
@@ -81,11 +84,19 @@ export default function MontirAIPage() {
                 body: JSON.stringify(formData)
             });
             const data = await response.json();
-            if (data.error) throw new Error(data.error);
+            if (data.error) {
+                if (response.status === 400 && data.error.includes("dianalisa")) {
+                    setLimitMessage(data.error);
+                    setShowLimitModal(true);
+                    return;
+                }
+                throw new Error(data.error);
+            }
             setResult(data);
             setStep("result");
         } catch (error: any) {
-            alert(error?.message || "Gagal melakukan analisa. Silakan coba lagi.");
+            setLimitMessage(error?.message || "Gagal melakukan analisa. Silakan coba lagi.");
+            setShowLimitModal(true);
             console.error(error);
         } finally {
             setIsLoading(false);
@@ -352,6 +363,57 @@ export default function MontirAIPage() {
                                 </div>
                             </div>
                         </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Limit Modal */}
+                <AnimatePresence>
+                    {showLimitModal && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setShowLimitModal(false)}
+                                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                            />
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                                className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100"
+                            >
+                                <div className="absolute top-4 right-4">
+                                    <button
+                                        onClick={() => setShowLimitModal(false)}
+                                        className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+
+                                <div className="p-8 text-center">
+                                    <div className="w-20 h-20 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-amber-500 shadow-inner">
+                                        <Lock size={40} />
+                                    </div>
+                                    <h3 className="text-2xl font-black text-slate-900 mb-3">Batasan Tercapai</h3>
+                                    <p className="text-slate-600 leading-relaxed">
+                                        {limitMessage}
+                                    </p>
+                                    <div className="mt-8 space-y-3">
+                                        <Button
+                                            onClick={() => setShowLimitModal(false)}
+                                            className="w-full h-12 font-bold"
+                                        >
+                                            Mengerti
+                                        </Button>
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-6">
+                                        Keamanan & Efisiensi Sistem
+                                    </p>
+                                </div>
+                            </motion.div>
+                        </div>
                     )}
                 </AnimatePresence>
             </div>
