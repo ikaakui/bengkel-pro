@@ -396,7 +396,7 @@ export default function MontirAIPage() {
                                     <div className="w-20 h-20 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-amber-500 shadow-inner">
                                         <Lock size={40} />
                                     </div>
-                                    <h3 className="text-2xl font-black text-slate-900 mb-3">Batasan Tercapai</h3>
+                                    <h3 className="text-2xl font-black text-slate-900 mb-3">Akses Terbatas</h3>
                                     <p className="text-slate-600 leading-relaxed">
                                         {limitMessage}
                                     </p>

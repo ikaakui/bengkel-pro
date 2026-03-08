@@ -40,11 +40,11 @@ export async function POST(req: Request) {
             .single();
 
         if (existingUsage) {
-            return NextResponse.json({ error: "Kendaraan pelanggan ini sudah dianalisa dalam 30 hari terakhir." }, { status: 400 });
+            return NextResponse.json({ error: "Anda sudah mencapai batas maksimal penggunaan AI. Silakan tunggu 30 hari lagi." }, { status: 400 });
         }
 
         if (!process.env.GEMINI_API_KEY) {
-            return NextResponse.json({ error: "API Key tidak dikonfigurasi" }, { status: 500 });
+            return NextResponse.json({ error: "Layanan AI sedang tidak tersedia." }, { status: 500 });
         }
 
         const prompt = `
@@ -95,8 +95,6 @@ export async function POST(req: Request) {
 
                 if (insertError) {
                     console.error("Failed to log montir ai usage:", insertError);
-                    // Decide if you want to fail the whole request or just proceed with warning
-                    // Let's proceed because the AI generated something
                 }
 
 
@@ -119,15 +117,12 @@ export async function POST(req: Request) {
     } catch (error: any) {
         console.error("Montir AI Error:", error);
         const message = error?.message || "";
-        if (message.includes("429") || message.includes("quota")) {
-            return NextResponse.json({ error: "Kuota API Gemini habis. Silakan coba beberapa saat lagi." }, { status: 429 });
+
+        // Return a simplified message for all AI-related quota or model issues
+        if (message.includes("429") || message.includes("quota") || message.includes("404") || message.includes("not found")) {
+            return NextResponse.json({ error: "Anda sudah mencapai batas maksimal penggunaan AI. Silakan tunggu beberapa saat lagi atau hubungi Admin." }, { status: 429 });
         }
-        if (message.includes("401") || message.includes("403") || message.includes("API key")) {
-            return NextResponse.json({ error: "API Key tidak valid: " + message }, { status: 401 });
-        }
-        if (message.includes("404") || message.includes("not found")) {
-            return NextResponse.json({ error: "Gagal memanggil model AI: " + message }, { status: 404 });
-        }
-        return NextResponse.json({ error: "Gagal memproses analisa AI: " + message }, { status: 500 });
+
+        return NextResponse.json({ error: "Layanan AI sedang tidak tersedia (System Busy)." }, { status: 500 });
     }
 }
