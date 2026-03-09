@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useMemo } 
 import { createClient } from "@/lib/supabase-client";
 import { useRouter } from "next/navigation";
 import type { User, Session } from "@supabase/supabase-js";
+import SessionTimeoutHandler from "@/components/auth/SessionTimeoutHandler";
 
 export type UserRole = "owner" | "admin" | "mitra";
 
@@ -268,6 +269,13 @@ export default function AuthProvider({
             }}
         >
             {children}
+            {user && (
+                <SessionTimeoutHandler
+                    timeoutMinutes={15}
+                    warningMinutes={1}
+                    onLogout={signOut}
+                />
+            )}
         </AuthContext.Provider>
     );
 }
