@@ -208,46 +208,36 @@ export default function AuthProvider({
 
     const signOut = async () => {
         try {
-            // 1. Clear local data immediately (synchronous-like)
+            // 1. Trigger router prefetch to make navigation faster
+            router.prefetch("/login");
+
+            // 2. Clear local data immediately
             if (typeof window !== 'undefined') {
                 localStorage.clear();
                 sessionStorage.clear();
             }
 
-            // 2. Clear state
+            // 3. Clear State immediately for instant UI feedback
             setUser(null);
             setProfile(null);
             setBranchName(null);
             setGlobalLogoUrl(null);
-            setLogoLoading(true);
 
-            // 3. Clear Cookies manually for faster feedback
-            if (typeof document !== 'undefined') {
-                const cookies = document.cookie.split(';');
-                for (const cookie of cookies) {
-                    const name = cookie.split('=')[0].trim();
-                    if (name.startsWith('sb-') || name.includes('supabase')) {
-                        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-                    }
-                }
-            }
+            // 4. Redirect INSTANTLY using Next.js router (no full page reload)
+            router.push("/login");
 
-            // 4. Fire and forget or quick wait for network calls
+            // 5. Perform server-side cleanup in the background
             const logoutPromises = [
                 supabase.auth.signOut(),
                 fetch('/api/auth/signout', { method: 'POST', cache: 'no-store' }).catch(() => { })
             ];
 
-            // Give it 800ms max to talk to the server, then redirect anyway
-            await Promise.race([
-                Promise.allSettled(logoutPromises),
-                new Promise(resolve => setTimeout(resolve, 800))
-            ]);
+            // We don't await this for too long to keep the UI snappy
+            Promise.allSettled(logoutPromises);
 
         } catch (err) {
             console.error("Error during signOut:", err);
-        } finally {
-            // 5. Guaranteed redirect
+            // Fallback for safety
             window.location.href = "/login";
         }
     };
