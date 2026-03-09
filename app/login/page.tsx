@@ -7,6 +7,9 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Wrench, Mail, Lock, Eye, EyeOff, LogIn, UserPlus, Loader2 } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { ToastContainer, type ToastItem } from "@/components/ui/Toast";
+import LoginSuccessModal from "@/components/auth/LoginSuccessModal";
+import type { UserRole } from "@/components/providers/AuthProvider";
 
 const roles = [
     { id: "mitra", label: "Mitra", desc: "Affiliate Partner", color: "from-emerald-500 to-teal-600" },
@@ -23,8 +26,20 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const { globalLogoUrl, logoLoading } = useAuth();
+    const [toasts, setToasts] = useState<ToastItem[]>([]);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [successData, setSuccessData] = useState<{ name: string; role: UserRole | null }>({ name: "", role: null });
     const router = useRouter();
     const supabase = createClient();
+
+    const addToast = (type: "success" | "warning" | "info", message: string) => {
+        const id = Math.random().toString(36).substring(2, 9);
+        setToasts((prev) => [...prev, { id, type, message }]);
+    };
+
+    const dismissToast = (id: string) => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+    };
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,8 +62,26 @@ export default function LoginPage() {
             }
 
             if (data.user) {
-                router.push("/");
-                router.refresh();
+                // Fetch profile to get name and role for the modal
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("full_name, role")
+                    .eq("id", data.user.id)
+                    .single();
+
+                setSuccessData({
+                    name: profile?.full_name || "User",
+                    role: profile?.role as UserRole || null
+                });
+
+                setShowSuccessModal(true);
+
+                // Small delay to let user see the greeting
+                setTimeout(() => {
+                    router.push("/");
+                    router.refresh();
+                }, 2500);
+                return; // Keep loading true during delay
             }
         } catch (err) {
             setError("Terjadi kesalahan. Silakan coba lagi.");
@@ -200,6 +233,12 @@ export default function LoginPage() {
                     &copy; {new Date().getFullYear()} BENGKEL PRO. All rights reserved.
                 </p>
             </motion.div>
+            <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+            <LoginSuccessModal
+                isOpen={showSuccessModal}
+                name={successData.name}
+                role={successData.role}
+            />
         </div>
     );
 }

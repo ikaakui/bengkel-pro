@@ -31,7 +31,10 @@ export default function MitraDashboard() {
     const [commissionRate, setCommissionRate] = useState(5);
 
     const fetchData = useCallback(async () => {
-        if (!profile?.id) return;
+        if (!profile?.id) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
 
         try {

@@ -61,7 +61,10 @@ export default function AdminDashboard() {
     };
 
     const fetchAdminOverview = async () => {
-        if (!branchId) return;
+        if (!branchId) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
 
         const now = new Date();

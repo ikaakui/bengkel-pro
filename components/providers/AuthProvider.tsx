@@ -144,7 +144,7 @@ export default function AuthProvider({
 
         const getSessionWithTimeout = async () => {
             const timeoutPromise = new Promise<void>((_, reject) => {
-                setTimeout(() => reject(new Error("Session check timed out")), 2000);
+                setTimeout(() => reject(new Error("Session check timed out")), 5000);
             });
 
             try {
@@ -166,7 +166,7 @@ export default function AuthProvider({
                         try {
                             const fetchPromise = fetchProfile(session.user.id);
                             const fetchTimeout = new Promise<void>((_, reject) => {
-                                setTimeout(() => reject(new Error("Profile fetch timed out")), 2000);
+                                setTimeout(() => reject(new Error("Profile fetch timed out")), 5000);
                             });
                             await Promise.race([fetchPromise, fetchTimeout]);
                         } catch (profileErr) {
@@ -208,25 +208,20 @@ export default function AuthProvider({
 
     const signOut = async () => {
         try {
+            // 1. Clear local data immediately (synchronous-like)
             if (typeof window !== 'undefined') {
                 localStorage.clear();
                 sessionStorage.clear();
             }
 
+            // 2. Clear state
             setUser(null);
             setProfile(null);
             setBranchName(null);
             setGlobalLogoUrl(null);
             setLogoLoading(true);
 
-            await supabase.auth.signOut();
-
-            try {
-                await fetch('/api/auth/signout', { method: 'POST', cache: 'no-store' });
-            } catch { }
-        } catch (err) {
-            console.error("Error during signOut:", err);
-        } finally {
+            // 3. Clear Cookies manually for faster feedback
             if (typeof document !== 'undefined') {
                 const cookies = document.cookie.split(';');
                 for (const cookie of cookies) {
@@ -236,10 +231,24 @@ export default function AuthProvider({
                     }
                 }
             }
-            router.refresh();
-            setTimeout(() => {
-                window.location.href = "/login";
-            }, 100);
+
+            // 4. Fire and forget or quick wait for network calls
+            const logoutPromises = [
+                supabase.auth.signOut(),
+                fetch('/api/auth/signout', { method: 'POST', cache: 'no-store' }).catch(() => { })
+            ];
+
+            // Give it 800ms max to talk to the server, then redirect anyway
+            await Promise.race([
+                Promise.allSettled(logoutPromises),
+                new Promise(resolve => setTimeout(resolve, 800))
+            ]);
+
+        } catch (err) {
+            console.error("Error during signOut:", err);
+        } finally {
+            // 5. Guaranteed redirect
+            window.location.href = "/login";
         }
     };
 
