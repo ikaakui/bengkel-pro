@@ -5,6 +5,9 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 export const metadata = {
   title: 'BENGKEL PRO',
   description: 'Sistem Affiliate dan POS',
+  icons: {
+    icon: '/favicon.png',
+  },
 }
 
 export default async function RootLayout({
