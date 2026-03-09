@@ -29,6 +29,7 @@ interface AuthContextType {
     loading: boolean;
     globalLogoUrl: string | null;
     logoLoading: boolean;
+    isLoggingOut: boolean;
     signOut: () => Promise<void>;
     refreshProfile: () => Promise<void>;
     refreshGlobalLogo: () => Promise<void>;
@@ -44,6 +45,7 @@ const AuthContext = createContext<AuthContextType>({
     loading: true,
     globalLogoUrl: null,
     logoLoading: true,
+    isLoggingOut: false,
     signOut: async () => { },
     refreshProfile: async () => { },
     refreshGlobalLogo: async () => { },
@@ -66,6 +68,7 @@ export default function AuthProvider({
     const [branchName, setBranchName] = useState<string | null>(null);
     const [globalLogoUrl, setGlobalLogoUrl] = useState<string | null>(null);
     const [logoLoading, setLogoLoading] = useState(true);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [loading, setLoading] = useState(!initialUser);
     const router = useRouter();
     const supabase = useMemo(() => createClient(), []);
@@ -208,36 +211,40 @@ export default function AuthProvider({
 
     const signOut = async () => {
         try {
-            // 1. Trigger router prefetch to make navigation faster
-            router.prefetch("/login");
+            // 1. Set global logging out state
+            setIsLoggingOut(true);
 
-            // 2. Clear local data immediately
+            // 2. Small delay for smooth transition feel
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            // 3. Clear local data
             if (typeof window !== 'undefined') {
                 localStorage.clear();
                 sessionStorage.clear();
+
+                // Clear all cookies related to supabase
+                const cookies = document.cookie.split(";");
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i];
+                    const eqPos = cookie.indexOf("=");
+                    const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+                    if (name.includes('sb-') || name.includes('supabase')) {
+                        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+                    }
+                }
             }
 
-            // 3. Clear State immediately for instant UI feedback
-            setUser(null);
-            setProfile(null);
-            setBranchName(null);
-            setGlobalLogoUrl(null);
+            // 4. Force hard redirect to login to ensure clean state
+            // This is actually more professional for logout than router.push 
+            // because it guarantees no stale memory remains, but we make it fast
+            window.location.assign("/login");
 
-            // 4. Redirect INSTANTLY using Next.js router (no full page reload)
-            router.push("/login");
-
-            // 5. Perform server-side cleanup in the background
-            const logoutPromises = [
-                supabase.auth.signOut(),
-                fetch('/api/auth/signout', { method: 'POST', cache: 'no-store' }).catch(() => { })
-            ];
-
-            // We don't await this for too long to keep the UI snappy
-            Promise.allSettled(logoutPromises);
+            // 5. Background cleanup (if it even gets to run before navigation)
+            supabase.auth.signOut();
+            fetch('/api/auth/signout', { method: 'POST' }).catch(() => { });
 
         } catch (err) {
             console.error("Error during signOut:", err);
-            // Fallback for safety
             window.location.href = "/login";
         }
     };
@@ -253,6 +260,7 @@ export default function AuthProvider({
                 loading,
                 globalLogoUrl,
                 logoLoading,
+                isLoggingOut,
                 signOut,
                 refreshProfile,
                 refreshGlobalLogo,

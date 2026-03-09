@@ -77,7 +77,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [loggingOut, setLoggingOut] = useState(false);
     const pathname = usePathname();
-    const { profile, role, branchName, loading, globalLogoUrl, logoLoading, signOut } = useAuth();
+    const { profile, role, branchName, loading, globalLogoUrl, logoLoading, isLoggingOut, signOut } = useAuth();
 
     const userRole = role;
     const filteredNav = userRole ? navigation.filter(item => item.roles.includes(userRole)) : [];
@@ -90,12 +90,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         setTimeout(() => setCopied(false), 2000);
     };
 
-    if (loading) {
+    if (loading || isLoggingOut) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                    <p className="text-slate-500 mt-4 text-sm font-medium">Memuat...</p>
+            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center"
+                >
+                    <div className="relative w-24 h-24 mx-auto mb-8">
+                        <div className="absolute inset-0 border-4 border-primary/20 rounded-full" />
+                        <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                        <div className="absolute inset-0 flex items-center justify-center text-primary">
+                            <Wrench size={32} className="animate-pulse" />
+                        </div>
+                    </div>
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">
+                        {isLoggingOut ? "Keluar Sistem..." : "Memuat Data..."}
+                    </h2>
+                    <p className="text-slate-500 font-medium">
+                        {isLoggingOut ? "Menghapus sesi dengan aman, silakan tunggu." : "Sedang menyinkronkan data profil Anda."}
+                    </p>
+                </motion.div>
+
+                {/* Visual feedback at bottom */}
+                <div className="fixed bottom-12 left-0 right-0 text-center">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
+                        Bengkel Pro &copy; {new Date().getFullYear()}
+                    </p>
                 </div>
             </div>
         );

@@ -36,7 +36,7 @@ interface ClientDashboardWrapperProps {
 }
 
 export default function ClientDashboardWrapper({ initialUser, initialProfile }: ClientDashboardWrapperProps) {
-    const { role, profile, loading, setInitialData } = useAuth();
+    const { role, profile, loading, isLoggingOut, setInitialData } = useAuth();
 
     // Sync initial data from server to auth provider if provided
     useEffect(() => {
@@ -48,8 +48,8 @@ export default function ClientDashboardWrapper({ initialUser, initialProfile }: 
     // Use current role from provider (which might be updated via setInitialData)
     const activeRole = profile?.role || initialProfile?.role;
 
-    if (loading && !activeRole) {
-        return <DashboardLoading message="Menyiapkan Dashboard..." />;
+    if ((loading || isLoggingOut) && !activeRole) {
+        return <DashboardLoading message={isLoggingOut ? "Keluar Sistem..." : "Menyiapkan Dashboard..."} />;
     }
 
     if (!activeRole && !loading) {
