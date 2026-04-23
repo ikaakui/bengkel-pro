@@ -87,7 +87,7 @@ export default function AuthProvider({
         console.log("Fetching profile for:", userId);
 
         try {
-            const { data, error }: any = await supabase
+            const { data, error } = await supabase
                 .from("profiles")
                 .select("*")
                 .eq("id", userId)
@@ -198,7 +198,7 @@ export default function AuthProvider({
         initAuth();
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (event, session) => {
+            async (event: any, session: Session | null) => {
                 if (!mounted) return;
 
                 setUser(session?.user ?? null);

@@ -65,27 +65,27 @@ export default function OwnerDashboard() {
             ]);
 
             const paidTransactions = transactionsData || [];
-            const revenueSum = paidTransactions.reduce((acc, t) => acc + Number(t.total_amount), 0);
+            const revenueSum = paidTransactions.reduce((acc: number, t: any) => acc + Number(t.total_amount), 0);
             setCurrentMonthRevenue(revenueSum);
 
             let targetMap: Record<string, { name: string; target: number }> = {};
             if (targetSetting?.value) {
                 try { targetMap = JSON.parse(targetSetting.value); } catch (e) { }
             }
-            setMonthlyTarget(Object.values(targetMap).reduce((acc, t) => acc + t.target, 0) || 500000000);
+            setMonthlyTarget(Object.values(targetMap).reduce((acc: number, t: any) => acc + t.target, 0) || 500000000);
 
             if (branches) {
-                setBranchTargets(branches.map(br => ({
+                setBranchTargets(branches.map((br: any) => ({
                     branchId: br.id,
                     branchName: br.name,
                     target: targetMap[br.id]?.target || 250000000,
-                    revenue: paidTransactions.filter(t => t.branch_id === br.id).reduce((acc, t) => acc + Number(t.total_amount), 0)
+                    revenue: paidTransactions.filter((t: any) => t.branch_id === br.id).reduce((acc: number, t: any) => acc + Number(t.total_amount), 0)
                 })));
 
                 if (recent) {
-                    setRecentBookings(recent.map(r => ({
+                    setRecentBookings(recent.map((r: any) => ({
                         ...r,
-                        branch_name: branches.find(b => b.id === r.branch_id)?.name || 'Unknown'
+                        branch_name: branches.find((b: any) => b.id === r.branch_id)?.name || 'Unknown'
                     })));
                 }
             }

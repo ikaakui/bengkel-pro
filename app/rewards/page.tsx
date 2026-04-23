@@ -37,6 +37,16 @@ interface Reward {
     is_active: boolean;
 }
 
+interface RedemptionHistory {
+    id: string;
+    points: number;
+    description: string;
+    created_at: string;
+    member?: {
+        full_name: string;
+    };
+}
+
 export default function RewardsPage() {
     const [rewards, setRewards] = useState<Reward[]>([]);
     const [loading, setLoading] = useState(true);
@@ -46,7 +56,7 @@ export default function RewardsPage() {
     const [editingReward, setEditingReward] = useState<Partial<Reward> | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [feedback, setFeedback] = useState<{ show: boolean; type: 'success' | 'error'; message: string }>({ show: false, type: 'success', message: '' });
-    const [history, setHistory] = useState<any[]>([]);
+    const [history, setHistory] = useState<RedemptionHistory[]>([]);
 
     const supabase = createClient();
 
@@ -424,7 +434,7 @@ export default function RewardsPage() {
                                             <label className="text-sm font-bold text-slate-700">Tipe Reward</label>
                                             <select 
                                                 value={editingReward?.reward_type}
-                                                onChange={(e) => setEditingReward(prev => ({ ...prev, reward_type: e.target.value as any }))}
+                                                onChange={(e) => setEditingReward(prev => ({ ...prev, reward_type: e.target.value as Reward['reward_type'] }))}
                                                 className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:outline-none focus:border-amber-500 focus:bg-white transition-all font-bold appearance-none"
                                             >
                                                 <option value="discount">🎟️ Potongan Harga</option>

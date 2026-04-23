@@ -77,8 +77,9 @@ export default function RewardsMemberPage() {
             await refreshProfile();
             setRedeemSuccess(reward.name);
             setTimeout(() => setRedeemSuccess(null), 5000);
-        } catch (err: any) {
-            alert("Gagal menukarkan reward: " + err.message);
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : "Terjadi kesalahan tidak dikenal";
+            alert("Gagal menukarkan reward: " + errorMessage);
         } finally {
             setIsRedeeming(null);
         }
@@ -242,32 +243,6 @@ export default function RewardsMemberPage() {
                             })}
                         </div>
                     )}
-                </div>
-            </RoleGuard>
-        </DashboardLayout>
-    );
-}
-
-                    {/* Info Card */}
-                    <Card className="bg-slate-900 text-white p-8 rounded-[2.5rem] relative overflow-hidden">
-                        <div className="absolute right-0 top-0 w-64 h-64 bg-primary opacity-10 rounded-full translate-x-1/3 -translate-y-1/3 blur-3xl" />
-                        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-                            <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center shrink-0">
-                                <Sparkles size={40} className="text-primary" />
-                            </div>
-                            <div className="text-center md:text-left space-y-2">
-                                <h3 className="text-2xl font-black tracking-tight">Kumpulkan Poin Lebih Banyak!</h3>
-                                <p className="text-slate-400 text-sm max-w-lg leading-relaxed">
-                                    Dapatkan poin dari setiap transaksi servis dan pembelian sparepart. Semakin sering servis, semakin banyak reward yang bisa Anda nikmati.
-                                </p>
-                            </div>
-                            <div className="md:ml-auto">
-                                <Button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="h-14 px-8 rounded-2xl font-black bg-primary text-white hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all active:scale-95">
-                                    TUKARKAN POIN SEKARANG
-                                </Button>
-                            </div>
-                        </div>
-                    </Card>
                 </div>
             </RoleGuard>
         </DashboardLayout>
