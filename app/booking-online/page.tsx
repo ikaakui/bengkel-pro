@@ -33,13 +33,11 @@ export default function BookingOnlinePage() {
 
     const [step, setStep] = useState(1);
     const [branches, setBranches] = useState<any[]>([]);
-    const [vehicles, setVehicles] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
     // Form State
     const [selectedBranch, setSelectedBranch] = useState<any>(null);
-    const [selectedVehicleId, setSelectedVehicleId] = useState<string>("manual");
     const [carModel, setCarModel] = useState("");
     const [licensePlate, setLicensePlate] = useState("");
     const [serviceDate, setServiceDate] = useState("");
@@ -49,26 +47,20 @@ export default function BookingOnlinePage() {
 
     const fetchData = useCallback(async () => {
         setLoading(true);
-        const [
-            { data: branchData },
-            { data: vehicleData }
-        ] = await Promise.all([
-            supabase.from("branches").select("*").eq("is_active", true),
-            supabase.from("member_vehicles").select("*").eq("member_id", profile?.id)
-        ]);
+        const { data: branchData } = await supabase
+            .from("branches")
+            .select("*")
+            .eq("is_active", true);
 
-        if (branchData) setBranches(branchData);
-        if (vehicleData) {
-            setVehicles(vehicleData);
-            const primary = vehicleData.find(v => v.is_primary);
-            if (primary) {
-                setSelectedVehicleId(primary.id);
-                setCarModel(primary.brand_model);
-                setLicensePlate(primary.license_plate);
-            }
+        if (branchData) {
+            const filtered = branchData.filter(b => 
+                b.name.toLowerCase().includes("depok") || 
+                b.name.toLowerCase().includes("bsd")
+            );
+            setBranches(filtered);
         }
         setLoading(false);
-    }, [profile?.id, supabase]);
+    }, [supabase]);
 
     useEffect(() => {
         if (profile?.id) fetchData();
@@ -92,19 +84,7 @@ export default function BookingOnlinePage() {
         fetchBookedTimes();
     }, [serviceDate, selectedBranch, supabase]);
 
-    const handleVehicleSelect = (id: string) => {
-        setSelectedVehicleId(id);
-        if (id === "manual") {
-            setCarModel("");
-            setLicensePlate("");
-        } else {
-            const v = vehicles.find(veh => veh.id === id);
-            if (v) {
-                setCarModel(v.brand_model);
-                setLicensePlate(v.license_plate);
-            }
-        }
-    };
+
 
     const handleBooking = async () => {
         if (!profile || !selectedBranch || !serviceDate || !serviceTime) return;
@@ -197,36 +177,30 @@ export default function BookingOnlinePage() {
 
                                         <div className="space-y-6">
                                             <div className="space-y-4">
-                                                <label className="text-sm font-bold text-slate-700">Pilih dari Garasi</label>
-                                                <div className="grid grid-cols-1 gap-2">
-                                                    {vehicles.map((v) => (
-                                                        <button key={v.id} onClick={() => handleVehicleSelect(v.id)} className={cn("flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left", selectedVehicleId === v.id ? "border-primary bg-primary/5" : "border-slate-50 hover:border-slate-200")}>
-                                                            <div className={cn("p-2 rounded-lg", selectedVehicleId === v.id ? "bg-primary text-white" : "bg-white text-slate-400")}><Car size={18} /></div>
-                                                            <div className="flex-1">
-                                                                <p className="text-sm font-bold text-slate-900">{v.brand_model}</p>
-                                                                <p className="text-[10px] font-mono text-slate-500">{v.license_plate}</p>
-                                                            </div>
-                                                        </button>
-                                                    ))}
-                                                    <button onClick={() => handleVehicleSelect("manual")} className={cn("flex items-center gap-3 p-3 rounded-xl border-2 border-dashed transition-all text-left", selectedVehicleId === "manual" ? "border-primary bg-primary/5" : "border-slate-100 text-slate-400 hover:border-slate-300")}>
-                                                        <PlusCircle size={18} />
-                                                        <span className="text-sm font-bold">Gunakan Kendaraan Lain</span>
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            {selectedVehicleId === "manual" && (
-                                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 pt-4 border-t border-slate-100">
+                                                <label className="text-sm font-bold text-slate-700">Informasi Kendaraan</label>
+                                                <div className="space-y-4">
                                                     <div className="relative">
                                                         <Car className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                                        <input type="text" placeholder="Merek & Tipe Mobil" className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:outline-none focus:border-primary focus:bg-white transition-all" value={carModel} onChange={(e) => setCarModel(e.target.value)} />
+                                                        <input 
+                                                            type="text" 
+                                                            placeholder="Merek & Tipe Mobil" 
+                                                            className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:outline-none focus:border-primary focus:bg-white transition-all" 
+                                                            value={carModel} 
+                                                            onChange={(e) => setCarModel(e.target.value)} 
+                                                        />
                                                     </div>
                                                     <div className="relative">
                                                         <Wrench className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                                        <input type="text" placeholder="Nomor Polisi" className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:outline-none focus:border-primary focus:bg-white transition-all uppercase" value={licensePlate} onChange={(e) => setLicensePlate(e.target.value)} />
+                                                        <input 
+                                                            type="text" 
+                                                            placeholder="Nomor Polisi" 
+                                                            className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:outline-none focus:border-primary focus:bg-white transition-all uppercase" 
+                                                            value={licensePlate} 
+                                                            onChange={(e) => setLicensePlate(e.target.value)} 
+                                                        />
                                                     </div>
-                                                </motion.div>
-                                            )}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
