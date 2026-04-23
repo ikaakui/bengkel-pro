@@ -6,7 +6,7 @@ import RoleGuard from "@/components/auth/RoleGuard";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { 
-    MessageSquareText, 
+    MessageSquare, 
     Star, 
     Send, 
     Loader2, 

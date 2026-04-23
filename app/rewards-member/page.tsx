@@ -16,7 +16,8 @@ import {
     Sparkles, 
     Info,
     ChevronRight,
-    Trophy
+    Trophy,
+    X
 } from "lucide-react";
 import { createClient } from "@/lib/supabase-client";
 import { useAuth } from "@/components/providers/AuthProvider";

@@ -30,6 +30,8 @@ import {
     Activity,
     CalendarPlus,
     MessageSquarePlus,
+    Clock,
+    Gift
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
