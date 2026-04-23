@@ -56,7 +56,9 @@ export default function BookingOnlinePage() {
             .select("*");
 
         if (branchData && branchData.length > 0) {
-            setBranches(branchData);
+            // Filter out duplicates by name to prevent UI clutter
+            const uniqueBranches = branchData.filter((v, i, a) => a.findIndex(t => t.name === v.name) === i);
+            setBranches(uniqueBranches);
         }
         setLoading(false);
     }, [supabase]);
