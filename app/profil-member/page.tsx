@@ -9,15 +9,12 @@ import { Badge } from "@/components/ui/Badge";
 import { 
     User, 
     Phone, 
-    Car, 
     MapPin, 
     Calendar, 
     ShieldCheck, 
     Edit3, 
     Save, 
     X,
-    Plus,
-    Trash2,
     Loader2,
     Star,
     Award,
@@ -45,24 +42,6 @@ export default function ProfilMemberPage() {
     const [fullName, setFullName] = useState(profile?.full_name || "");
     const [phone, setPhone] = useState(profile?.phone || "");
     const [loading, setLoading] = useState(false);
-    const [vehicles, setVehicles] = useState<any[]>([]);
-    const [loadingVehicles, setLoadingVehicles] = useState(true);
-
-    const fetchVehicles = useCallback(async () => {
-        if (!profile?.id) return;
-        setLoadingVehicles(true);
-        const { data } = await supabase
-            .from("member_vehicles")
-            .select("*")
-            .eq("member_id", profile.id)
-            .order("is_primary", { ascending: false });
-        if (data) setVehicles(data);
-        setLoadingVehicles(false);
-    }, [profile?.id, supabase]);
-
-    useEffect(() => {
-        fetchVehicles();
-    }, [fetchVehicles]);
 
     useEffect(() => {
         if (profile) {
@@ -90,16 +69,7 @@ export default function ProfilMemberPage() {
         }
     };
 
-    const handleDeleteVehicle = async (id: string) => {
-        if (!confirm("Hapus kendaraan ini dari garasi?")) return;
-        try {
-            const { error } = await supabase.from("member_vehicles").delete().eq("id", id);
-            if (error) throw error;
-            fetchVehicles();
-        } catch (err: any) {
-            alert("Gagal menghapus: " + err.message);
-        }
-    };
+
 
     const points = profile?.total_points || 0;
     const currentTier = points >= 5000 ? TIERS[3] : points >= 2000 ? TIERS[2] : points >= 500 ? TIERS[1] : TIERS[0];
@@ -203,41 +173,7 @@ export default function ProfilMemberPage() {
                                 )}
                             </Card>
 
-                            {/* Garage Section */}
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-xl font-bold flex items-center gap-2"><Car className="text-primary" size={24} />Garasi (Kendaraan)</h3>
-                                </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {loadingVehicles ? (
-                                        <div className="col-span-2 py-10 flex justify-center"><Loader2 className="animate-spin text-slate-200" /></div>
-                                    ) : vehicles.length === 0 ? (
-                                        <div className="col-span-2 py-10 text-center text-slate-400 font-medium">
-                                            Belum ada kendaraan yang terdaftar.
-                                        </div>
-                                    ) : (
-                                        vehicles.map((v) => (
-                                            <Card key={v.id} className="border-slate-100 p-6 flex flex-col justify-between group hover:border-primary transition-colors">
-                                                <div className="flex justify-between items-start">
-                                                    <div className="w-12 h-12 bg-slate-100 text-slate-500 rounded-2xl flex items-center justify-center"><Car size={24} /></div>
-                                                    {v.is_primary && <Badge variant="success">UTAMA</Badge>}
-                                                </div>
-                                                <div className="mt-6">
-                                                    <p className="text-lg font-black text-slate-900">{v.brand_model}</p>
-                                                    <p className="text-sm font-bold text-slate-400 font-mono tracking-widest mt-1">{v.license_plate}</p>
-                                                </div>
-                                                <div className="mt-6 flex items-center justify-between">
-                                                    <span className="text-xs font-bold text-slate-400">{v.year || '-'}</span>
-                                                    <button onClick={() => handleDeleteVehicle(v.id)} className="text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
-                                            </Card>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
