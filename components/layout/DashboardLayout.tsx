@@ -109,11 +109,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (loading || isLoggingOut) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6">
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center"
-                >
+                <div className="text-center animate-fadeIn">
                     <div className="relative w-24 h-24 mx-auto mb-8">
                         <div className="absolute inset-0 border-4 border-primary/20 rounded-full" />
                         <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -127,7 +123,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <p className="text-slate-500 font-medium">
                         {isLoggingOut ? "Menghapus sesi dengan aman, silakan tunggu." : "Sedang menyinkronkan data profil Anda."}
                     </p>
-                </motion.div>
+                </div>
 
                 {/* Visual feedback at bottom */}
                 <div className="fixed bottom-12 left-0 right-0 text-center">

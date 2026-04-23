@@ -127,7 +127,7 @@ export default function AuthProvider({
         try {
             setLogoLoading(true);
             const { data } = await supabase
-                .from("settings")
+                .from("app_settings")
                 .select("value")
                 .eq("key", "global_logo_url")
                 .single();
@@ -225,7 +225,7 @@ export default function AuthProvider({
             clearTimeout(maxLoadingTimer);
             subscription.unsubscribe();
         };
-    }, [supabase, fetchProfile, refreshGlobalLogo, loading]);
+    }, [supabase, fetchProfile, refreshGlobalLogo]);
 
     const signOut = async () => {
         try {

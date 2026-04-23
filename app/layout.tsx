@@ -1,5 +1,12 @@
 import "./globals.css";
+import { Inter } from "next/font/google";
 import AuthProvider from "@/components/providers/AuthProvider";
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 export const metadata = {
   title: 'INKA OTOSERVICE',
@@ -15,8 +22,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="id">
-      <body>
+    <html lang="id" className={inter.variable}>
+      <body className={inter.className}>
         <AuthProvider>
           {children}
         </AuthProvider>
@@ -24,3 +31,4 @@ export default function RootLayout({
     </html>
   )
 }
+
