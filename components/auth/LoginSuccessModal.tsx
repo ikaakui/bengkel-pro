@@ -4,15 +4,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, User, Crown, Shield, UserCheck } from "lucide-react";
 import { useEffect } from "react";
 
+import { type UserRole } from "@/components/providers/AuthProvider";
+
 interface LoginSuccessModalProps {
     isOpen: boolean;
     name: string;
-    role: "owner" | "admin" | "member" | null;
+    role: UserRole | null;
 }
 
-const roleConfig = {
+const roleConfig: Record<string, any> = {
     owner: { label: "Owner / Super Admin", icon: Crown, color: "text-purple-600", bg: "bg-purple-100" },
     admin: { label: "Admin Operasional", icon: Shield, color: "text-blue-600", bg: "bg-blue-100" },
+    admin_depok: { label: "Admin Depok", icon: Shield, color: "text-blue-600", bg: "bg-blue-100" },
+    admin_bsd: { label: "Admin BSD", icon: Shield, color: "text-blue-600", bg: "bg-blue-100" },
+    spv: { label: "Supervisor", icon: Shield, color: "text-indigo-600", bg: "bg-indigo-100" },
     member: { label: "Member Bengkel", icon: UserCheck, color: "text-emerald-600", bg: "bg-emerald-100" },
 };
 

@@ -93,7 +93,7 @@ export default function BankSettingsPage() {
 
     return (
         <DashboardLayout>
-            <RoleGuard allowedRoles={["mitra"]}>
+            <RoleGuard allowedRoles={["member"]}>
                 <div className="space-y-8 pb-10 max-w-2xl">
                     <div>
                         <h2 className="text-3xl font-bold text-slate-900 flex items-center gap-3">

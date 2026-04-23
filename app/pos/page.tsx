@@ -8,6 +8,7 @@ import POSProductGrid from "./components/POSProductGrid";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { motion } from "framer-motion";
 import {
     Search,
     Plus,
@@ -774,8 +775,6 @@ function POSContent() {
                         </div>
                     )}
 
-                        </div>
-                    )}
 
                     {/* Reward Selection Modal */}
                     {showRewardModal && (
@@ -830,7 +829,7 @@ function POSContent() {
                                                 </div>
                                                 <Button
                                                     size="sm"
-                                                    variant={customerPoints >= reward.points_required ? "warning" : "neutral"}
+                                                    variant={customerPoints >= reward.points_required ? "warning" : "outline"}
                                                     disabled={customerPoints < reward.points_required}
                                                     onClick={() => handleApplyReward(reward)}
                                                     className="font-black text-[10px]"

@@ -33,7 +33,8 @@ import {
     AlertTriangle,
     AlertCircle,
     Building2,
-    CalendarClock
+    CalendarClock,
+    PieChart
 } from "lucide-react";
 
 interface UserProfile {

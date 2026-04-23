@@ -81,7 +81,7 @@ function RegisterForm() {
                 return;
             }
 
-            setRegisteredReferralCode(referralCode);
+            // Removed referralCode logic
             setSuccess(true);
         } catch (err) {
             setError("Terjadi kesalahan. Silakan coba lagi.");

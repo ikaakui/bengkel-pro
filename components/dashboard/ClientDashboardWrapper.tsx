@@ -76,7 +76,7 @@ export default function ClientDashboardWrapper({ initialUser, initialProfile }: 
 
     return (
         <>
-            {activeRole === "member" || activeRole === "mitra" ? (
+            {activeRole === "member" ? (
                 <MemberDashboard />
             ) : activeRole === "owner" ? (
                 <OwnerDashboard />
