@@ -428,6 +428,59 @@ CREATE INDEX IF NOT EXISTS idx_point_tx_member_id          ON point_transactions
 CREATE INDEX IF NOT EXISTS idx_rewards_is_active           ON rewards (is_active);
 
 -- ────────────────────────────────────────────────────────────────
+-- 14. MEMBER FEEDBACK (Kritik & Saran)
+-- ────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS member_feedback (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  member_id   UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  full_name   TEXT,
+  subject     TEXT,
+  message     TEXT NOT NULL,
+  rating      INTEGER CHECK (rating >= 1 AND rating <= 5),
+  status      TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'read', 'resolved')),
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE member_feedback ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Member can insert own feedback" ON member_feedback;
+CREATE POLICY "Member can insert own feedback" ON member_feedback
+  FOR INSERT WITH CHECK (auth.uid() = member_id);
+
+DROP POLICY IF EXISTS "Member can view own feedback" ON member_feedback;
+CREATE POLICY "Member can view own feedback" ON member_feedback
+  FOR SELECT USING (auth.uid() = member_id);
+
+DROP POLICY IF EXISTS "Owner can manage all feedback" ON member_feedback;
+CREATE POLICY "Owner can manage all feedback" ON member_feedback
+  FOR ALL USING ((auth.jwt()->'user_metadata'->>'role') = 'owner');
+
+-- ────────────────────────────────────────────────────────────────
+-- 15. MEMBER VEHICLES (Garasi Member)
+-- ────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS member_vehicles (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  member_id     UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  brand_model   TEXT NOT NULL,
+  license_plate TEXT NOT NULL,
+  year          INTEGER,
+  color         TEXT,
+  is_primary    BOOLEAN DEFAULT FALSE,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE member_vehicles ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Member can manage own vehicles" ON member_vehicles;
+CREATE POLICY "Member can manage own vehicles" ON member_vehicles
+  FOR ALL USING (auth.uid() = member_id);
+
+DROP POLICY IF EXISTS "Owner and Admin can view member vehicles" ON member_vehicles;
+CREATE POLICY "Owner and Admin can view member vehicles" ON member_vehicles
+  FOR SELECT USING ((auth.jwt()->'user_metadata'->>'role') IN ('owner', 'admin'));
+
+-- ────────────────────────────────────────────────────────────────
 -- ✅ SETUP SELESAI!
 -- Langkah selanjutnya:
 --   1. Buat akun Owner melalui halaman /register atau Supabase Auth
