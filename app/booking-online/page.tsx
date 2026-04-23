@@ -27,6 +27,11 @@ import { cn } from "@/lib/utils";
 
 const TIME_SLOTS = ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"];
 
+const DEFAULT_BRANCHES = [
+    { id: "depok", name: "Inka Otoservice Depok", address: "Jl. Raya Depok No. 1, Kota Depok" },
+    { id: "bsd", name: "Inka Otoservice BSD", address: "BSD City, Tangerang Selatan" }
+];
+
 export default function BookingOnlinePage() {
     const { profile } = useAuth();
     const supabase = createClient();
@@ -160,20 +165,42 @@ export default function BookingOnlinePage() {
                                     <h3 className="text-xl font-bold mb-6 flex items-center gap-2"><MapPin className="text-primary" size={24} />Pilih Cabang & Kendaraan</h3>
                                     
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="space-y-4">
-                                            <label className="text-sm font-bold text-slate-700">Pilih Cabang Bengkel</label>
-                                            <div className="grid grid-cols-1 gap-3">
-                                                {branches.map((b) => (
-                                                    <button key={b.id} onClick={() => setSelectedBranch(b)} className={cn("flex items-center justify-between p-4 rounded-2xl border-2 transition-all text-left", selectedBranch?.id === b.id ? "border-primary bg-primary/5 ring-4 ring-primary/5" : "border-slate-100 hover:border-slate-200")}>
-                                                        <div>
-                                                            <p className="font-bold text-slate-900">{b.name}</p>
-                                                            <p className="text-xs text-slate-500 mt-1">{b.address}</p>
-                                                        </div>
-                                                        {selectedBranch?.id === b.id && <CheckCircle2 className="text-primary" size={20} />}
-                                                    </button>
-                                                ))}
+                                            <div className="space-y-4">
+                                                <label className="text-sm font-bold text-slate-700">Pilih Cabang Bengkel</label>
+                                                <div className="grid grid-cols-1 gap-4">
+                                                    {(branches.length > 0 ? branches : DEFAULT_BRANCHES).map((b) => (
+                                                        <button 
+                                                            key={b.id} 
+                                                            onClick={() => setSelectedBranch(b)} 
+                                                            className={cn(
+                                                                "relative flex items-start gap-4 p-5 rounded-2xl border-2 transition-all text-left group",
+                                                                selectedBranch?.id === b.id 
+                                                                    ? "border-primary bg-primary/5 ring-4 ring-primary/5" 
+                                                                    : "border-slate-100 hover:border-slate-200 bg-white"
+                                                            )}
+                                                        >
+                                                            <div className={cn(
+                                                                "mt-1 w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
+                                                                selectedBranch?.id === b.id ? "border-primary bg-primary" : "border-slate-200"
+                                                            )}>
+                                                                {selectedBranch?.id === b.id && <div className="w-2 h-2 rounded-full bg-white" />}
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className="font-black text-slate-900 group-hover:text-primary transition-colors">{b.name}</p>
+                                                                <div className="flex items-start gap-1.5 mt-2 text-slate-500">
+                                                                    <MapPin size={14} className="mt-0.5 shrink-0" />
+                                                                    <p className="text-xs font-medium leading-relaxed">{b.address || "Alamat belum diatur"}</p>
+                                                                </div>
+                                                            </div>
+                                                            {selectedBranch?.id === b.id && (
+                                                                <div className="absolute top-4 right-4">
+                                                                    <CheckCircle2 className="text-primary" size={20} />
+                                                                </div>
+                                                            )}
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
 
                                         <div className="space-y-6">
                                             <div className="space-y-4">
