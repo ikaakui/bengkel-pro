@@ -80,7 +80,7 @@ export default function ClientDashboardWrapper({ initialUser, initialProfile }: 
                 <MemberDashboard />
             ) : activeRole === "owner" ? (
                 <OwnerDashboard />
-            ) : activeRole === "admin" || activeRole === "spv" ? (
+            ) : activeRole === "admin" || activeRole === "spv" || activeRole === "admin_depok" || activeRole === "admin_bsd" ? (
                 <AdminDashboard />
             ) : (
                 <DashboardLoading message={`Menyinkronkan Akun (${activeRole})...`} />

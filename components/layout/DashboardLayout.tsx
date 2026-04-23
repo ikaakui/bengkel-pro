@@ -38,27 +38,27 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import type { UserRole } from "@/components/providers/AuthProvider";
 
 const navigation = [
-    { name: 'Overview', href: '/', icon: LayoutDashboard, roles: ['owner', 'admin', 'member'], group: 'Utama' },
+    { name: 'Overview', href: '/', icon: LayoutDashboard, roles: ['owner', 'admin', 'member', 'admin_depok', 'admin_bsd'], group: 'Utama' },
     // Owner Analytics
     { name: 'Performa Cabang', href: '/analytics/branches', icon: Building2, roles: ['owner'], group: 'Analisis' },
     { name: 'Analisis Member', href: '/analytics/member', icon: Users2, roles: ['owner'], group: 'Analisis' },
     { name: 'Retensi & Servis', href: '/analytics/customers', icon: PieChart, roles: ['owner'], group: 'Analisis' },
     { name: 'Status Inventori', href: '/analytics/inventory', icon: Package, roles: ['owner'], group: 'Analisis' },
     // Admin Analytics
-    { name: 'Operasional Live', href: '/analytics/operations', icon: Activity, roles: ['admin'], group: 'Analisis' },
-    { name: 'Keuangan Cabang', href: '/analytics/finance', icon: Banknote, roles: ['admin'], group: 'Analisis' },
+    { name: 'Operasional Live', href: '/analytics/operations', icon: Activity, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Analisis' },
+    { name: 'Keuangan Cabang', href: '/analytics/finance', icon: Banknote, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Analisis' },
 
-    { name: 'POS (Kasir)', href: '/pos', icon: ShoppingCart, roles: ['admin', 'spv'], group: 'Utama' },
-    { name: 'Antrian Service', href: '/antrian', icon: ClipboardList, roles: ['owner', 'admin', 'spv'], group: 'Utama' },
-    { name: 'Booking Service', href: '/bookings', icon: Package, roles: ['admin', 'spv'], group: 'Operasional' },
-    { name: 'Riwayat Servis', href: '/bookings-member', icon: Package, roles: ['admin', 'member', 'spv'], group: 'Operasional' },
+    { name: 'POS (Kasir)', href: '/pos', icon: ShoppingCart, roles: ['admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Utama' },
+    { name: 'Antrian Service', href: '/antrian', icon: ClipboardList, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Utama' },
+    { name: 'Booking Service', href: '/bookings', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Operasional' },
+    { name: 'Riwayat Servis', href: '/bookings-member', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd', 'member', 'spv'], group: 'Operasional' },
     { name: 'Poin Reward', href: '/rewards', icon: PieChart, roles: ['member'], group: 'Keuangan' },
     { name: 'Montir AI', href: '/montir-ai', icon: Bot, roles: ['member'], group: 'Asisten' },
     { name: 'Persetujuan Dana', href: '/withdrawals', icon: Banknote, roles: ['owner'], group: 'Keuangan' },
     { name: 'Laporan', href: '/reports', icon: PieChart, roles: ['owner', 'spv'], group: 'Keuangan' },
-    { name: 'Katalog', href: '/catalog', icon: Wrench, roles: ['owner', 'admin'], group: 'Manajemen' },
-    { name: 'Pengeluaran', href: '/expenses', icon: TrendingDown, roles: ['owner', 'admin', 'spv'], group: 'Keuangan' },
-    { name: 'Data Member', href: '/users', icon: Users2, roles: ['owner', 'admin', 'spv'], group: 'Manajemen' },
+    { name: 'Katalog', href: '/catalog', icon: Wrench, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd'], group: 'Manajemen' },
+    { name: 'Pengeluaran', href: '/expenses', icon: TrendingDown, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Keuangan' },
+    { name: 'Data Member', href: '/users', icon: Users2, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Manajemen' },
     { name: 'Karyawan & Admin', href: '/staff', icon: Shield, roles: ['owner'], group: 'Manajemen' },
     { name: 'Organisasi', href: '/branches', icon: Building2, roles: ['owner'], group: 'Manajemen' },
     { name: 'Pengaturan', href: '/settings', icon: Settings, roles: ['owner'], group: 'Sistem' },
@@ -67,6 +67,8 @@ const navigation = [
 const roleConfig: Record<UserRole, { label: string; icon: typeof Crown; color: string; bgColor: string }> = {
     owner: { label: 'Owner', icon: Crown, color: 'text-purple-600', bgColor: 'bg-purple-50' },
     admin: { label: 'Admin', icon: Shield, color: 'text-blue-600', bgColor: 'bg-blue-50' },
+    admin_depok: { label: 'Admin Depok', icon: Shield, color: 'text-blue-600', bgColor: 'bg-blue-50' },
+    admin_bsd: { label: 'Admin BSD', icon: Shield, color: 'text-blue-600', bgColor: 'bg-blue-50' },
     spv: { label: 'Supervisor', icon: UserCheck, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
     member: { label: 'Member', icon: UserCheck, color: 'text-amber-600', bgColor: 'bg-amber-50' },
 };
