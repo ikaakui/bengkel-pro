@@ -31,6 +31,7 @@ interface Reward {
     reward_type: 'discount' | 'item';
     discount_value: number | null;
     description: string | null;
+    image_url: string | null;
     is_active: boolean;
 }
 
@@ -66,10 +67,6 @@ export default function RewardsMemberPage() {
 
         setIsRedeeming(reward.id);
         try {
-            // 1. Log the redemption (using a generic audit or transactions table if needed, for now just updating points)
-            // Ideally we have a 'redemptions' table.
-            
-            // 2. Update member points
             const { error } = await supabase
                 .from("profiles")
                 .update({ total_points: (profile.total_points || 0) - reward.points_required })
@@ -92,21 +89,23 @@ export default function RewardsMemberPage() {
     return (
         <DashboardLayout>
             <RoleGuard allowedRoles={["member"]}>
-                <div className="max-w-6xl mx-auto space-y-8 pb-20">
+                <div className="max-w-6xl mx-auto space-y-12 pb-20">
                     {/* Header with Points Balance */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                         <div>
-                            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Katalog Reward</h1>
-                            <p className="text-slate-500 mt-1">Tukarkan poin Anda dengan berbagai penawaran menarik.</p>
+                            <h1 className="text-4xl font-black text-slate-900 tracking-tight">Katalog Reward</h1>
+                            <p className="text-slate-500 mt-1 font-medium">Tukarkan poin Anda dengan berbagai produk pilihan.</p>
                         </div>
 
-                        <Card className="border-amber-100 bg-amber-50/50 p-4 flex items-center gap-4 min-w-[240px] shadow-lg shadow-amber-500/5">
-                            <div className="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/20">
-                                <Coins size={24} />
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em]">Poin Tersedia</p>
-                                <p className="text-3xl font-black text-amber-700 tracking-tight">{points.toLocaleString()}</p>
+                        <Card className="border-none bg-gradient-to-br from-amber-400 to-orange-500 p-0 overflow-hidden min-w-[260px] shadow-2xl shadow-amber-500/20 rounded-[2rem]">
+                            <div className="p-6 flex items-center gap-5 text-white">
+                                <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-inner">
+                                    <Coins size={32} />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.25em] opacity-80">Poin Tersedia</p>
+                                    <p className="text-4xl font-black tracking-tighter leading-none">{points.toLocaleString()}</p>
+                                </div>
                             </div>
                         </Card>
                     </div>
@@ -115,19 +114,19 @@ export default function RewardsMemberPage() {
                     <AnimatePresence>
                         {redeemSuccess && (
                             <motion.div 
-                                initial={{ opacity: 0, y: -20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                className="bg-emerald-50 border-2 border-emerald-100 p-4 rounded-2xl flex items-center gap-3 text-emerald-800"
+                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                                className="bg-emerald-50 border-2 border-emerald-100 p-6 rounded-[2rem] flex items-center gap-5 text-emerald-800 shadow-xl shadow-emerald-500/5"
                             >
-                                <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center shrink-0">
-                                    <Trophy size={20} />
+                                <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
+                                    <Trophy size={24} />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="font-bold">Berhasil Ditukarkan!</p>
-                                    <p className="text-sm">Reward <strong>{redeemSuccess}</strong> berhasil diklaim. Silakan tunjukkan ke petugas saat servis berikutnya.</p>
+                                    <p className="font-black text-lg">Berhasil Ditukarkan!</p>
+                                    <p className="text-sm font-medium opacity-80">Reward <strong>{redeemSuccess}</strong> berhasil diklaim. Silakan tunjukkan ke petugas saat servis berikutnya.</p>
                                 </div>
-                                <button onClick={() => setRedeemSuccess(null)} className="text-emerald-400 hover:text-emerald-600">
+                                <button onClick={() => setRedeemSuccess(null)} className="p-2 hover:bg-emerald-100 rounded-xl transition-colors">
                                     <X size={20} />
                                 </button>
                             </motion.div>
@@ -137,105 +136,105 @@ export default function RewardsMemberPage() {
                     {/* Reward Grid */}
                     {loading ? (
                         <div className="py-20 flex justify-center">
-                            <Loader2 size={40} className="animate-spin text-slate-300" />
+                            <Loader2 size={40} className="animate-spin text-amber-500" />
                         </div>
                     ) : rewards.length === 0 ? (
-                        <Card className="py-20 text-center border-dashed border-2 border-slate-100">
-                            <Gift size={64} className="mx-auto text-slate-200 mb-4" />
-                            <p className="text-xl font-bold text-slate-400">Belum ada reward tersedia saat ini.</p>
-                            <p className="text-sm text-slate-400">Nantikan promo menarik dari kami segera!</p>
+                        <Card className="py-24 text-center border-dashed border-4 border-slate-100 rounded-[3rem]">
+                            <Gift size={80} className="mx-auto text-slate-100 mb-6" />
+                            <p className="text-2xl font-black text-slate-300 uppercase tracking-widest">Belum ada reward</p>
                         </Card>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                             {rewards.map((reward) => {
                                 const canAfford = points >= reward.points_required;
                                 return (
                                     <motion.div
                                         key={reward.id}
-                                        whileHover={{ y: -8 }}
-                                        className="group"
+                                        whileHover={{ y: -10 }}
+                                        className="relative group"
                                     >
                                         <Card className={cn(
-                                            "h-full flex flex-col p-0 overflow-hidden border-2 transition-all duration-500",
+                                            "h-full flex flex-col p-6 overflow-hidden rounded-[2.5rem] border-none shadow-2xl transition-all duration-500",
                                             canAfford 
-                                                ? "border-slate-100 hover:border-amber-200 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-amber-500/10" 
-                                                : "border-slate-50 opacity-80 grayscale-[0.3]"
+                                                ? "bg-white shadow-slate-200/60 hover:shadow-amber-500/10" 
+                                                : "bg-slate-50/50 grayscale-[0.8] opacity-80"
                                         )}>
-                                            {/* Card Image/Icon Header */}
-                                            <div className={cn(
-                                                "p-8 flex items-center justify-center relative overflow-hidden h-44",
-                                                reward.reward_type === 'discount' ? "bg-amber-50" : "bg-blue-50"
-                                            )}>
-                                                {/* Decorative background blobs */}
-                                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/50 rounded-full blur-3xl transition-transform group-hover:scale-150 duration-700" />
-                                                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/30 rounded-full blur-2xl" />
+                                            {/* Product Image Container (Yellow Box Style from Screenshot) */}
+                                            <div className="relative aspect-square mb-6 rounded-[2rem] border-[3px] border-amber-100 bg-gradient-to-br from-amber-50 to-amber-100 p-8 flex items-center justify-center overflow-hidden transition-all duration-500 group-hover:border-amber-300">
+                                                {/* Decorative background circle */}
+                                                <div className="absolute inset-4 bg-white/40 rounded-[1.5rem] blur-xl" />
                                                 
-                                                <div className={cn(
-                                                    "w-24 h-24 rounded-[2rem] flex items-center justify-center shadow-2xl relative z-10 transition-all duration-500 group-hover:scale-110 group-hover:rotate-6",
-                                                    reward.reward_type === 'discount' 
-                                                        ? "bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-amber-500/30" 
-                                                        : "bg-gradient-to-br from-blue-400 to-indigo-500 text-white shadow-blue-500/30"
-                                                )}>
-                                                    {reward.reward_type === 'discount' ? <Ticket size={48} /> : <Gift size={48} />}
-                                                </div>
+                                                {reward.image_url ? (
+                                                    <img 
+                                                        src={reward.image_url} 
+                                                        alt={reward.name}
+                                                        className="relative z-10 w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                                                    />
+                                                ) : (
+                                                    <div className="relative z-10 text-amber-500/30">
+                                                        {reward.reward_type === 'discount' ? <Ticket size={80} /> : <Gift size={80} />}
+                                                    </div>
+                                                )}
 
-                                                {/* Point Badge - Floating */}
-                                                <div className="absolute top-4 right-4 z-20">
-                                                    <Badge className="bg-white/90 backdrop-blur-md text-slate-900 border-none shadow-lg px-4 py-2 rounded-full font-black text-xs flex items-center gap-2">
-                                                        <Coins size={14} className="text-amber-500" />
-                                                        {reward.points_required} POIN
-                                                    </Badge>
+                                                {/* Sparkles decoration like screenshot */}
+                                                <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Sparkles className="text-amber-400 animate-pulse" size={20} />
+                                                </div>
+                                                <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Sparkles className="text-amber-400 animate-pulse" size={20} />
                                                 </div>
                                             </div>
 
-                                            <div className="p-8 flex-1 flex flex-col">
-                                                <div className="mb-4">
-                                                    <h3 className="text-2xl font-black text-slate-900 leading-tight group-hover:text-amber-600 transition-colors">{reward.name}</h3>
-                                                    <div className="h-1 w-12 bg-amber-200 mt-2 rounded-full transition-all group-hover:w-20" />
+                                            {/* Content Area */}
+                                            <div className="text-center space-y-3 mb-8">
+                                                <h3 className="text-2xl font-black text-slate-800 tracking-tight leading-none group-hover:text-amber-600 transition-colors">
+                                                    {reward.name}
+                                                </h3>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <div className="w-5 h-5 rounded-full bg-amber-400 shadow-inner flex items-center justify-center">
+                                                        <div className="w-2.5 h-2.5 rounded-full bg-white/40" />
+                                                    </div>
+                                                    <span className="text-lg font-bold text-slate-600">
+                                                        {reward.points_required.toLocaleString()} Poin
+                                                    </span>
                                                 </div>
-                                                
-                                                <p className="text-sm text-slate-500 font-medium leading-relaxed mb-8 flex-1">
-                                                    {reward.description || "Tukarkan poin Anda dengan reward spesial ini."}
-                                                </p>
+                                            </div>
 
-                                                <div className="space-y-4">
-                                                    {!canAfford ? (
-                                                        <div className="space-y-3">
-                                                            <div className="flex justify-between items-end">
-                                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Progress Poin</p>
-                                                                <p className="text-xs font-black text-slate-600">{points} / {reward.points_required}</p>
-                                                            </div>
-                                                            <div className="h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-50">
-                                                                <motion.div 
-                                                                    initial={{ width: 0 }}
-                                                                    animate={{ width: `${Math.min((points / reward.points_required) * 100, 100)}%` }}
-                                                                    className="h-full bg-gradient-to-r from-slate-300 to-slate-400 rounded-full" 
-                                                                />
-                                                            </div>
-                                                            <p className="text-[10px] font-bold text-slate-400 text-center uppercase tracking-wider">
-                                                                Butuh {reward.points_required - points} Poin lagi
-                                                            </p>
+                                            {/* Action Button */}
+                                            <div className="mt-auto">
+                                                {!canAfford ? (
+                                                    <div className="space-y-3 p-4 bg-slate-100/50 rounded-2xl">
+                                                        <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                                            <span>Progres Poin</span>
+                                                            <span>{Math.round((points / reward.points_required) * 100)}%</span>
                                                         </div>
-                                                    ) : (
-                                                        <Button
-                                                            onClick={() => handleRedeem(reward)}
-                                                            disabled={isRedeeming === reward.id}
-                                                            className="w-full h-16 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black text-lg shadow-xl shadow-amber-500/20 hover:shadow-amber-500/40 transition-all active:scale-95 group/btn flex flex-col items-center justify-center gap-0"
-                                                        >
-                                                            {isRedeeming === reward.id ? (
-                                                                <Loader2 size={24} className="animate-spin" />
-                                                            ) : (
-                                                                <>
-                                                                    <span className="uppercase tracking-widest text-xs opacity-80 mb-1">Klaim Sekarang</span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <Gift size={20} className="group-hover/btn:rotate-12 transition-transform" />
-                                                                        TUKARKAN POIN
-                                                                    </div>
-                                                                </>
-                                                            )}
-                                                        </Button>
-                                                    )}
-                                                </div>
+                                                        <div className="h-2 bg-white rounded-full overflow-hidden shadow-inner">
+                                                            <motion.div 
+                                                                initial={{ width: 0 }}
+                                                                animate={{ width: `${Math.min((points / reward.points_required) * 100, 100)}%` }}
+                                                                className="h-full bg-slate-300 rounded-full"
+                                                            />
+                                                        </div>
+                                                        <p className="text-[10px] font-bold text-slate-400 text-center uppercase tracking-tighter">
+                                                            Kurang { (reward.points_required - points).toLocaleString() } poin lagi
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <Button
+                                                        onClick={() => handleRedeem(reward)}
+                                                        disabled={isRedeeming === reward.id}
+                                                        className="w-full h-14 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black text-sm uppercase tracking-widest shadow-xl shadow-amber-500/20 hover:shadow-amber-500/40 transition-all active:scale-95 flex items-center justify-center gap-3"
+                                                    >
+                                                        {isRedeeming === reward.id ? (
+                                                            <Loader2 size={20} className="animate-spin" />
+                                                        ) : (
+                                                            <>
+                                                                TUKARKAN POIN
+                                                                <ChevronRight size={18} />
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                )}
                                             </div>
                                         </Card>
                                     </motion.div>
@@ -243,6 +242,11 @@ export default function RewardsMemberPage() {
                             })}
                         </div>
                     )}
+                </div>
+            </RoleGuard>
+        </DashboardLayout>
+    );
+}
 
                     {/* Info Card */}
                     <Card className="bg-slate-900 text-white p-8 rounded-[2.5rem] relative overflow-hidden">
