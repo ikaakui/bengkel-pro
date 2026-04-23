@@ -140,7 +140,7 @@ export default function RewardsPage() {
 
     return (
         <DashboardLayout>
-            <RoleGuard allowedRoles={["owner", "admin"]}>
+            <RoleGuard allowedRoles={["owner", "admin", "spv"]}>
                 <div className="max-w-6xl mx-auto space-y-8 pb-20">
                     
                     {/* Header Section */}

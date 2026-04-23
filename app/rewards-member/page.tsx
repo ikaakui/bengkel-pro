@@ -146,63 +146,94 @@ export default function RewardsMemberPage() {
                             <p className="text-sm text-slate-400">Nantikan promo menarik dari kami segera!</p>
                         </Card>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {rewards.map((reward) => {
                                 const canAfford = points >= reward.points_required;
                                 return (
                                     <motion.div
                                         key={reward.id}
-                                        whileHover={{ y: -5 }}
-                                        className="h-full"
+                                        whileHover={{ y: -8 }}
+                                        className="group"
                                     >
                                         <Card className={cn(
-                                            "h-full flex flex-col p-0 overflow-hidden border-slate-100 transition-all hover:shadow-2xl hover:shadow-slate-200/50",
-                                            !canAfford && "grayscale-[0.5]"
+                                            "h-full flex flex-col p-0 overflow-hidden border-2 transition-all duration-500",
+                                            canAfford 
+                                                ? "border-slate-100 hover:border-amber-200 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-amber-500/10" 
+                                                : "border-slate-50 opacity-80 grayscale-[0.3]"
                                         )}>
+                                            {/* Card Image/Icon Header */}
                                             <div className={cn(
-                                                "p-6 flex items-center justify-center relative overflow-hidden h-40",
+                                                "p-8 flex items-center justify-center relative overflow-hidden h-44",
                                                 reward.reward_type === 'discount' ? "bg-amber-50" : "bg-blue-50"
                                             )}>
-                                                {/* Background decoration */}
-                                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/40 rounded-full translate-x-1/3 -translate-y-1/3 blur-2xl" />
+                                                {/* Decorative background blobs */}
+                                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/50 rounded-full blur-3xl transition-transform group-hover:scale-150 duration-700" />
+                                                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/30 rounded-full blur-2xl" />
                                                 
                                                 <div className={cn(
-                                                    "w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl relative z-10 transition-transform group-hover:scale-110",
-                                                    reward.reward_type === 'discount' ? "bg-amber-500 text-white shadow-amber-500/20" : "bg-blue-500 text-white shadow-blue-500/20"
+                                                    "w-24 h-24 rounded-[2rem] flex items-center justify-center shadow-2xl relative z-10 transition-all duration-500 group-hover:scale-110 group-hover:rotate-6",
+                                                    reward.reward_type === 'discount' 
+                                                        ? "bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-amber-500/30" 
+                                                        : "bg-gradient-to-br from-blue-400 to-indigo-500 text-white shadow-blue-500/30"
                                                 )}>
-                                                    {reward.reward_type === 'discount' ? <Ticket size={40} /> : <Gift size={40} />}
+                                                    {reward.reward_type === 'discount' ? <Ticket size={48} /> : <Gift size={48} />}
+                                                </div>
+
+                                                {/* Point Badge - Floating */}
+                                                <div className="absolute top-4 right-4 z-20">
+                                                    <Badge className="bg-white/90 backdrop-blur-md text-slate-900 border-none shadow-lg px-4 py-2 rounded-full font-black text-xs flex items-center gap-2">
+                                                        <Coins size={14} className="text-amber-500" />
+                                                        {reward.points_required} POIN
+                                                    </Badge>
                                                 </div>
                                             </div>
 
-                                            <div className="p-6 flex-1 flex flex-col">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <Badge variant={reward.reward_type === 'discount' ? 'warning' : 'info'} className="text-[10px] font-black uppercase tracking-widest">
-                                                        {reward.reward_type === 'discount' ? 'Diskon' : 'Produk'}
-                                                    </Badge>
-                                                    <div className="flex items-center gap-1 text-amber-500 font-black">
-                                                        <Star size={14} fill="currentColor" />
-                                                        <span className="text-sm">{reward.points_required} PTS</span>
-                                                    </div>
+                                            <div className="p-8 flex-1 flex flex-col">
+                                                <div className="mb-4">
+                                                    <h3 className="text-2xl font-black text-slate-900 leading-tight group-hover:text-amber-600 transition-colors">{reward.name}</h3>
+                                                    <div className="h-1 w-12 bg-amber-200 mt-2 rounded-full transition-all group-hover:w-20" />
                                                 </div>
+                                                
+                                                <p className="text-sm text-slate-500 font-medium leading-relaxed mb-8 flex-1">
+                                                    {reward.description || "Tukarkan poin Anda dengan reward spesial ini."}
+                                                </p>
 
-                                                <h3 className="text-xl font-black text-slate-900 mb-2 leading-tight">{reward.name}</h3>
-                                                <p className="text-sm text-slate-500 line-clamp-3 mb-6 flex-1">{reward.description || "Tukarkan poin Anda dengan reward spesial ini."}</p>
-
-                                                <div className="pt-4 border-t border-slate-50 flex items-center justify-between gap-4">
+                                                <div className="space-y-4">
                                                     {!canAfford ? (
-                                                        <div className="flex-1 space-y-2">
-                                                            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                                <div className="h-full bg-slate-300 rounded-full" style={{ width: `${(points / reward.points_required) * 100}%` }} />
+                                                        <div className="space-y-3">
+                                                            <div className="flex justify-between items-end">
+                                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Progress Poin</p>
+                                                                <p className="text-xs font-black text-slate-600">{points} / {reward.points_required}</p>
                                                             </div>
-                                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                                                Kurang {reward.points_required - points} Poin lagi
+                                                            <div className="h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-50">
+                                                                <motion.div 
+                                                                    initial={{ width: 0 }}
+                                                                    animate={{ width: `${Math.min((points / reward.points_required) * 100, 100)}%` }}
+                                                                    className="h-full bg-gradient-to-r from-slate-300 to-slate-400 rounded-full" 
+                                                                />
+                                                            </div>
+                                                            <p className="text-[10px] font-bold text-slate-400 text-center uppercase tracking-wider">
+                                                                Butuh {reward.points_required - points} Poin lagi
                                                             </p>
                                                         </div>
                                                     ) : (
-                                                        <div className="w-full h-12 rounded-2xl bg-emerald-50 border-2 border-emerald-100 flex items-center justify-center text-emerald-600 font-black gap-2">
-                                                            <CheckCircle2 size={18} />
-                                                            BISA DITUKAR DI KASIR
-                                                        </div>
+                                                        <Button
+                                                            onClick={() => handleRedeem(reward)}
+                                                            disabled={isRedeeming === reward.id}
+                                                            className="w-full h-16 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black text-lg shadow-xl shadow-amber-500/20 hover:shadow-amber-500/40 transition-all active:scale-95 group/btn flex flex-col items-center justify-center gap-0"
+                                                        >
+                                                            {isRedeeming === reward.id ? (
+                                                                <Loader2 size={24} className="animate-spin" />
+                                                            ) : (
+                                                                <>
+                                                                    <span className="uppercase tracking-widest text-xs opacity-80 mb-1">Klaim Sekarang</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <Gift size={20} className="group-hover/btn:rotate-12 transition-transform" />
+                                                                        TUKARKAN POIN
+                                                                    </div>
+                                                                </>
+                                                            )}
+                                                        </Button>
                                                     )}
                                                 </div>
                                             </div>

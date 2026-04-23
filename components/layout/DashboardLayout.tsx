@@ -66,7 +66,7 @@ const navigation = [
     { name: 'Antrian Service', href: '/antrian', icon: ClipboardList, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Utama' },
     { name: 'Booking Service', href: '/bookings', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Operasional' },
     { name: 'Riwayat Servis', href: '/bookings-member', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Operasional' },
-    { name: 'Kelola Reward', href: '/rewards', icon: Gift, roles: ['owner'], group: 'Manajemen' },
+    { name: 'Kelola Reward', href: '/rewards', icon: Gift, roles: ['owner', 'spv'], group: 'Manajemen' },
     { name: 'Persetujuan Dana', href: '/withdrawals', icon: Banknote, roles: ['owner'], group: 'Keuangan' },
     { name: 'Laporan', href: '/reports', icon: PieChart, roles: ['owner', 'spv'], group: 'Keuangan' },
     { name: 'Katalog', href: '/catalog', icon: Wrench, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd'], group: 'Manajemen' },
