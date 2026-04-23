@@ -1,0 +1,143 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { NextResponse } from "next/server";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+
+// Models to try, in order of preference (different models have separate quotas)
+const MODELS = ["gemini-2.0-flash", "gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
+
+export async function POST(req: Request) {
+    try {
+        const supabase = createServerSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const { carType, carYear, mileage, issues, description, roadCondition, customerPhone, licensePlate } = await req.json();
+
+        if (!customerPhone || !licensePlate) {
+            return NextResponse.json({ error: "Nomor HP dan Plat Nomor wajib diisi." }, { status: 400 });
+        }
+
+        // Normalize inputs
+        const normalizedPhone = customerPhone.replace(/\D/g, ""); // Remove non-digits
+        const normalizedPlate = licensePlate.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+
+        // Fetch AI quota settings
+        const { data: settingsData } = await supabase
+            .from("app_settings")
+            .select("key, value")
+            .in("key", ["montir_ai_duration_days", "montir_ai_quota"]);
+
+        let durationDays = 30; // default
+        let quotaLimit = 1; // default
+
+        if (settingsData) {
+            settingsData.forEach(setting => {
+                if (setting.key === "montir_ai_duration_days") durationDays = parseInt(setting.value) || 30;
+                if (setting.key === "montir_ai_quota") quotaLimit = parseInt(setting.value) || 1;
+            });
+        }
+
+        // Check for existing analysis
+        const limitDate = new Date();
+        limitDate.setDate(limitDate.getDate() - durationDays);
+
+        const { count, error: checkError } = await supabase
+            .from("montir_ai_usage")
+            .select("*", { count: "exact", head: true })
+            .eq("partner_id", user.id)
+            .eq("customer_phone", normalizedPhone)
+            .eq("license_plate", normalizedPlate)
+            .gte("created_at", limitDate.toISOString());
+
+        if (count !== null && count >= quotaLimit) {
+            return NextResponse.json({ error: `Kendaraan ini sudah dianalisa ${count} kali. Batas maksimal adalah ${quotaLimit} kali per ${durationDays} hari.` }, { status: 400 });
+        }
+
+        if (!process.env.GEMINI_API_KEY) {
+            return NextResponse.json({ error: "Layanan AI sedang tidak tersedia." }, { status: 500 });
+        }
+
+        const prompt = `
+            Anda adalah montir ahli spesialis kaki-kaki mobil (suspensi & sasis) di Indonesia.
+            Analisa masalah mobil berdasarkan data berikut:
+            
+            - Mobil: ${carType} (${carYear})
+            - Kilometer: ${mileage} km
+            - Keluhan: ${issues.join(", ")}
+            - Detail: ${description || "-"}
+            - Kondisi Jalan: ${roadCondition}
+
+            PENTING: Jawab SINGKAT dan PADAT. Jangan bertele-tele.
+
+            Berikan hasil dalam format JSON murni (tanpa markdown, tanpa pembuka/penutup):
+            {
+                "diagnosis": "Maksimal 2 kalimat pendek. Langsung sebut komponen yang bermasalah dan penyebabnya.",
+                "saran": "Maksimal 4 poin saran, pisahkan dengan tanda • (bullet). Contoh: • Ganti ball joint • Cek tie rod. Langsung to the point.",
+                "urgensi": "Segera" | "Dalam Waktu Dekat" | "Bisa Ditunda",
+                "penjelasan_urgensi": "Maksimal 1 kalimat singkat saja."
+            }
+
+            Gunakan bahasa sederhana, langsung ke inti masalah. JANGAN panjang lebar.
+        `;
+
+        // Try each model until one works
+        let lastError: any = null;
+        for (const modelName of MODELS) {
+            try {
+                console.log(`Trying model: ${modelName}`);
+                const model = genAI.getGenerativeModel({ model: modelName });
+                const result = await model.generateContent(prompt);
+                const response = await result.response;
+                const text = response.text();
+
+                // Clean potential markdown from Gemini response
+                const cleanJson = text.replace(/```json|```/g, "").trim();
+                const parsedResult = JSON.parse(cleanJson);
+
+                // Insert into usage history
+                const { error: insertError } = await supabase
+                    .from("montir_ai_usage")
+                    .insert({
+                        partner_id: user.id,
+                        customer_phone: normalizedPhone,
+                        license_plate: normalizedPlate,
+                    });
+
+                if (insertError) {
+                    console.error("Failed to log montir ai usage:", insertError);
+                }
+
+
+                return NextResponse.json(parsedResult);
+            } catch (modelError: any) {
+                console.warn(`Model ${modelName} failed:`, modelError?.message?.substring(0, 100));
+                lastError = modelError;
+                // If it's a quota error, try the next model
+                const msg = modelError?.message || "";
+                if (msg.includes("429") || msg.includes("quota") || msg.includes("404") || msg.includes("not found")) {
+                    continue;
+                }
+                // For non-recoverable errors, throw immediately
+                throw modelError;
+            }
+        }
+
+        // All models failed (likely all quota exceeded)
+        throw lastError;
+    } catch (error: any) {
+        console.error("Montir AI Error:", error);
+        const message = error?.message || "";
+
+        // Return a simplified message for all AI-related quota or model issues
+        if (message.includes("429") || message.includes("quota") || message.includes("404") || message.includes("not found")) {
+            return NextResponse.json({ error: "Anda sudah mencapai batas maksimal penggunaan AI. Silakan tunggu beberapa saat lagi atau hubungi Admin." }, { status: 429 });
+        }
+
+        return NextResponse.json({ error: "Layanan AI sedang tidak tersedia (System Busy)." }, { status: 500 });
+    }
+}
