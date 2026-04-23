@@ -379,10 +379,10 @@ export default function RewardsPage() {
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden"
+                            className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden max-h-[90vh] flex flex-col"
                         >
-                            <form onSubmit={handleSaveReward}>
-                                <div className="p-8 bg-gradient-to-r from-amber-500 to-orange-600 text-white flex items-center justify-between">
+                            <form onSubmit={handleSaveReward} className="flex flex-col h-full overflow-hidden">
+                                <div className="p-8 bg-gradient-to-r from-amber-500 to-orange-600 text-white flex items-center justify-between shrink-0">
                                     <div className="flex items-center gap-4">
                                         <div className="p-3 bg-white/20 rounded-2xl">
                                             <Gift size={32} />
@@ -403,7 +403,7 @@ export default function RewardsPage() {
                                     </button>
                                 </div>
 
-                                <div className="p-8 space-y-6">
+                                <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
                                     <div className="space-y-2">
                                         <label className="text-sm font-bold text-slate-700">Nama Reward / Benefit</label>
                                         <input 
@@ -499,7 +499,7 @@ export default function RewardsPage() {
                                     </div>
                                 </div>
 
-                                <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
+                                <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4 shrink-0">
                                     <Button 
                                         type="button"
                                         variant="outline"

@@ -4,7 +4,8 @@
 ALTER TABLE rewards 
 ADD COLUMN IF NOT EXISTS reward_type text DEFAULT 'item',
 ADD COLUMN IF NOT EXISTS discount_value numeric DEFAULT 0,
-ADD COLUMN IF NOT EXISTS description text;
+ADD COLUMN IF NOT EXISTS description text,
+ADD COLUMN IF NOT EXISTS image_url text;
 
 -- Insert default rewards
 INSERT INTO rewards (name, points_required, reward_type, description, is_active)
