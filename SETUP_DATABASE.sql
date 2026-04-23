@@ -192,7 +192,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   service_time  TEXT,
   status        TEXT NOT NULL DEFAULT 'pending'
                   CHECK (status IN ('pending', 'processing', 'completed', 'cancelled')),
-  mitra_id      UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  member_id     UUID REFERENCES profiles(id) ON DELETE SET NULL,
   branch_id     UUID REFERENCES branches(id) ON DELETE SET NULL,
   notes         TEXT,
   created_at    TIMESTAMPTZ DEFAULT NOW(),
@@ -216,11 +216,11 @@ CREATE POLICY "Admin can manage branch bookings" ON bookings
 
 DROP POLICY IF EXISTS "Member can view own bookings" ON bookings;
 CREATE POLICY "Member can view own bookings" ON bookings
-  FOR SELECT USING (auth.uid() = mitra_id);
+  FOR SELECT USING (auth.uid() = member_id);
 
 DROP POLICY IF EXISTS "Member can insert own bookings" ON bookings;
 CREATE POLICY "Member can insert own bookings" ON bookings
-  FOR INSERT WITH CHECK (auth.uid() = mitra_id);
+  FOR INSERT WITH CHECK (auth.uid() = member_id);
 
 -- ────────────────────────────────────────────────────────────────
 -- 7. TRANSACTIONS (Transaksi POS)

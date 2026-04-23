@@ -264,7 +264,7 @@ export default function UsersPage() {
             const { data: bkData } = await supabase
                 .from("bookings")
                 .select("*")
-                .eq("mitra_id", memberId) // still using mitra_id column for now
+                .eq("member_id", memberId)
                 .order("created_at", { ascending: false });
             if (bkData) setMemberBookings(bkData);
 

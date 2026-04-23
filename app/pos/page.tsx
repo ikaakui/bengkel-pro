@@ -55,8 +55,8 @@ interface BookingData {
     license_plate: string;
     booking_code: string;
     booking_type: string;
-    mitra_id: string | null;
-    mitra?: { full_name: string; referral_code: string } | null;
+    member_id: string | null;
+    member?: { full_name: string; referral_code: string } | null;
 }
 
 function POSContent() {
@@ -141,7 +141,7 @@ function POSContent() {
         setLoadingBooking(true);
         const { data, error } = await supabase
             .from("bookings")
-            .select("*, mitra:mitra_id(full_name, referral_code)")
+            .select("*, member:member_id(full_name, referral_code)")
             .eq("id", bookingId)
             .single();
 
@@ -211,7 +211,7 @@ function POSContent() {
                 if (draft.booking_id && !bookingId) {
                     const { data: bk } = await supabase
                         .from("bookings")
-                        .select("*, mitra:mitra_id(full_name, referral_code)")
+                        .select("*, member:member_id(full_name, referral_code)")
                         .eq("id", draft.booking_id)
                         .single();
                     if (bk) {
@@ -237,7 +237,7 @@ function POSContent() {
             const searchPattern = `%${bookingSearchTerm}%`;
             const { data } = await supabase
                 .from("bookings")
-                .select("id, customer_name, license_plate, car_model, booking_code, booking_type, status, mitra_id")
+                .select("id, customer_name, license_plate, car_model, booking_code, booking_type, status, member_id")
                 .or(`license_plate.ilike.${searchPattern},customer_name.ilike.${searchPattern},car_model.ilike.${searchPattern},booking_code.ilike.${searchPattern}`)
                 .order("created_at", { ascending: false })
                 .limit(8);
@@ -263,7 +263,7 @@ function POSContent() {
 
     useEffect(() => {
         const fetchPoints = async () => {
-            const mId = bookingData?.mitra_id;
+            const mId = bookingData?.member_id;
             if (mId) {
                 const { data } = await supabase.from('profiles').select('total_points').eq('id', mId).single();
                 if (data) setCustomerPoints(data.total_points || 0);
@@ -532,7 +532,7 @@ function POSContent() {
             }
 
             // Point Earning Logic
-            const memberId = bookingData?.mitra_id || null;
+            const memberId = bookingData?.member_id || null;
             if (memberId && total > 0) {
                 const earnedPoints = Math.floor(total / pointsPerRupiah);
                 if (earnedPoints > 0) {
@@ -946,7 +946,7 @@ function POSContent() {
                                                                 className="p-3 hover:bg-blue-50/80 rounded-lg cursor-pointer transition-colors group border-b border-slate-100 last:border-0"
                                                                 onClick={() => {
                                                                     // Check conversion rules
-                                                                    if (b.booking_type === 'referral' || b.mitra_id) {
+                                                                    if (b.booking_type === 'referral' || b.member_id) {
                                                                         setConversionPrompt({
                                                                             show: true,
                                                                             booking: b,
@@ -1121,7 +1121,7 @@ function POSContent() {
                                     </div>
                                 </div>
 
-                                {bookingData?.mitra_id && (
+                                {bookingData?.member_id && (
                                     <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 flex items-center justify-between mb-2">
                                         <div className="flex items-center gap-2">
                                             <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-amber-500 shadow-sm">

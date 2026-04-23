@@ -19,10 +19,10 @@ import { cn } from "@/lib/utils";
 
 export default function MemberAnalyticsPage() {
     const [loading, setLoading] = useState(true);
-    const [mitraCount, setMitraCount] = useState(0);
+    const [memberCount, setMemberCount] = useState(0);
     const [pendingWD, setPendingWD] = useState(0);
-    const [mitraRevenueShare, setMitraRevenueShare] = useState({ mitra: 0, direct: 0 });
-    const [mitraMVP, setMitraMVP] = useState<any[]>([]);
+    const [memberRevenueShare, setMemberRevenueShare] = useState({ member: 0, direct: 0 });
+    const [memberMVP, setMemberMVP] = useState<any[]>([]);
 
     const { role } = useAuth();
     const supabase = createClient();
@@ -38,37 +38,37 @@ export default function MemberAnalyticsPage() {
             ] = await Promise.all([
                 supabase.from("profiles").select("id", { count: 'exact', head: true }).eq("role", "member"),
                 supabase.from("withdrawals").select("id", { count: 'exact', head: true }).eq("status", "pending"),
-                supabase.from("transactions").select("total_amount, status, mitra_id").eq('status', 'Paid'),
+                supabase.from("transactions").select("total_amount, status, member_id").eq('status', 'Paid'),
                 supabase.from("profiles").select("id, full_name").eq("role", "member")
             ]);
 
             const paidTransactions = transactionsData || [];
 
             // Revenue Share
-            const mitraRev = paidTransactions.filter(t => t.mitra_id).reduce((acc, t) => acc + Number(t.total_amount), 0);
-            const directRev = paidTransactions.filter(t => !t.mitra_id).reduce((acc, t) => acc + Number(t.total_amount), 0);
-            setMitraRevenueShare({ mitra: mitraRev, direct: directRev });
+            const memberRev = paidTransactions.filter(t => t.member_id).reduce((acc, t) => acc + Number(t.total_amount), 0);
+            const directRev = paidTransactions.filter(t => !t.member_id).reduce((acc, t) => acc + Number(t.total_amount), 0);
+            setMemberRevenueShare({ member: memberRev, direct: directRev });
 
             // MVP Leaderboard
-            const mitraMap = new Map<string, { revenue: number, visits: number }>();
+            const memberMap = new Map<string, { revenue: number, visits: number }>();
             paidTransactions.forEach(t => {
-                if (t.mitra_id) {
-                    const existing = mitraMap.get(t.mitra_id) || { revenue: 0, visits: 0 };
-                    mitraMap.set(t.mitra_id, {
+                if (t.member_id) {
+                    const existing = memberMap.get(t.member_id) || { revenue: 0, visits: 0 };
+                    memberMap.set(t.member_id, {
                         revenue: existing.revenue + Number(t.total_amount),
                         visits: existing.visits + 1
                     });
                 }
             });
 
-            setMitraMVP(Array.from(mitraMap.entries())
+            setMemberMVP(Array.from(memberMap.entries())
                 .map(([id, stats]) => ({
-                    name: profilesData?.find(p => p.id === id)?.full_name || 'Mitra',
+                    name: profilesData?.find(p => p.id === id)?.full_name || 'Member',
                     ...stats
                 }))
                 .sort((a, b) => b.revenue - a.revenue));
 
-            setMitraCount(mCount || 0);
+            setMemberCount(mCount || 0);
             setPendingWD(pWD || 0);
 
         } catch (error) {
@@ -91,8 +91,8 @@ export default function MemberAnalyticsPage() {
         );
     }
 
-    const totalRevenue = mitraRevenueShare.mitra + mitraRevenueShare.direct;
-    const mitraPct = Math.round((mitraRevenueShare.mitra / (totalRevenue || 1)) * 100);
+    const totalRevenue = memberRevenueShare.member + memberRevenueShare.direct;
+    const memberPct = Math.round((memberRevenueShare.member / (totalRevenue || 1)) * 100);
 
     return (
         <DashboardLayout>
@@ -114,7 +114,7 @@ export default function MemberAnalyticsPage() {
                             <span className="text-xs font-black text-emerald-600 uppercase tracking-widest">+12%</span>
                         </div>
                         <div>
-                            <p className="text-2xl font-black text-slate-900 tracking-tighter italic">{mitraCount}</p>
+                            <p className="text-2xl font-black text-slate-900 tracking-tighter italic">{memberCount}</p>
                             <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Total Member Terdaftar</p>
                         </div>
                     </Card>
@@ -134,14 +134,14 @@ export default function MemberAnalyticsPage() {
 
                     <Card className="p-6 border-none shadow-xl bg-blue-600 text-white lg:col-span-2 relative overflow-hidden">
                         <div className="relative z-10">
-                            <p className="text-blue-100 text-[10px] font-black uppercase tracking-widest mb-4">Total Revenue Mitra</p>
+                            <p className="text-blue-100 text-[10px] font-black uppercase tracking-widest mb-4">Total Revenue Member</p>
                             <div className="flex items-end justify-between">
                                 <div>
-                                    <h3 className="text-3xl font-black tracking-tighter">Rp {mitraRevenueShare.mitra.toLocaleString('id-ID')}</h3>
-                                    <p className="text-xs text-blue-200 font-bold mt-1">Kontribusi {mitraPct}% dari total omset</p>
+                                    <h3 className="text-3xl font-black tracking-tighter">Rp {memberRevenueShare.member.toLocaleString('id-ID')}</h3>
+                                    <p className="text-xs text-blue-200 font-bold mt-1">Kontribusi {memberPct}% dari total omset</p>
                                 </div>
                                 <div className="w-16 h-16 rounded-full border-4 border-white/20 flex items-center justify-center font-black text-lg italic">
-                                    {mitraPct}%
+                                    {memberPct}%
                                 </div>
                             </div>
                         </div>
@@ -174,7 +174,7 @@ export default function MemberAnalyticsPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
-                                    {mitraMVP.map((mvp, i) => (
+                                    {memberMVP.map((mvp, i) => (
                                         <tr key={i} className="hover:bg-slate-50/80 transition-all group">
                                             <td className="px-8 py-5">
                                                 <div className={cn(
@@ -209,15 +209,15 @@ export default function MemberAnalyticsPage() {
                             <div className="space-y-3">
                                 <div className="flex justify-between items-end">
                                     <div>
-                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Direct (Non-Mitra)</p>
-                                        <p className="text-2xl font-black text-slate-900 tracking-tighter italic">Rp {mitraRevenueShare.direct.toLocaleString('id-ID')}</p>
+                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Direct (Non-Member)</p>
+                                        <p className="text-2xl font-black text-slate-900 tracking-tighter italic">Rp {memberRevenueShare.direct.toLocaleString('id-ID')}</p>
                                     </div>
-                                    <span className="text-xl font-black text-indigo-500 italic">{100 - mitraPct}%</span>
+                                    <span className="text-xl font-black text-indigo-500 italic">{100 - memberPct}%</span>
                                 </div>
                                 <div className="h-3 w-full bg-slate-50 rounded-full overflow-hidden p-0.5 border border-slate-100 shadow-inner">
                                     <motion.div
                                         initial={{ width: 0 }}
-                                        animate={{ width: `${100 - mitraPct}%` }}
+                                        animate={{ width: `${100 - memberPct}%` }}
                                         className="h-full bg-indigo-500 rounded-full"
                                     />
                                 </div>
@@ -226,15 +226,15 @@ export default function MemberAnalyticsPage() {
                             <div className="space-y-3">
                                 <div className="flex justify-between items-end">
                                     <div>
-                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Jaringan Mitra</p>
-                                        <p className="text-2xl font-black text-slate-900 tracking-tighter italic">Rp {mitraRevenueShare.mitra.toLocaleString('id-ID')}</p>
+                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Jaringan Member</p>
+                                        <p className="text-2xl font-black text-slate-900 tracking-tighter italic">Rp {memberRevenueShare.member.toLocaleString('id-ID')}</p>
                                     </div>
-                                    <span className="text-xl font-black text-emerald-500 italic">{mitraPct}%</span>
+                                    <span className="text-xl font-black text-emerald-500 italic">{memberPct}%</span>
                                 </div>
                                 <div className="h-3 w-full bg-slate-50 rounded-full overflow-hidden p-0.5 border border-slate-100 shadow-inner">
                                     <motion.div
                                         initial={{ width: 0 }}
-                                        animate={{ width: `${mitraPct}%` }}
+                                        animate={{ width: `${memberPct}%` }}
                                         className="h-full bg-emerald-500 rounded-full"
                                     />
                                 </div>
@@ -244,9 +244,9 @@ export default function MemberAnalyticsPage() {
                                 <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
                                     <h4 className="text-sm font-black text-slate-900 uppercase mb-2">💡 Insight</h4>
                                     <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                                        {mitraPct > 50
-                                            ? "Jaringan mitra mendominasi omset. Pertahankan hubungan baik dan pastikan pembayaran komisi tepat waktu."
-                                            : "Pendapatan direct masih stabil. Tingkatkan program insentif mitra untuk mendongkrak penjualan lebih jauh."}
+                                        {memberPct > 50
+                                            ? "Jaringan member mendominasi omset. Pertahankan hubungan baik dan pastikan layanan terbaik untuk member."
+                                            : "Pendapatan direct masih stabil. Tingkatkan program insentif member untuk mendongkrak penjualan lebih jauh."}
                                     </p>
                                 </div>
                             </div>

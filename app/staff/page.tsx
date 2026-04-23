@@ -267,7 +267,7 @@ export default function StaffPage() {
             const { data: bkData } = await supabase
                 .from("bookings")
                 .select("*")
-                .eq("mitra_id", mitraId)
+                .eq("member_id", mitraId)
                 .order("created_at", { ascending: false });
             if (bkData) setMitraBookings(bkData);
 
@@ -275,7 +275,7 @@ export default function StaffPage() {
             const { data: wdData } = await supabase
                 .from("withdrawals")
                 .select("*")
-                .eq("mitra_id", mitraId)
+                .eq("member_id", mitraId)
                 .order("created_at", { ascending: false });
             if (wdData) setMitraWithdrawals(wdData);
         } catch (err) {

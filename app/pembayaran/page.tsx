@@ -40,7 +40,7 @@ export default function PembayaranPage() {
             const { data: bookingData } = await supabase
                 .from("bookings")
                 .select("*, branches:branch_id(name)")
-                .eq("mitra_id", profile.id)
+                .eq("member_id", profile.id)
                 .order("created_at", { ascending: false });
             
             if (bookingData) setBookings(bookingData);

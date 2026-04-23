@@ -64,7 +64,7 @@ export default function BookingsPage() {
         setIsLoadingData(true);
         const { data, error } = await supabase
             .from("bookings")
-            .select("*, mitra:mitra_id(full_name, referral_code)")
+            .select("*, member:member_id(full_name, referral_code)")
             .order("created_at", { ascending: false })
             .limit(100);
 
@@ -147,7 +147,7 @@ export default function BookingsPage() {
 
         const { data, error } = await supabase
             .from("bookings")
-            .select("*, mitra:mitra_id(full_name, referral_code)")
+            .select("*, member:member_id(full_name, referral_code)")
             .eq("booking_code", codeInput.trim().toUpperCase())
             .single();
 
@@ -200,7 +200,7 @@ export default function BookingsPage() {
             license_plate: licensePlate.toUpperCase(),
             service_date: serviceDate,
             service_time: serviceTime,
-            mitra_id: profile.id,
+            member_id: profile.id,
             branch_id: selectedBranchId,
             booking_code: code,
             booking_type: 'referral',
@@ -242,7 +242,7 @@ export default function BookingsPage() {
             license_plate: licensePlate.toUpperCase(),
             service_date: serviceDate,
             service_time: serviceTime,
-            mitra_id: null,
+            member_id: null,
             branch_id: branchId,
             booking_code: null,
             booking_type: 'direct',
@@ -349,8 +349,8 @@ export default function BookingsPage() {
     // Filter bookings
     const filteredBookings = bookings
         .filter(bk => {
-            if (activeTab === 'direct') return bk.booking_type === 'direct' || !bk.mitra_id;
-            if (activeTab === 'referral') return bk.booking_type === 'referral' || bk.mitra_id;
+            if (activeTab === 'direct') return bk.booking_type === 'direct' || !bk.member_id;
+            if (activeTab === 'referral') return bk.booking_type === 'referral' || bk.member_id;
             return true;
         })
         .filter(bk =>
@@ -680,11 +680,11 @@ export default function BookingsPage() {
                                                 <h4 className="font-bold text-lg text-slate-900 uppercase">{bk.car_model}</h4>
                                                 <Badge variant="neutral" className="text-xs">{bk.license_plate}</Badge>
                                                 {/* Type badge */}
-                                                {bk.booking_type === 'direct' || !bk.mitra_id ? (
+                                                {bk.booking_type === 'direct' || !bk.member_id ? (
                                                     <Badge variant="neutral" className="text-[9px] bg-slate-200 text-slate-600">🏷️ UMUM</Badge>
                                                 ) : (
                                                     <Badge variant="info" className="text-[9px]">
-                                                        💎 {bk.mitra?.full_name || 'Member'}
+                                                        💎 {bk.member?.full_name || 'Member'}
                                                     </Badge>
                                                 )}
                                             </div>
@@ -749,7 +749,7 @@ export default function BookingsPage() {
                                     <Badge variant={statusVariant(selectedBooking.status)} className="px-3 py-1 text-sm">
                                         Status: {selectedBooking.status.toUpperCase()}
                                     </Badge>
-                                    {selectedBooking.booking_type === 'direct' || !selectedBooking.mitra_id ? (
+                                    {selectedBooking.booking_type === 'direct' || !selectedBooking.member_id ? (
                                         <Badge variant="neutral" className="text-xs bg-slate-200 text-slate-600">🏷️ UMUM</Badge>
                                     ) : (
                                         <Badge variant="info" className="text-xs">💎 MEMBER LOYALTY</Badge>
@@ -799,17 +799,17 @@ export default function BookingsPage() {
                                     </div>
                                 </div>
 
-                                {/* Mitra Info (if referral) */}
-                                {selectedBooking.mitra_id && selectedBooking.mitra && (
+                                {/* Member Info (if referral) */}
+                                {selectedBooking.member_id && selectedBooking.member && (
                                     <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex items-center gap-4">
                                         <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
                                             <Users size={20} />
                                         </div>
                                         <div>
-                                            <p className="text-xs text-emerald-500 font-bold uppercase tracking-wider">Mitra Referral</p>
-                                            <p className="font-bold text-emerald-800">{selectedBooking.mitra.full_name}</p>
-                                            {selectedBooking.mitra.referral_code && (
-                                                <p className="text-xs text-emerald-600 font-mono">Kode: {selectedBooking.mitra.referral_code}</p>
+                                            <p className="text-xs text-emerald-500 font-bold uppercase tracking-wider">Member Referral</p>
+                                            <p className="font-bold text-emerald-800">{selectedBooking.member.full_name}</p>
+                                            {selectedBooking.member.referral_code && (
+                                                <p className="text-xs text-emerald-600 font-mono">Kode: {selectedBooking.member.referral_code}</p>
                                             )}
                                         </div>
                                     </div>

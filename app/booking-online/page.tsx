@@ -107,9 +107,10 @@ export default function BookingOnlinePage() {
                 license_plate: licensePlate.toUpperCase(),
                 service_date: serviceDate,
                 service_time: serviceTime,
-                mitra_id: profile.id,
+                member_id: profile.id,
                 branch_id: selectedBranch.id,
                 booking_code: code,
+                booking_type: 'online',
                 status: 'pending'
             }]);
 
