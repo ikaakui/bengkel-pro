@@ -61,7 +61,7 @@ const roleIcons: Record<string, typeof Crown> = {
 const roleColors: Record<string, string> = {
     owner: "bg-purple-100 text-purple-700",
     admin: "bg-blue-100 text-blue-700",
-    member: "bg-amber-100 text-amber-700",
+    member: "bg-blue-100 text-blue-700",
 };
 
 export default function UsersPage() {
@@ -82,6 +82,8 @@ export default function UsersPage() {
     const [newPassword, setNewPassword] = useState("");
     const [newRole, setNewRole] = useState("member");
     const [newBranchId, setNewBranchId] = useState("");
+    const [brandModel, setBrandModel] = useState("");
+    const [licensePlate, setLicensePlate] = useState("");
 
     // Branch list for selection
     const [branches, setBranches] = useState<BranchOption[]>([]);
@@ -205,11 +207,23 @@ export default function UsersPage() {
                 return;
             }
 
+            // Save vehicle info if it's a member and vehicle data is provided
+            if (res.ok && newRole === "member" && brandModel && licensePlate) {
+                await supabase.from("member_vehicles").insert([{
+                    member_id: result.user.id,
+                    brand_model: brandModel,
+                    license_plate: licensePlate.toUpperCase(),
+                    is_primary: true
+                }]);
+            }
+
             setSuccess(result.message);
             setNewName("");
             setNewEmail("");
             setNewPhone("");
             setNewPassword("");
+            setBrandModel("");
+            setLicensePlate("");
             setNewRole("member");
             setNewBranchId("");
             setShowForm(false);
@@ -339,79 +353,142 @@ export default function UsersPage() {
 
                     {/* Add User Form */}
                     {showForm && (
-                        <Card className="border-primary/20 bg-primary/5">
-                            <CardHeader>
-                                <h3 className="text-xl font-bold">Tambah User Baru</h3>
+                        <Card className="border-blue-200 bg-blue-50/30 overflow-hidden rounded-[2rem] shadow-xl shadow-blue-500/5">
+                            <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-white/20 rounded-xl">
+                                        <Plus size={20} />
+                                    </div>
+                                    <h3 className="text-xl font-black uppercase tracking-tight">Tambah Member Baru</h3>
+                                </div>
                             </CardHeader>
-                            <CardContent>
-                                <form onSubmit={handleAddUser} className="space-y-4">
+                            <CardContent className="p-8">
+                                <form onSubmit={handleAddUser} className="space-y-8">
                                     {error && (
-                                        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 font-medium">
+                                        <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-sm text-red-600 font-bold flex items-center gap-2">
+                                            <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
                                             {error}
                                         </div>
                                     )}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold opacity-70">Nama Lengkap</label>
-                                            <div className="relative">
-                                                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                                <input
-                                                    type="text"
-                                                    value={newName}
-                                                    onChange={(e) => setNewName(e.target.value)}
-                                                    placeholder="Nama lengkap"
-                                                    required
-                                                    className="input-field pl-10"
-                                                />
+                                    
+                                    <div className="space-y-6">
+                                        {/* Section: Personal Info */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-2 pb-1 border-b border-blue-100">
+                                                <User size={14} className="text-blue-500" />
+                                                <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">Data Personal</span>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-bold text-slate-500 uppercase ml-1">Nama Lengkap</label>
+                                                    <div className="relative group">
+                                                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                                                        <input
+                                                            type="text"
+                                                            value={newName}
+                                                            onChange={(e) => setNewName(e.target.value)}
+                                                            placeholder="Nama lengkap member"
+                                                            required
+                                                            className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 transition-all font-bold"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-bold text-slate-500 uppercase ml-1">No. WhatsApp</label>
+                                                    <div className="relative group">
+                                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                                                        <input
+                                                            type="tel"
+                                                            value={newPhone}
+                                                            onChange={(e) => setNewPhone(e.target.value)}
+                                                            placeholder="0812xxxxxxxx"
+                                                            className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 transition-all font-bold"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-bold text-slate-500 uppercase ml-1">Email</label>
+                                                    <div className="relative group">
+                                                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                                                        <input
+                                                            type="email"
+                                                            value={newEmail}
+                                                            onChange={(e) => setNewEmail(e.target.value)}
+                                                            placeholder="email@contoh.com"
+                                                            required
+                                                            className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 transition-all font-bold text-sm"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-bold text-slate-500 uppercase ml-1">Password</label>
+                                                    <div className="relative group">
+                                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                                                        <input
+                                                            type="password"
+                                                            value={newPassword}
+                                                            onChange={(e) => setNewPassword(e.target.value)}
+                                                            placeholder="Min. 6 karakter"
+                                                            required
+                                                            minLength={6}
+                                                            className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 transition-all font-bold"
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold opacity-70">Email</label>
-                                            <div className="relative">
-                                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                                <input
-                                                    type="email"
-                                                    value={newEmail}
-                                                    onChange={(e) => setNewEmail(e.target.value)}
-                                                    placeholder="email@contoh.com"
-                                                    required
-                                                    className="input-field pl-10"
-                                                />
+
+                                        {/* Section: Vehicle Info (Only for Member) */}
+                                        {newRole === 'member' && (
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-2 pb-1 border-b border-blue-100">
+                                                    <Car size={14} className="text-blue-500" />
+                                                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">Data Kendaraan (Opsional)</span>
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-bold text-slate-500 uppercase ml-1">Merek & Tipe</label>
+                                                        <div className="relative group">
+                                                            <Car className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                                                            <input
+                                                                type="text"
+                                                                value={brandModel}
+                                                                onChange={(e) => setBrandModel(e.target.value)}
+                                                                placeholder="Toyota Avanza"
+                                                                className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 transition-all font-bold"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-bold text-slate-500 uppercase ml-1">No. Polisi</label>
+                                                        <div className="relative group">
+                                                            <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                                                            <input
+                                                                type="text"
+                                                                value={licensePlate}
+                                                                onChange={(e) => setLicensePlate(e.target.value)}
+                                                                placeholder="B 1234 ABC"
+                                                                className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 transition-all font-bold uppercase"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold opacity-70">No. WhatsApp</label>
-                                            <div className="relative">
-                                                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                                <input
-                                                    type="tel"
-                                                    value={newPhone}
-                                                    onChange={(e) => setNewPhone(e.target.value)}
-                                                    placeholder="0812xxxxxxxx"
-                                                    className="input-field pl-10"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold opacity-70">Password</label>
-                                            <div className="relative">
-                                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                                <input
-                                                    type="password"
-                                                    value={newPassword}
-                                                    onChange={(e) => setNewPassword(e.target.value)}
-                                                    placeholder="Min. 6 karakter"
-                                                    required
-                                                    minLength={6}
-                                                    className="input-field pl-10"
-                                                />
-                                            </div>
-                                        </div>
+                                        )}
                                     </div>
-                                    <Button type="submit" disabled={formLoading} className="w-full md:w-auto h-11" variant="success">
-                                        {formLoading ? <Loader2 size={18} className="animate-spin mr-2" /> : <Plus size={18} className="mr-2" />}
-                                        {formLoading ? "Menyimpan..." : "Simpan User"}
-                                    </Button>
+
+                                    <div className="flex justify-end pt-2">
+                                        <motion.button
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            type="submit"
+                                            disabled={formLoading}
+                                            className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl font-black shadow-lg shadow-blue-500/20 hover:shadow-2xl hover:shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
+                                        >
+                                            {formLoading ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
+                                            {formLoading ? "MENYIMPAN..." : "SIMPAN MEMBER"}
+                                        </motion.button>
+                                    </div>
                                 </form>
                             </CardContent>
                         </Card>
