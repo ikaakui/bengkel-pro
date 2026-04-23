@@ -45,11 +45,8 @@ export default function ProfilMemberPage() {
     const [fullName, setFullName] = useState(profile?.full_name || "");
     const [phone, setPhone] = useState(profile?.phone || "");
     const [loading, setLoading] = useState(false);
-    
     const [vehicles, setVehicles] = useState<any[]>([]);
     const [loadingVehicles, setLoadingVehicles] = useState(true);
-    const [isAddingVehicle, setIsAddingVehicle] = useState(false);
-    const [newVehicle, setNewVehicle] = useState({ brand_model: "", license_plate: "", year: "" });
 
     const fetchVehicles = useCallback(async () => {
         if (!profile?.id) return;
@@ -88,30 +85,6 @@ export default function ProfilMemberPage() {
             setIsEditing(false);
         } catch (err: any) {
             alert("Gagal memperbarui profil: " + err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleAddVehicle = async () => {
-        if (!profile?.id || !newVehicle.brand_model || !newVehicle.license_plate) return;
-        setLoading(true);
-        try {
-            const { error } = await supabase
-                .from("member_vehicles")
-                .insert([{
-                    member_id: profile.id,
-                    brand_model: newVehicle.brand_model,
-                    license_plate: newVehicle.license_plate.toUpperCase(),
-                    year: parseInt(newVehicle.year) || null,
-                    is_primary: vehicles.length === 0
-                }]);
-            if (error) throw error;
-            setNewVehicle({ brand_model: "", license_plate: "", year: "" });
-            setIsAddingVehicle(false);
-            fetchVehicles();
-        } catch (err: any) {
-            alert("Gagal menambah kendaraan: " + err.message);
         } finally {
             setLoading(false);
         }
@@ -234,18 +207,15 @@ export default function ProfilMemberPage() {
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-xl font-bold flex items-center gap-2"><Car className="text-primary" size={24} />Garasi (Kendaraan)</h3>
-                                    <Button variant="ghost" className="text-primary font-bold gap-1" onClick={() => setIsAddingVehicle(true)}>
-                                        <Plus size={18} />TAMBAH MOBIL
-                                    </Button>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {loadingVehicles ? (
                                         <div className="col-span-2 py-10 flex justify-center"><Loader2 className="animate-spin text-slate-200" /></div>
                                     ) : vehicles.length === 0 ? (
-                                        <button onClick={() => setIsAddingVehicle(true)} className="col-span-2 border-2 border-dashed border-slate-200 rounded-3xl p-10 flex flex-col items-center justify-center gap-3 text-slate-400 hover:border-primary hover:text-primary transition-all group">
-                                            <Plus size={24} /> <span className="font-bold">Daftarkan Mobil Pertama Anda</span>
-                                        </button>
+                                        <div className="col-span-2 py-10 text-center text-slate-400 font-medium">
+                                            Belum ada kendaraan yang terdaftar.
+                                        </div>
                                     ) : (
                                         vehicles.map((v) => (
                                             <Card key={v.id} className="border-slate-100 p-6 flex flex-col justify-between group hover:border-primary transition-colors">
@@ -271,35 +241,6 @@ export default function ProfilMemberPage() {
                         </div>
                     </div>
                 </div>
-
-                {/* Add Vehicle Modal */}
-                <AnimatePresence>
-                    {isAddingVehicle && (
-                        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden p-8 space-y-6">
-                                <h3 className="text-2xl font-black text-slate-900">Tambah Kendaraan</h3>
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-slate-500 uppercase">Merek & Tipe</label>
-                                        <input type="text" placeholder="e.g. Toyota Avanza" className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:outline-none focus:border-primary transition-all font-bold" value={newVehicle.brand_model} onChange={(e) => setNewVehicle({...newVehicle, brand_model: e.target.value})} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-slate-500 uppercase">Nomor Polisi</label>
-                                        <input type="text" placeholder="e.g. B 1234 ABC" className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:outline-none focus:border-primary transition-all font-bold uppercase" value={newVehicle.license_plate} onChange={(e) => setNewVehicle({...newVehicle, license_plate: e.target.value})} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-slate-500 uppercase">Tahun (Opsional)</label>
-                                        <input type="number" placeholder="e.g. 2022" className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:outline-none focus:border-primary transition-all font-bold" value={newVehicle.year} onChange={(e) => setNewVehicle({...newVehicle, year: e.target.value})} />
-                                    </div>
-                                </div>
-                                <div className="flex gap-4 pt-4">
-                                    <Button variant="outline" className="flex-1 rounded-2xl font-bold" onClick={() => setIsAddingVehicle(false)}>BATAL</Button>
-                                    <Button disabled={loading || !newVehicle.brand_model || !newVehicle.license_plate} onClick={handleAddVehicle} className="flex-1 rounded-2xl font-black">{loading ? <Loader2 className="animate-spin" /> : "SIMPAN"}</Button>
-                                </div>
-                            </motion.div>
-                        </div>
-                    )}
-                </AnimatePresence>
             </RoleGuard>
         </DashboardLayout>
     );
