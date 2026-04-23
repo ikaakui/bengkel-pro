@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import RoleGuard from "@/components/auth/RoleGuard";
 import { Card } from "@/components/ui/Card";
@@ -34,6 +35,7 @@ const DEFAULT_BRANCHES = [
 
 export default function BookingOnlinePage() {
     const { profile } = useAuth();
+    const router = useRouter();
     const supabase = createClient();
 
     const [step, setStep] = useState(1);
@@ -114,7 +116,7 @@ export default function BookingOnlinePage() {
 
             if (error) throw error;
             setBookingCode(code);
-            setStep(4);
+            router.push(`/booking-online/invoice/${code}`);
         } catch (err: any) {
             alert("Gagal membuat booking: " + err.message);
         } finally {
