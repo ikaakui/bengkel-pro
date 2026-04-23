@@ -33,6 +33,7 @@ export default function PembayaranPage() {
     }, [profile?.id]);
 
     const fetchData = async () => {
+        if (!profile?.id) return;
         setLoading(true);
         try {
             // Fetch Bookings

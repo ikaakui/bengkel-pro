@@ -31,7 +31,8 @@ import {
     CalendarPlus,
     MessageSquarePlus,
     Clock,
-    Gift
+    Gift,
+    Receipt
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
