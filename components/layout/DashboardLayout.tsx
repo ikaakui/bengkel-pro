@@ -28,6 +28,8 @@ import {
     TrendingDown,
     ClipboardList,
     Activity,
+    CalendarPlus,
+    MessageSquarePlus,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
@@ -39,6 +41,14 @@ import type { UserRole } from "@/components/providers/AuthProvider";
 
 const navigation = [
     { name: 'Overview', href: '/', icon: LayoutDashboard, roles: ['owner', 'admin', 'member', 'admin_depok', 'admin_bsd'], group: 'Utama' },
+    // Member Exclusive
+    { name: 'Booking Online', href: '/booking-online', icon: CalendarPlus, roles: ['member'], group: 'Layanan' },
+    { name: 'Riwayat Servis', href: '/riwayat-servis', icon: Clock, roles: ['member'], group: 'Layanan' },
+    { name: 'Poin & Reward', href: '/rewards-member', icon: Gift, roles: ['member'], group: 'Loyalty' },
+    { name: 'Montir AI', href: '/montir-ai', icon: Bot, roles: ['member'], group: 'Asisten' },
+    { name: 'Profil & Garasi', href: '/profil-member', icon: UserCircle, roles: ['member'], group: 'Akun' },
+    { name: 'Kritik & Saran', href: '/complain', icon: MessageSquarePlus, roles: ['member'], group: 'Akun' },
+
     // Owner Analytics
     { name: 'Performa Cabang', href: '/analytics/branches', icon: Building2, roles: ['owner'], group: 'Analisis' },
     { name: 'Analisis Member', href: '/analytics/member', icon: Users2, roles: ['owner'], group: 'Analisis' },
@@ -51,9 +61,8 @@ const navigation = [
     { name: 'POS (Kasir)', href: '/pos', icon: ShoppingCart, roles: ['admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Utama' },
     { name: 'Antrian Service', href: '/antrian', icon: ClipboardList, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Utama' },
     { name: 'Booking Service', href: '/bookings', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Operasional' },
-    { name: 'Riwayat Servis', href: '/bookings-member', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd', 'member', 'spv'], group: 'Operasional' },
-    { name: 'Poin Reward', href: '/rewards', icon: PieChart, roles: ['member'], group: 'Keuangan' },
-    { name: 'Montir AI', href: '/montir-ai', icon: Bot, roles: ['member'], group: 'Asisten' },
+    { name: 'Riwayat Servis', href: '/bookings-member', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Operasional' },
+    { name: 'Kelola Reward', href: '/rewards', icon: Gift, roles: ['owner'], group: 'Manajemen' },
     { name: 'Persetujuan Dana', href: '/withdrawals', icon: Banknote, roles: ['owner'], group: 'Keuangan' },
     { name: 'Laporan', href: '/reports', icon: PieChart, roles: ['owner', 'spv'], group: 'Keuangan' },
     { name: 'Katalog', href: '/catalog', icon: Wrench, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd'], group: 'Manajemen' },
@@ -171,11 +180,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <nav className="flex-1 overflow-y-auto custom-scrollbar px-3 pt-6 pb-20 space-y-8">
                         {[
                             { id: 'utama', label: 'Utama', group: 'Utama' },
+                            { id: 'layanan', label: 'Layanan Servis', group: 'Layanan' },
+                            { id: 'loyalty', label: 'Program Loyalty', group: 'Loyalty' },
                             { id: 'analisis', label: 'Analisis & Data', group: 'Analisis' },
-                            { id: 'layanan', label: 'Operasional', group: 'Operasional' },
+                            { id: 'operasional', label: 'Operasional', group: 'Operasional' },
                             { id: 'keuangan', label: 'Keuangan', group: 'Keuangan' },
                             { id: 'manajemen', label: 'Manajemen', group: 'Manajemen' },
                             { id: 'asisten', label: 'AI Helper', group: 'Asisten' },
+                            { id: 'akun', label: 'Akun & Profil', group: 'Akun' },
                             { id: 'sistem', label: 'Sistem', group: 'Sistem' }
                         ].map((cat) => {
                             const groupItems = filteredNav.filter(item => item.group === cat.group);
