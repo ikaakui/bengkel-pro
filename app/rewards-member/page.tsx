@@ -160,24 +160,16 @@ export default function RewardsMemberPage() {
                                                 ? "bg-white shadow-slate-200/60 hover:shadow-amber-500/10" 
                                                 : "bg-slate-50/50 grayscale-[0.8] opacity-80"
                                         )}>
-                                            {/* Product Image Container (Yellow Box Style from Screenshot) */}
+                                            {/* Product Icon Container (Yellow Box Style) */}
                                             <div className="relative aspect-square mb-6 rounded-[2rem] border-[3px] border-amber-100 bg-gradient-to-br from-amber-50 to-amber-100 p-8 flex items-center justify-center overflow-hidden transition-all duration-500 group-hover:border-amber-300">
                                                 {/* Decorative background circle */}
                                                 <div className="absolute inset-4 bg-white/40 rounded-[1.5rem] blur-xl" />
                                                 
-                                                {reward.image_url ? (
-                                                    <img 
-                                                        src={reward.image_url} 
-                                                        alt={reward.name}
-                                                        className="relative z-10 w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
-                                                    />
-                                                ) : (
-                                                    <div className="relative z-10 text-amber-500/30">
-                                                        {reward.reward_type === 'discount' ? <Ticket size={80} /> : <Gift size={80} />}
-                                                    </div>
-                                                )}
+                                                <div className="relative z-10 text-amber-500 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6">
+                                                    {reward.reward_type === 'discount' ? <Ticket size={80} strokeWidth={1.5} /> : <Gift size={80} strokeWidth={1.5} />}
+                                                </div>
 
-                                                {/* Sparkles decoration like screenshot */}
+                                                {/* Sparkles decoration */}
                                                 <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <Sparkles className="text-amber-400 animate-pulse" size={20} />
                                                 </div>

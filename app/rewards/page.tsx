@@ -33,7 +33,6 @@ interface Reward {
     reward_type: 'discount' | 'item';
     discount_value: number | null;
     description: string | null;
-    image_url: string | null;
     is_active: boolean;
 }
 
@@ -463,16 +462,6 @@ export default function RewardsPage() {
                                         </motion.div>
                                     )}
 
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-bold text-slate-700">URL Gambar Produk</label>
-                                        <input 
-                                            type="text"
-                                            value={editingReward?.image_url || ""}
-                                            onChange={(e) => setEditingReward(prev => ({ ...prev, image_url: e.target.value }))}
-                                            placeholder="https://example.com/image.jpg"
-                                            className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:outline-none focus:border-amber-500 focus:bg-white transition-all font-medium"
-                                        />
-                                    </div>
 
                                     <div className="space-y-2">
                                         <label className="text-sm font-bold text-slate-700">Deskripsi Singkat</label>
