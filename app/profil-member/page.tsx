@@ -137,7 +137,7 @@ export default function ProfilMemberPage() {
             <RoleGuard allowedRoles={["member"]}>
                 <div className="max-w-5xl mx-auto space-y-10 pb-20">
                     <div className="flex items-center justify-between">
-                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Profil Member</h1>
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Profil Akun Member</h1>
                         <Button 
                             variant={isEditing ? "outline" : "primary"}
                             onClick={() => isEditing ? setIsEditing(false) : setIsEditing(true)}

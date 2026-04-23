@@ -48,7 +48,7 @@ const navigation = [
     { name: 'Riwayat Servis', href: '/riwayat-servis', icon: Clock, roles: ['member'], group: 'Layanan' },
     { name: 'Poin & Reward', href: '/rewards-member', icon: Gift, roles: ['member'], group: 'Loyalty' },
     { name: 'Montir AI', href: '/montir-ai', icon: Bot, roles: ['member'], group: 'Asisten' },
-    { name: 'Profil & Garasi', href: '/profil-member', icon: UserCircle, roles: ['member'], group: 'Akun' },
+    { name: 'Profil Akun Member', href: '/profil-member', icon: UserCircle, roles: ['member'], group: 'Akun' },
     { name: 'Kritik & Saran', href: '/complain', icon: MessageSquarePlus, roles: ['member'], group: 'Akun' },
 
     // Owner Analytics
