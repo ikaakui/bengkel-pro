@@ -20,7 +20,8 @@ import {
     Wrench,
     AlertCircle,
     Check,
-    PlusCircle
+    PlusCircle,
+    Phone
 } from "lucide-react";
 import { createClient } from "@/lib/supabase-client";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -40,6 +41,7 @@ export default function BookingOnlinePage() {
     
     // Form State
     const [selectedBranch, setSelectedBranch] = useState<any>(null);
+    const [customerPhone, setCustomerPhone] = useState("");
     const [carModel, setCarModel] = useState("");
     const [licensePlate, setLicensePlate] = useState("");
     const [serviceDate, setServiceDate] = useState("");
@@ -64,6 +66,12 @@ export default function BookingOnlinePage() {
     }, [profile?.id, fetchData]);
 
     useEffect(() => {
+        if (profile?.phone && !customerPhone) {
+            setCustomerPhone(profile.phone);
+        }
+    }, [profile?.phone, customerPhone]);
+
+    useEffect(() => {
         const fetchBookedTimes = async () => {
             if (!serviceDate || !selectedBranch) {
                 setBookedTimes([]);
@@ -84,7 +92,10 @@ export default function BookingOnlinePage() {
 
 
     const handleBooking = async () => {
-        if (!profile || !selectedBranch || !serviceDate || !serviceTime) return;
+        if (!profile || !selectedBranch || !serviceDate || !serviceTime || !customerPhone) {
+            alert("Harap lengkapi semua data termasuk nomor telepon.");
+            return;
+        }
         
         setIsSubmitting(true);
         try {
@@ -92,7 +103,7 @@ export default function BookingOnlinePage() {
             
             const { error } = await supabase.from("bookings").insert([{
                 customer_name: profile.full_name,
-                customer_phone: profile.phone,
+                customer_phone: customerPhone || "-",
                 car_model: carModel,
                 license_plate: licensePlate.toUpperCase(),
                 service_date: serviceDate,
@@ -196,8 +207,18 @@ export default function BookingOnlinePage() {
 
                                         <div className="space-y-6">
                                             <div className="space-y-4">
-                                                <label className="text-sm font-bold text-slate-700">Informasi Kendaraan</label>
+                                                <label className="text-sm font-bold text-slate-700">Kontak & Kendaraan</label>
                                                 <div className="space-y-4">
+                                                    <div className="relative">
+                                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                        <input 
+                                                            type="text" 
+                                                            placeholder="Nomor WhatsApp" 
+                                                            className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:outline-none focus:border-primary focus:bg-white transition-all" 
+                                                            value={customerPhone} 
+                                                            onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, ''))} 
+                                                        />
+                                                    </div>
                                                     <div className="relative">
                                                         <Car className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                                         <input 
@@ -224,7 +245,7 @@ export default function BookingOnlinePage() {
                                     </div>
 
                                     <div className="mt-10 flex justify-end">
-                                        <Button disabled={!selectedBranch || !carModel || !licensePlate} onClick={() => setStep(2)} className="h-14 px-8 rounded-2xl shadow-xl shadow-primary/20 gap-2 font-black">
+                                        <Button disabled={!selectedBranch || !carModel || !licensePlate || !customerPhone} onClick={() => setStep(2)} className="h-14 px-8 rounded-2xl shadow-xl shadow-primary/20 gap-2 font-black">
                                             LANJUT PILIH JADWAL <ChevronRight size={20} />
                                         </Button>
                                     </div>
