@@ -199,14 +199,10 @@ export default function RewardsMemberPage() {
                                                             </p>
                                                         </div>
                                                     ) : (
-                                                        <Button 
-                                                            onClick={() => handleRedeem(reward)}
-                                                            disabled={isRedeeming === reward.id}
-                                                            className="w-full h-12 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black shadow-lg shadow-slate-900/10 gap-2"
-                                                        >
-                                                            {isRedeeming === reward.id ? <Loader2 className="animate-spin" /> : "TUKARKAN SEKARANG"}
-                                                            <ChevronRight size={18} />
-                                                        </Button>
+                                                        <div className="w-full h-12 rounded-2xl bg-emerald-50 border-2 border-emerald-100 flex items-center justify-center text-emerald-600 font-black gap-2">
+                                                            <CheckCircle2 size={18} />
+                                                            BISA DITUKAR DI KASIR
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>

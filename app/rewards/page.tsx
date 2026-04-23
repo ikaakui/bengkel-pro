@@ -19,7 +19,8 @@ import {
     Coins,
     CheckCircle2,
     AlertCircle,
-    Info
+    Info,
+    FileText
 } from "lucide-react";
 import { createClient } from "@/lib/supabase-client";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,6 +45,7 @@ export default function RewardsPage() {
     const [editingReward, setEditingReward] = useState<Partial<Reward> | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [feedback, setFeedback] = useState<{ show: boolean; type: 'success' | 'error'; message: string }>({ show: false, type: 'success', message: '' });
+    const [history, setHistory] = useState<any[]>([]);
 
     const supabase = createClient();
 
@@ -62,6 +64,15 @@ export default function RewardsPage() {
             .single();
         if (settings) setPointsPerRupiah(Number(settings.value));
         
+        // Fetch History
+        const { data: historyData } = await supabase
+            .from("point_transactions")
+            .select("*, member:profiles(full_name)")
+            .eq("type", "redeem")
+            .order("created_at", { ascending: false })
+            .limit(20);
+        if (historyData) setHistory(historyData);
+
         setLoading(false);
     };
 
@@ -129,7 +140,7 @@ export default function RewardsPage() {
 
     return (
         <DashboardLayout>
-            <RoleGuard allowedRoles={["owner"]}>
+            <RoleGuard allowedRoles={["owner", "admin"]}>
                 <div className="max-w-6xl mx-auto space-y-8 pb-20">
                     
                     {/* Header Section */}
@@ -294,6 +305,42 @@ export default function RewardsPage() {
                                 </AnimatePresence>
                             </div>
                         </div>
+                    </div>
+
+                    {/* History Section */}
+                    <div className="mt-12 space-y-6">
+                        <div className="flex items-center gap-2 px-2">
+                            <FileText className="text-slate-500" size={24} />
+                            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Riwayat Penukaran Reward</h2>
+                        </div>
+                        <Card className="border-2 border-slate-100 rounded-[2rem] overflow-hidden">
+                            <CardContent className="p-0">
+                                {loading ? (
+                                    <div className="p-10 flex justify-center"><Loader2 size={30} className="animate-spin text-slate-300" /></div>
+                                ) : history.length === 0 ? (
+                                    <div className="p-10 text-center">
+                                        <p className="text-slate-500 font-medium">Belum ada riwayat penukaran reward.</p>
+                                    </div>
+                                ) : (
+                                    <div className="divide-y divide-slate-100">
+                                        {history.map(item => (
+                                            <div key={item.id} className="p-6 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                                                <div>
+                                                    <p className="font-bold text-slate-900">{item.member?.full_name || "Member"}</p>
+                                                    <p className="text-sm text-slate-500 mt-1">{item.description}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <Badge variant="warning" className="mb-1 text-xs">{item.points} PTS</Badge>
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                                                        {new Date(item.created_at).toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
 
