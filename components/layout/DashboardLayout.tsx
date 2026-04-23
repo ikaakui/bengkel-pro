@@ -106,7 +106,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         setTimeout(() => setCopied(false), 2000);
     };
 
-    if (loading || isLoggingOut) {
+    if (isLoggingOut) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6">
                 <div className="text-center animate-fadeIn">
@@ -118,10 +118,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         </div>
                     </div>
                     <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">
-                        {isLoggingOut ? "Keluar Sistem..." : "Memuat Data..."}
+                        Keluar Sistem...
                     </h2>
                     <p className="text-slate-500 font-medium">
-                        {isLoggingOut ? "Menghapus sesi dengan aman, silakan tunggu." : "Sedang menyinkronkan data profil Anda."}
+                        Menghapus sesi dengan aman, silakan tunggu.
                     </p>
                 </div>
 

@@ -10,21 +10,26 @@ import type { UserProfile } from "@/components/providers/AuthProvider";
 
 // Dynamically import dashboards for code splitting
 const OwnerDashboard = dynamic(() => import("./OwnerDashboard"), {
-    loading: () => <DashboardLoading message="Memuat Dashboard Owner..." />
+    loading: () => <DashboardLoading />
 });
 const AdminDashboard = dynamic(() => import("./AdminDashboard"), {
-    loading: () => <DashboardLoading message="Memuat Dashboard Admin..." />
+    loading: () => <DashboardLoading />
 });
 const MemberDashboard = dynamic(() => import("./MemberDashboard"), {
-    loading: () => <DashboardLoading message="Memuat Dashboard Member..." />
+    loading: () => <DashboardLoading />
 });
 
-function DashboardLoading({ message }: { message: string }) {
+function DashboardLoading() {
     return (
-        <div className="flex items-center justify-center min-h-[50vh]">
-            <div className="text-center">
-                <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto" />
-                <p className="text-slate-500 mt-4 text-sm font-medium">{message}</p>
+        <div className="space-y-6 w-full animate-pulse p-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="bg-slate-200/60 rounded-3xl h-[120px] w-full" />
+                ))}
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+                <div className="lg:col-span-2 bg-slate-200/60 rounded-3xl h-[400px] w-full" />
+                <div className="bg-slate-200/60 rounded-3xl h-[400px] w-full" />
             </div>
         </div>
     );
@@ -49,7 +54,7 @@ export default function ClientDashboardWrapper({ initialUser, initialProfile }: 
     const activeRole = profile?.role || initialProfile?.role;
 
     if ((loading || isLoggingOut) && !activeRole) {
-        return <DashboardLoading message={isLoggingOut ? "Keluar Sistem..." : "Menyiapkan Dashboard..."} />;
+        return <DashboardLoading />;
     }
 
     if (!activeRole && !loading) {
@@ -83,7 +88,7 @@ export default function ClientDashboardWrapper({ initialUser, initialProfile }: 
             ) : activeRole === "admin" || activeRole === "spv" || activeRole === "admin_depok" || activeRole === "admin_bsd" ? (
                 <AdminDashboard />
             ) : (
-                <DashboardLoading message={`Menyinkronkan Akun (${activeRole})...`} />
+                <DashboardLoading />
             )}
         </>
     );
