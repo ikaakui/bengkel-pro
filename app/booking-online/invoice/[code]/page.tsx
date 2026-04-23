@@ -127,6 +127,11 @@ export default function BookingInvoicePage() {
         );
     }
 
+    const waNumber = booking?.branches?.phone ? booking.branches.phone.replace(/\D/g, '') : "6281234567890";
+    const formattedWa = waNumber.startsWith('0') ? '62' + waNumber.substring(1) : waNumber;
+    const waMessage = `Halo Admin, saya ingin mengirimkan bukti transfer DP untuk kode booking *${booking?.booking_code}*`;
+    const waLink = `https://wa.me/${formattedWa}?text=${encodeURIComponent(waMessage)}`;
+
     return (
         <DashboardLayout>
             <RoleGuard allowedRoles={["member"]}>
@@ -308,12 +313,12 @@ export default function BookingInvoicePage() {
                                 <tbody className="divide-y divide-slate-100">
                                     <tr className="group">
                                         <td className="py-8">
-                                            <p className="font-black text-slate-900 text-lg">Booking Service Antrian</p>
-                                            <p className="text-xs text-slate-500 font-medium mt-1">Layanan reservasi jadwal teknisi di {booking.branches?.name}</p>
+                                            <p className="font-black text-slate-900 text-lg">Booking Fee / DP Servis</p>
+                                            <p className="text-xs text-slate-500 font-medium mt-1">Biaya komitmen reservasi jadwal di {booking.branches?.name}</p>
                                         </td>
                                         <td className="py-8 text-center font-bold text-slate-700 text-lg">1</td>
-                                        <td className="py-8 text-right font-bold text-slate-700 text-lg">Rp 0</td>
-                                        <td className="py-8 text-right font-black text-slate-900 text-xl">Rp 0</td>
+                                        <td className="py-8 text-right font-bold text-slate-700 text-lg">Rp 50.000</td>
+                                        <td className="py-8 text-right font-black text-slate-900 text-xl">Rp 50.000</td>
                                     </tr>
                                 </tbody>
                                 <tfoot>
@@ -321,7 +326,7 @@ export default function BookingInvoicePage() {
                                         <td colSpan={2} className="py-8">
                                             <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 max-w-sm">
                                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Informasi Pembayaran</p>
-                                                <p className="text-xs text-slate-600 leading-relaxed font-medium">Biaya servis akan dihitung setelah unit diperiksa oleh teknisi di bengkel. Tidak ada biaya booking (GRATIS).</p>
+                                                <p className="text-xs text-slate-600 leading-relaxed font-medium">Biaya servis akan dihitung setelah unit diperiksa. Untuk mengunci jadwal, <strong>wajib mentransfer Booking Fee / DP</strong> dan mengirimkan bukti transfer via WhatsApp.</p>
                                             </div>
                                         </td>
                                         <td className="py-8 text-right">
@@ -333,10 +338,10 @@ export default function BookingInvoicePage() {
                                         </td>
                                         <td className="py-8 text-right">
                                             <div className="space-y-4">
-                                                <p className="text-sm font-bold text-slate-700">Rp 0</p>
+                                                <p className="text-sm font-bold text-slate-700">Rp 50.000</p>
                                                 <p className="text-sm font-bold text-slate-700">Rp 0</p>
                                                 <div className="bg-primary text-white px-6 py-3 rounded-2xl inline-block mt-2">
-                                                    <p className="text-2xl font-black">Rp 0</p>
+                                                    <p className="text-2xl font-black">Rp 50.000</p>
                                                 </div>
                                             </div>
                                         </td>
@@ -349,8 +354,16 @@ export default function BookingInvoicePage() {
                         <div className="p-8 sm:p-12 bg-slate-900 text-white flex flex-col md:flex-row items-center gap-10">
                             <div className="flex-1 space-y-6">
                                 <div>
-                                    <h3 className="text-xl font-black tracking-tight mb-2">Petunjuk Selanjutnya</h3>
-                                    <p className="text-slate-400 text-sm leading-relaxed">Silakan datang sesuai jadwal yang telah ditentukan. Tunjukkan invoice ini atau Kode Booking kepada Service Advisor kami saat tiba di lokasi.</p>
+                                    <h3 className="text-xl font-black tracking-tight mb-2">Petunjuk & Konfirmasi</h3>
+                                    <p className="text-slate-400 text-sm leading-relaxed mb-5">Untuk menyelesaikan reservasi, Anda <strong>wajib mentransfer</strong> biaya di atas dan mengirimkan bukti transfer agar jadwal Anda terkunci di sistem kami.</p>
+                                    <a 
+                                        href={waLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3.5 rounded-2xl font-black transition-all shadow-xl shadow-emerald-500/20"
+                                    >
+                                        <Smartphone size={18} /> KIRIM BUKTI VIA WA
+                                    </a>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 group hover:bg-white/10 transition-colors">

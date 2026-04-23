@@ -201,7 +201,7 @@ export default function PembayaranPage() {
                             <div className="space-y-2">
                                 <h4 className="text-lg font-black text-slate-900 uppercase tracking-tight">Informasi Invoice</h4>
                                 <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                                    Invoice booking adalah bukti reservasi Anda. Estimasi biaya akan diberikan oleh teknisi kami setelah pengecekan fisik kendaraan. Pembayaran dilakukan di kasir setelah pengerjaan selesai menggunakan Cash, Debit, atau Transfer.
+                                    Invoice booking adalah bukti reservasi Anda. Untuk mengunci jadwal, Anda <strong>wajib mentransfer Booking Fee / DP</strong> ke rekening yang tertera di invoice dan mengirimkan buktinya melalui WhatsApp admin. Sisa pembayaran dilakukan di kasir setelah pengerjaan selesai.
                                 </p>
                             </div>
                         </div>
