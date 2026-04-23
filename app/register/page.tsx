@@ -213,7 +213,7 @@ function RegisterForm() {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-4">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-slate-500 uppercase ml-1">Email</label>
                                         <div className="relative group">
@@ -250,7 +250,7 @@ function RegisterForm() {
                                 <span className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Data Kendaraan (Opsional)</span>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-4">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase ml-1">Merek & Tipe</label>
                                     <div className="relative group">
@@ -285,7 +285,7 @@ function RegisterForm() {
                                 <span className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Keamanan Akun</span>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-4">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase ml-1">Password</label>
                                     <div className="relative group">

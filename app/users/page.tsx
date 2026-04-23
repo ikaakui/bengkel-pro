@@ -378,7 +378,7 @@ export default function UsersPage() {
                                                 <User size={14} className="text-blue-500" />
                                                 <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">Data Personal</span>
                                             </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-4">
                                                 <div className="space-y-2">
                                                     <label className="text-xs font-bold text-slate-500 uppercase ml-1">Nama Lengkap</label>
                                                     <div className="relative group">
@@ -445,34 +445,34 @@ export default function UsersPage() {
                                                     <Car size={14} className="text-blue-500" />
                                                     <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">Data Kendaraan (Opsional)</span>
                                                 </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                    <div className="space-y-2">
-                                                        <label className="text-xs font-bold text-slate-500 uppercase ml-1">Merek & Tipe</label>
-                                                        <div className="relative group">
-                                                            <Car className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
-                                                            <input
-                                                                type="text"
-                                                                value={brandModel}
-                                                                onChange={(e) => setBrandModel(e.target.value)}
-                                                                placeholder="Toyota Avanza"
-                                                                className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 transition-all font-bold"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <label className="text-xs font-bold text-slate-500 uppercase ml-1">No. Polisi</label>
-                                                        <div className="relative group">
-                                                            <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
-                                                            <input
-                                                                type="text"
-                                                                value={licensePlate}
-                                                                onChange={(e) => setLicensePlate(e.target.value)}
-                                                                placeholder="B 1234 ABC"
-                                                                className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 transition-all font-bold uppercase"
-                                                            />
-                                                        </div>
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-bold text-slate-500 uppercase ml-1">Merek & Tipe</label>
+                                                    <div className="relative group">
+                                                        <Car className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                                                        <input
+                                                            type="text"
+                                                            value={brandModel}
+                                                            onChange={(e) => setBrandModel(e.target.value)}
+                                                            placeholder="Toyota Avanza"
+                                                            className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 transition-all font-bold"
+                                                        />
                                                     </div>
                                                 </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-bold text-slate-500 uppercase ml-1">No. Polisi</label>
+                                                    <div className="relative group">
+                                                        <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                                                        <input
+                                                            type="text"
+                                                            value={licensePlate}
+                                                            onChange={(e) => setLicensePlate(e.target.value)}
+                                                            placeholder="B 1234 ABC"
+                                                            className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 transition-all font-bold uppercase"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
                                             </div>
                                         )}
                                     </div>
