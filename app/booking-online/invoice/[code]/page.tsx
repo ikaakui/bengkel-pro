@@ -141,8 +141,38 @@ export default function BookingInvoicePage() {
 
     const waNumber = booking?.branches?.phone ? booking.branches.phone.replace(/\D/g, '') : "6281234567890";
     const formattedWa = waNumber.startsWith('0') ? '62' + waNumber.substring(1) : waNumber;
-    const waMessage = `Halo Admin, saya ingin mengirimkan bukti transfer DP untuk kode booking *${booking?.booking_code}*`;
+    
+    const waMessage = `Halo Admin, saya ingin mengirimkan bukti transfer DP.
+    
+*Data Booking:*
+- Kode: *${booking?.booking_code}*
+- Nama: ${booking?.customer_name}
+- Unit: ${booking?.car_model} (${booking?.license_plate})
+- Cabang: ${booking?.branches?.name}`;
+
     const waLink = `https://wa.me/${formattedWa}?text=${encodeURIComponent(waMessage)}`;
+
+    const handleConfirmTransfer = async () => {
+        if (!booking || booking.status !== 'pending') {
+            window.open(waLink, '_blank');
+            return;
+        }
+
+        try {
+            const { error: updateError } = await supabase
+                .from("bookings")
+                .update({ status: 'confirmed' })
+                .eq("id", booking.id);
+
+            if (!updateError) {
+                setBooking({ ...booking, status: 'confirmed' });
+            }
+        } catch (err) {
+            console.error("Error updating status:", err);
+        } finally {
+            window.open(waLink, '_blank');
+        }
+    };
 
     return (
         <DashboardLayout>
@@ -244,7 +274,7 @@ export default function BookingInvoicePage() {
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Kode Booking Member</p>
                                         <p className="text-4xl font-black font-mono tracking-tighter group-hover:scale-105 transition-transform duration-500">{booking.booking_code}</p>
                                         <div className="mt-4 flex items-center md:justify-end gap-2 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
-                                            <Check size={12} strokeWidth={3} /> Terdaftar di Sistem
+                                            <Check size={12} strokeWidth={3} /> {booking.status === 'confirmed' ? 'PEMBAYARAN DP TERKONFIRMASI' : 'Terdaftar di Sistem'}
                                         </div>
                                     </div>
                                     <div className="mt-6 space-y-1">
@@ -368,14 +398,13 @@ export default function BookingInvoicePage() {
                                 <div>
                                     <h3 className="text-xl font-black tracking-tight mb-2">Petunjuk & Konfirmasi</h3>
                                     <p className="text-slate-400 text-sm leading-relaxed mb-5">Untuk menyelesaikan reservasi, Anda <strong>wajib mentransfer</strong> biaya di atas dan mengirimkan bukti transfer agar jadwal Anda terkunci di sistem kami.</p>
-                                    <a 
-                                        href={waLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3.5 rounded-2xl font-black transition-all shadow-xl shadow-emerald-500/20"
+                                    <Button 
+                                        onClick={handleConfirmTransfer}
+                                        className="h-14 px-8 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl shadow-xl shadow-emerald-500/20 gap-3 font-black w-full sm:w-auto"
                                     >
-                                        <Smartphone size={18} /> KIRIM BUKTI VIA WA
-                                    </a>
+                                        <Smartphone size={20} /> 
+                                        {booking.status === 'confirmed' ? 'KIRIM LAGI BUKTI VIA WA' : 'KIRIM BUKTI & KONFIRMASI'}
+                                    </Button>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 group hover:bg-white/10 transition-colors">

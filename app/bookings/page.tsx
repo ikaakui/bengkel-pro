@@ -96,7 +96,7 @@ export default function BookingsPage() {
                 .from("bookings")
                 .select("service_time")
                 .eq("service_date", serviceDate)
-                .in("status", ["pending", "processing", "completed"]);
+                .in("status", ["pending", "confirmed", "processing", "completed"]);
             if (targetBranch) query = query.eq("branch_id", targetBranch);
 
             const { data } = await query;
@@ -361,7 +361,10 @@ export default function BookingsPage() {
         );
 
     const statusVariant = (s: string) =>
-        s === 'completed' ? 'success' : s === 'pending' ? 'warning' : s === 'processing' ? 'info' : 'danger';
+        s === 'completed' ? 'success' : 
+        s === 'confirmed' ? 'success' : 
+        s === 'pending' ? 'warning' : 
+        s === 'processing' ? 'info' : 'danger';
 
     return (
         <DashboardLayout>
