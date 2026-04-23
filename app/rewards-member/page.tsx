@@ -231,7 +231,7 @@ export default function RewardsMemberPage() {
                                 </p>
                             </div>
                             <div className="md:ml-auto">
-                                <Button onClick={() => window.location.href = '/booking-online'} className="h-14 px-8 rounded-2xl font-black bg-white text-slate-900 hover:bg-slate-100 shadow-xl shadow-white/5">
+                                <Button onClick={() => window.location.href = '/booking-online'} className="h-14 px-8 rounded-2xl font-black bg-primary text-white hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all active:scale-95">
                                     BOOKING SERVIS SEKARANG
                                 </Button>
                             </div>
