@@ -247,7 +247,16 @@ export default function BookingOnlinePage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         <div className="space-y-4">
                                             <label className="text-sm font-bold text-slate-700">Pilih Tanggal</label>
-                                            <input type="date" min={new Date().toISOString().split('T')[0]} className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:outline-none focus:border-primary transition-all font-bold" value={serviceDate} onChange={(e) => setServiceDate(e.target.value)} />
+                                            <div className="relative">
+                                                <input 
+                                                    type="date" 
+                                                    min={new Date().toISOString().split('T')[0]} 
+                                                    className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:outline-none focus:border-primary transition-all font-bold cursor-pointer" 
+                                                    value={serviceDate} 
+                                                    onChange={(e) => setServiceDate(e.target.value)}
+                                                    onClick={(e) => e.currentTarget.showPicker?.()}
+                                                />
+                                            </div>
                                         </div>
                                         <div className="space-y-4">
                                             <label className="text-sm font-bold text-slate-700">Pilih Jam</label>
