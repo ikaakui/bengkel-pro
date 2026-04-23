@@ -28,11 +28,6 @@ import { cn } from "@/lib/utils";
 
 const TIME_SLOTS = ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"];
 
-const DEFAULT_BRANCHES = [
-    { id: "depok", name: "Inka Otoservice Depok", address: "Jl. Raya Depok No. 1, Kota Depok" },
-    { id: "bsd", name: "Inka Otoservice BSD", address: "BSD City, Tangerang Selatan" }
-];
-
 export default function BookingOnlinePage() {
     const { profile } = useAuth();
     const router = useRouter();
@@ -56,15 +51,10 @@ export default function BookingOnlinePage() {
         setLoading(true);
         const { data: branchData } = await supabase
             .from("branches")
-            .select("*")
-            .eq("is_active", true);
+            .select("*");
 
-        if (branchData) {
-            const filtered = branchData.filter(b => 
-                b.name.toLowerCase().includes("depok") || 
-                b.name.toLowerCase().includes("bsd")
-            );
-            setBranches(filtered);
+        if (branchData && branchData.length > 0) {
+            setBranches(branchData);
         }
         setLoading(false);
     }, [supabase]);
@@ -170,7 +160,7 @@ export default function BookingOnlinePage() {
                                             <div className="space-y-4">
                                                 <label className="text-sm font-bold text-slate-700">Pilih Cabang Bengkel</label>
                                                 <div className="grid grid-cols-1 gap-4">
-                                                    {(branches.length > 0 ? branches : DEFAULT_BRANCHES).map((b) => (
+                                                    {branches.map((b) => (
                                                         <button 
                                                             key={b.id} 
                                                             onClick={() => setSelectedBranch(b)} 
