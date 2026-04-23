@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import type { User, Session } from "@supabase/supabase-js";
 import SessionTimeoutHandler from "@/components/auth/SessionTimeoutHandler";
 
-export type UserRole = "owner" | "admin" | "member";
+export type UserRole = "owner" | "admin" | "member" | "spv";
 
 export interface UserProfile {
     id: string;
