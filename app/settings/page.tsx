@@ -18,7 +18,8 @@ import {
     RefreshCw,
     Bot,
     Calendar,
-    Hash
+    Hash,
+    Banknote
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -30,6 +31,10 @@ export default function SettingsPage() {
     const [originalAiDuration, setOriginalAiDuration] = useState("30");
     const [aiQuota, setAiQuota] = useState("1");
     const [originalAiQuota, setOriginalAiQuota] = useState("1");
+
+    // Booking Settings
+    const [bookingFee, setBookingFee] = useState("50000");
+    const [originalBookingFee, setOriginalBookingFee] = useState("50000");
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -54,6 +59,10 @@ export default function SettingsPage() {
             const quota = data.find((d: any) => d.key === "montir_ai_quota")?.value || "1";
             setAiQuota(quota);
             setOriginalAiQuota(quota);
+
+            const fee = data.find((d: any) => d.key === "booking_fee_amount")?.value || "50000";
+            setBookingFee(fee);
+            setOriginalBookingFee(fee);
         }
         setLoading(false);
     };
@@ -87,6 +96,10 @@ export default function SettingsPage() {
             updates.push({ key: "montir_ai_quota", value: aiQuota, updated_at: new Date().toISOString() });
         }
 
+        if (bookingFee !== originalBookingFee) {
+            updates.push({ key: "booking_fee_amount", value: bookingFee, updated_at: new Date().toISOString() });
+        }
+
         if (updates.length > 0) {
             const { error: updateError } = await supabase
                 .from("app_settings")
@@ -99,6 +112,7 @@ export default function SettingsPage() {
                 setOriginalRate(commissionRate);
                 setOriginalAiDuration(aiDuration);
                 setOriginalAiQuota(aiQuota);
+                setOriginalBookingFee(bookingFee);
                 setTimeout(() => setSuccess(""), 3000);
             }
         }
@@ -106,7 +120,7 @@ export default function SettingsPage() {
         setSaving(false);
     };
 
-    const hasChanges = commissionRate !== originalRate || aiDuration !== originalAiDuration || aiQuota !== originalAiQuota;
+    const hasChanges = commissionRate !== originalRate || aiDuration !== originalAiDuration || aiQuota !== originalAiQuota || bookingFee !== originalBookingFee;
 
     return (
         <DashboardLayout>
@@ -304,6 +318,80 @@ export default function SettingsPage() {
                                                     setCommissionRate(originalRate);
                                                     setAiDuration(originalAiDuration);
                                                     setAiQuota(originalAiQuota);
+                                                }}
+                                                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
+                                            >
+                                                <RefreshCw size={14} />
+                                                Reset
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Booking Fee Setting */}
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <div className="p-3 bg-emerald-100 rounded-xl">
+                                    <Banknote size={24} className="text-emerald-600" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold">Biaya DP / Booking Online</h3>
+                                    <p className="text-sm text-slate-500 mt-0.5">
+                                        Besaran Down Payment yang wajib ditransfer pelanggan saat melakukan booking online.
+                                    </p>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            {loading ? (
+                                <div className="flex items-center gap-2 text-slate-500">
+                                    <Loader2 size={16} className="animate-spin" />
+                                    Memuat...
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative flex-1 max-w-xs">
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg">Rp</span>
+                                            <input
+                                                type="number"
+                                                value={bookingFee}
+                                                onChange={(e) => setBookingFee(e.target.value)}
+                                                min="0"
+                                                step="1000"
+                                                className="input-field pl-12 text-xl font-bold text-left"
+                                            />
+                                        </div>
+                                        <div className="text-sm text-slate-500">
+                                            <p>Nominal ini akan ditagihkan pada <strong className="text-primary">Invoice Booking Online</strong>.</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 pt-2">
+                                        <Button
+                                            onClick={handleSave}
+                                            disabled={saving || !hasChanges}
+                                            variant="primary"
+                                            className="h-11"
+                                        >
+                                            {saving ? (
+                                                <Loader2 size={18} className="animate-spin mr-2" />
+                                            ) : (
+                                                <Save size={18} className="mr-2" />
+                                            )}
+                                            {saving ? "Menyimpan..." : "Simpan Perubahan"}
+                                        </Button>
+                                        {hasChanges && (
+                                            <button
+                                                onClick={() => {
+                                                    setCommissionRate(originalRate);
+                                                    setAiDuration(originalAiDuration);
+                                                    setAiQuota(originalAiQuota);
+                                                    setBookingFee(originalBookingFee);
                                                 }}
                                                 className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
                                             >

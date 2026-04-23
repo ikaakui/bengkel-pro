@@ -56,6 +56,7 @@ export default function BookingInvoicePage() {
     const invoiceRef = useRef<HTMLDivElement>(null);
 
     const [booking, setBooking] = useState<Booking | null>(null);
+    const [bookingFee, setBookingFee] = useState<number>(50000);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -78,6 +79,17 @@ export default function BookingInvoicePage() {
                 setError("Data booking tidak ditemukan.");
             } else {
                 setBooking(data);
+                
+                // Fetch booking fee amount
+                const { data: feeData } = await supabase
+                    .from("app_settings")
+                    .select("value")
+                    .eq("key", "booking_fee_amount")
+                    .single();
+                    
+                if (feeData?.value) {
+                    setBookingFee(parseInt(feeData.value) || 50000);
+                }
             }
         } catch (err: any) {
             setError("Gagal memuat data: " + err.message);
@@ -317,8 +329,8 @@ export default function BookingInvoicePage() {
                                             <p className="text-xs text-slate-500 font-medium mt-1">Biaya komitmen reservasi jadwal di {booking.branches?.name}</p>
                                         </td>
                                         <td className="py-8 text-center font-bold text-slate-700 text-lg">1</td>
-                                        <td className="py-8 text-right font-bold text-slate-700 text-lg">Rp 50.000</td>
-                                        <td className="py-8 text-right font-black text-slate-900 text-xl">Rp 50.000</td>
+                                        <td className="py-8 text-right font-bold text-slate-700 text-lg">Rp {bookingFee.toLocaleString("id-ID")}</td>
+                                        <td className="py-8 text-right font-black text-slate-900 text-xl">Rp {bookingFee.toLocaleString("id-ID")}</td>
                                     </tr>
                                 </tbody>
                                 <tfoot>
@@ -338,10 +350,10 @@ export default function BookingInvoicePage() {
                                         </td>
                                         <td className="py-8 text-right">
                                             <div className="space-y-4">
-                                                <p className="text-sm font-bold text-slate-700">Rp 50.000</p>
+                                                <p className="text-sm font-bold text-slate-700">Rp {bookingFee.toLocaleString("id-ID")}</p>
                                                 <p className="text-sm font-bold text-slate-700">Rp 0</p>
                                                 <div className="bg-primary text-white px-6 py-3 rounded-2xl inline-block mt-2">
-                                                    <p className="text-2xl font-black">Rp 50.000</p>
+                                                    <p className="text-2xl font-black">Rp {bookingFee.toLocaleString("id-ID")}</p>
                                                 </div>
                                             </div>
                                         </td>
