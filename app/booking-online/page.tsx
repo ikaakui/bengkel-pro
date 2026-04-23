@@ -110,7 +110,6 @@ export default function BookingOnlinePage() {
                 mitra_id: profile.id,
                 branch_id: selectedBranch.id,
                 booking_code: code,
-                booking_type: 'referral',
                 status: 'pending'
             }]);
 
