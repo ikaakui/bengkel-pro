@@ -190,13 +190,7 @@ function RegisterForm() {
                             </motion.div>
                         )}
 
-                        <div className="space-y-5">
-                            {/* Personal Info Header */}
-                            <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
-                                <User size={16} className="text-blue-500" />
-                                <span className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Informasi Personal</span>
-                            </div>
-
+                        <div className="space-y-6">
                             <div className="space-y-4">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase ml-1">Nama Lengkap</label>
@@ -244,11 +238,7 @@ function RegisterForm() {
                                 </div>
                             </div>
 
-                            {/* Vehicle Info Header */}
-                            <div className="flex items-center gap-2 pb-1 border-b border-slate-100 pt-2">
-                                <Car size={16} className="text-blue-500" />
-                                <span className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Data Kendaraan (Opsional)</span>
-                            </div>
+
 
                             <div className="space-y-4">
                                 <div className="space-y-2">
@@ -279,11 +269,7 @@ function RegisterForm() {
                                 </div>
                             </div>
 
-                            {/* Password Header */}
-                            <div className="flex items-center gap-2 pb-1 border-b border-slate-100 pt-2">
-                                <Lock size={16} className="text-blue-500" />
-                                <span className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Keamanan Akun</span>
-                            </div>
+
 
                             <div className="space-y-4">
                                 <div className="space-y-2">

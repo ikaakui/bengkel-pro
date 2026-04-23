@@ -372,79 +372,66 @@ export default function UsersPage() {
                                     )}
                                     
                                     <div className="space-y-6">
-                                        {/* Section: Personal Info */}
                                         <div className="space-y-4">
-                                            <div className="flex items-center gap-2 pb-1 border-b border-blue-100">
-                                                <User size={14} className="text-blue-500" />
-                                                <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">Data Personal</span>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-bold text-slate-500 uppercase ml-1">Nama Lengkap</label>
+                                                <div className="relative group">
+                                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                                                    <input
+                                                        type="text"
+                                                        value={newName}
+                                                        onChange={(e) => setNewName(e.target.value)}
+                                                        placeholder="Nama lengkap member"
+                                                        required
+                                                        className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 transition-all font-bold"
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className="space-y-4">
-                                                <div className="space-y-2">
-                                                    <label className="text-xs font-bold text-slate-500 uppercase ml-1">Nama Lengkap</label>
-                                                    <div className="relative group">
-                                                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
-                                                        <input
-                                                            type="text"
-                                                            value={newName}
-                                                            onChange={(e) => setNewName(e.target.value)}
-                                                            placeholder="Nama lengkap member"
-                                                            required
-                                                            className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 transition-all font-bold"
-                                                        />
-                                                    </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-bold text-slate-500 uppercase ml-1">No. WhatsApp</label>
+                                                <div className="relative group">
+                                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                                                    <input
+                                                        type="tel"
+                                                        value={newPhone}
+                                                        onChange={(e) => setNewPhone(e.target.value)}
+                                                        placeholder="0812xxxxxxxx"
+                                                        className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 transition-all font-bold"
+                                                    />
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-xs font-bold text-slate-500 uppercase ml-1">No. WhatsApp</label>
-                                                    <div className="relative group">
-                                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
-                                                        <input
-                                                            type="tel"
-                                                            value={newPhone}
-                                                            onChange={(e) => setNewPhone(e.target.value)}
-                                                            placeholder="0812xxxxxxxx"
-                                                            className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 transition-all font-bold"
-                                                        />
-                                                    </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-bold text-slate-500 uppercase ml-1">Email</label>
+                                                <div className="relative group">
+                                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                                                    <input
+                                                        type="email"
+                                                        value={newEmail}
+                                                        onChange={(e) => setNewEmail(e.target.value)}
+                                                        placeholder="email@contoh.com"
+                                                        required
+                                                        className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 transition-all font-bold text-sm"
+                                                    />
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-xs font-bold text-slate-500 uppercase ml-1">Email</label>
-                                                    <div className="relative group">
-                                                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
-                                                        <input
-                                                            type="email"
-                                                            value={newEmail}
-                                                            onChange={(e) => setNewEmail(e.target.value)}
-                                                            placeholder="email@contoh.com"
-                                                            required
-                                                            className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 transition-all font-bold text-sm"
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-xs font-bold text-slate-500 uppercase ml-1">Password</label>
-                                                    <div className="relative group">
-                                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
-                                                        <input
-                                                            type="password"
-                                                            value={newPassword}
-                                                            onChange={(e) => setNewPassword(e.target.value)}
-                                                            placeholder="Min. 6 karakter"
-                                                            required
-                                                            minLength={6}
-                                                            className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 transition-all font-bold"
-                                                        />
-                                                    </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-bold text-slate-500 uppercase ml-1">Password</label>
+                                                <div className="relative group">
+                                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                                                    <input
+                                                        type="password"
+                                                        value={newPassword}
+                                                        onChange={(e) => setNewPassword(e.target.value)}
+                                                        placeholder="Min. 6 karakter"
+                                                        required
+                                                        minLength={6}
+                                                        className="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 transition-all font-bold"
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Section: Vehicle Info (Only for Member) */}
                                         {newRole === 'member' && (
-                                            <div className="space-y-4">
-                                                <div className="flex items-center gap-2 pb-1 border-b border-blue-100">
-                                                    <Car size={14} className="text-blue-500" />
-                                                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">Data Kendaraan (Opsional)</span>
-                                                </div>
                                             <div className="space-y-4">
                                                 <div className="space-y-2">
                                                     <label className="text-xs font-bold text-slate-500 uppercase ml-1">Merek & Tipe</label>
@@ -472,7 +459,6 @@ export default function UsersPage() {
                                                         />
                                                     </div>
                                                 </div>
-                                            </div>
                                             </div>
                                         )}
                                     </div>
