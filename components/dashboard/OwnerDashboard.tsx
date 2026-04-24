@@ -39,7 +39,7 @@ export default function OwnerDashboard() {
     const [monthlyTarget, setMonthlyTarget] = useState(0);
     const [branchTargets, setBranchTargets] = useState<BranchTarget[]>([]);
     const [recentBookings, setRecentBookings] = useState<any[]>([]);
-    const [quickStats, setQuickStats] = useState({ member: 0, pendingWD: 0 });
+    const [quickStats, setQuickStats] = useState({ member: 0, todayBookings: 0, redemptions: 0 });
     const [branchComparison, setBranchComparison] = useState<{ labels: string[], branches: any[] }>({ labels: [], branches: [] });
 
     const { profile } = useAuth();
@@ -51,19 +51,24 @@ export default function OwnerDashboard() {
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
         try {
+            const startOfToday = new Date();
+            startOfToday.setHours(0, 0, 0, 0);
+
             const [
                 { data: branches },
                 { data: transactionsData },
                 { data: targetSetting },
                 { count: mCount },
-                { count: pWD },
+                { count: tBookings },
+                { count: rCount },
                 { data: recent }
             ] = await Promise.all([
                 supabase.from("branches").select("id, name").order("name"),
                 supabase.from("transactions").select("total_amount, branch_id").eq('status', 'Paid').gte('created_at', startOfMonth),
                 supabase.from('app_settings').select('value').eq('key', 'branch_targets').single(),
                 supabase.from("profiles").select("id", { count: 'exact', head: true }).eq("role", "member"),
-                supabase.from("withdrawals").select("id", { count: 'exact', head: true }).eq("status", "pending"),
+                supabase.from("bookings").select("id", { count: 'exact', head: true }).gte("created_at", startOfToday.toISOString()),
+                supabase.from("point_transactions").select("id", { count: 'exact', head: true }).eq("type", "redeem").gte("created_at", startOfMonth),
                 supabase.from("bookings").select("id, customer_name, car_model, branch_id, status").order("created_at", { ascending: false }).limit(5)
             ]);
 
@@ -98,7 +103,11 @@ export default function OwnerDashboard() {
                 }
             }
 
-            setQuickStats({ member: mCount || 0, pendingWD: pWD || 0 });
+            setQuickStats({
+                member: mCount || 0,
+                todayBookings: tBookings || 0,
+                redemptions: rCount || 0
+            });
 
             // Fetch Comparison Data (Last 6 Months)
             if (uniqueBranches.length > 0) {
@@ -206,24 +215,24 @@ export default function OwnerDashboard() {
                 <Card className="p-6 border-none shadow-xl bg-white flex flex-col justify-between">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl">
-                            <Target size={24} />
+                            <Zap size={24} />
                         </div>
                     </div>
                     <div>
-                        <p className="text-2xl font-black text-slate-900 tracking-tighter italic">{overallPct}%</p>
-                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Pencapaian Global</p>
+                        <p className="text-2xl font-black text-slate-900 tracking-tighter italic">{quickStats.redemptions}</p>
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Penukaran Poin Bulan Ini</p>
                     </div>
                 </Card>
 
                 <Card className="p-6 border-none shadow-xl bg-white flex flex-col justify-between hover:shadow-blue-50/50 transition-all border-l-4 border-blue-500">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
-                            <ShieldCheck size={24} />
+                            <Clock3 size={24} />
                         </div>
                     </div>
                     <div>
-                        <p className="text-3xl font-black text-slate-900 tracking-tighter italic">{quickStats.pendingWD}</p>
-                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Pending Withdrawals</p>
+                        <p className="text-3xl font-black text-slate-900 tracking-tighter italic">{quickStats.todayBookings}</p>
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Booking Hari Ini</p>
                     </div>
                 </Card>
             </div>
