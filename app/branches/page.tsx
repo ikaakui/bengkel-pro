@@ -59,7 +59,7 @@ export default function BranchesPage() {
     const [success, setSuccess] = useState("");
 
     // Global Settings
-    const { refreshGlobalLogo } = useAuth();
+    const { refreshGlobalLogo, role } = useAuth();
     const [globalLogoUrl, setGlobalLogoUrl] = useState("");
     const [savingLogo, setSavingLogo] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);

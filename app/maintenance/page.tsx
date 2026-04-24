@@ -16,7 +16,6 @@ import {
     Search, 
     Filter,
     ChevronRight,
-    Tool,
     Settings,
     History
 } from "lucide-react";
