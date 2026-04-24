@@ -78,8 +78,7 @@ export default function LoginPage() {
 
                 // Quick greeting then navigate immediately
                 setTimeout(() => {
-                    router.push("/");
-                    router.refresh();
+                    window.location.assign("/");
                 }, 1200);
                 return; // Keep loading true during delay
             }
