@@ -108,7 +108,12 @@ export default function BranchesPage() {
             .in("role", ["owner", "admin"])
             .order("created_at", { ascending: false });
 
-        if (bData) setBranches(bData);
+        if (bData) {
+            const uniqueBranches = bData.filter((branch, index, self) =>
+                index === self.findIndex((t) => t.name === branch.name)
+            );
+            setBranches(uniqueBranches);
+        }
         if (pData) {
             setOwners(pData.filter(p => p.role === "owner"));
 

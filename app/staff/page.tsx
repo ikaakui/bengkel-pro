@@ -124,9 +124,13 @@ export default function StaffPage() {
             .select("id, name")
             .order("name");
         if (data) {
-            setBranches(data);
+            // Filter duplicates by name to prevent visual redundancy
+            const uniqueBranches = data.filter((branch, index, self) =>
+                index === self.findIndex((t) => t.name === branch.name)
+            );
+            setBranches(uniqueBranches);
             const names: Record<string, string> = {};
-            data.forEach(b => { names[b.id] = b.name; });
+            uniqueBranches.forEach(b => { names[b.id] = b.name; });
             setBranchNames(names);
         }
     };

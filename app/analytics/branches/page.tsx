@@ -74,12 +74,11 @@ export default function BranchAnalyticsPage() {
             setCurrentMonthRevenue(currentMonthRev);
             setMonthlyTarget(Object.values(targetMap).reduce((acc, t) => acc + t.target, 0));
 
-            if (branches) {
-                // Deduplicate branches by name to prevent double data display
-                const uniqueBranches = branches.filter((br: any, index: number, self: any[]) =>
-                    index === self.findIndex((t: any) => t.name === br.name)
-                );
+            const uniqueBranches = branches ? branches.filter((br: any, index: number, self: any[]) =>
+                index === self.findIndex((t: any) => t.name === br.name)
+            ) : [];
 
+            if (branches) {
                 setBranchTargets(uniqueBranches.map(br => ({
                     branchId: br.id,
                     branchName: br.name,
@@ -90,11 +89,11 @@ export default function BranchAnalyticsPage() {
 
             // For simplicity in this specialized page, we'll use a mocked comparison pattern similar to OwnerDashboard
             // In a real scenario, this would be a more complex aggregation
-            const branchNames = (branches || []).map(b => b.name);
+            const branchNames = uniqueBranches.map(b => b.name);
             const branchColors = ['#2563eb', '#059669', '#7c3aed', '#f59e0b'];
             setBranchComparison({
                 labels: ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4'],
-                branches: (branches || []).map((br, i) => ({
+                branches: uniqueBranches.map((br, i) => ({
                     name: br.name,
                     color: branchColors[i % branchColors.length],
                     values: [0, 0, 0, 0].map(() => Math.round(paidTransactions.filter(t => t.branch_id === br.id).reduce((acc, t) => acc + Number(t.total_amount), 0) / 4 * (0.8 + Math.random() * 0.4)))

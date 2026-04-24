@@ -78,7 +78,12 @@ export default function ReportsPage() {
         try {
             // Fetch branches
             const { data: bData } = await supabase.from('branches').select('id, name').order('name');
-            if (bData) setBranches(bData);
+            if (bData) {
+                const uniqueBranches = bData.filter((branch, index, self) =>
+                    index === self.findIndex((t) => t.name === branch.name)
+                );
+                setBranches(uniqueBranches);
+            }
 
             const { start, end } = getDateRangeFromMonthYear(selectedMonth, selectedYear);
             const prev = getPrevDateRangeFromMonthYear(selectedMonth, selectedYear);

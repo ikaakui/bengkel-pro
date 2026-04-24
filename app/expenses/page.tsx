@@ -72,7 +72,13 @@ export default function ExpensesPage() {
         try {
             // Fetch branches
             const { data: bData } = await supabase.from("branches").select("id, name").order("name");
-            if (bData) setBranches(bData);
+            if (bData) {
+                // Filter duplicates by name to prevent visual redundancy
+                const uniqueBranches = bData.filter((branch, index, self) =>
+                    index === self.findIndex((t) => t.name === branch.name)
+                );
+                setBranches(uniqueBranches);
+            }
 
             // Fetch expenses
             const query = supabase.from("expenses").select("*").order("expense_date", { ascending: false });

@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 export default function MemberAnalyticsPage() {
     const [loading, setLoading] = useState(true);
     const [memberCount, setMemberCount] = useState(0);
-    const [pendingWD, setPendingWD] = useState(0);
+    const [pointRedeems, setPointRedeems] = useState(0);
     const [memberRevenueShare, setMemberRevenueShare] = useState({ member: 0, direct: 0 });
     const [memberMVP, setMemberMVP] = useState<any[]>([]);
 
@@ -38,7 +38,7 @@ export default function MemberAnalyticsPage() {
                 { data: profilesData }
             ] = await Promise.all([
                 supabase.from("profiles").select("id", { count: 'exact', head: true }).eq("role", "member"),
-                supabase.from("withdrawals").select("id", { count: 'exact', head: true }).eq("status", "pending"),
+                supabase.from("point_transactions").select("id", { count: 'exact', head: true }).eq("type", "redeem").gte("created_at", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
                 supabase.from("transactions").select("total_amount, status, member_id").eq('status', 'Paid'),
                 supabase.from("profiles").select("id, full_name").eq("role", "member")
             ]);
@@ -70,7 +70,7 @@ export default function MemberAnalyticsPage() {
                 .sort((a, b) => b.revenue - a.revenue));
 
             setMemberCount(mCount || 0);
-            setPendingWD(pWD || 0);
+            setPointRedeems(pWD || 0);
 
         } catch (error) {
             console.error("Error fetching member analytics:", error);
@@ -129,8 +129,8 @@ export default function MemberAnalyticsPage() {
                             <TrendingUp size={16} className="text-amber-500" />
                         </div>
                         <div>
-                            <p className="text-2xl font-black text-slate-900 tracking-tighter italic">{pendingWD}</p>
-                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Pending Withdrawals</p>
+                            <p className="text-2xl font-black text-slate-900 tracking-tighter italic">{pointRedeems}</p>
+                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Redeem Poin (Bulan Ini)</p>
                         </div>
                     </Card>
 

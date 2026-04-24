@@ -76,7 +76,12 @@ export default function BookingsPage() {
 
     const fetchBranches = async () => {
         const { data } = await supabase.from("branches").select("id, name");
-        if (data) setBranches(data);
+        if (data) {
+            const uniqueBranches = data.filter((branch, index, self) =>
+                index === self.findIndex((t) => t.name === branch.name)
+            );
+            setBranches(uniqueBranches);
+        }
     };
 
     useEffect(() => {
