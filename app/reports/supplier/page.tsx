@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { useAuth } from "@/components/providers/AuthProvider";
 import RoleGuard from "@/components/auth/RoleGuard";
 import { createClient } from "@/lib/supabase-client";
 import { Card } from "@/components/ui/Card";
@@ -14,7 +15,6 @@ import {
     TrendingUp,
     Building2,
     DollarSign,
-    Filter,
     AlertCircle,
     ChevronDown,
     Download

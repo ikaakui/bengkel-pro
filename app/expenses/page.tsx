@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { createClient } from "@/lib/supabase-client";
@@ -8,7 +8,6 @@ import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import {
     TrendingDown,
-    Plus,
     Search,
     Calendar,
     Trash2,
@@ -16,9 +15,7 @@ import {
     Building2,
     DollarSign,
     Filter,
-    CheckCircle2,
-    MessageCircle,
-    Package
+    CheckCircle2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -53,8 +50,6 @@ export default function ExpensesPage() {
     const [showAddForm, setShowAddForm] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState<string>('all');
-    const [activeTab, setActiveTab] = useState<'operasional' | 'supplier'>('operasional');
-    const [ownerWA, setOwnerWA] = useState('6281234567890'); // Default fallback
 
     const supabase = createClient();
 
