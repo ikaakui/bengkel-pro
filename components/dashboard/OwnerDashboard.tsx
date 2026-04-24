@@ -51,9 +51,9 @@ export default function OwnerDashboard() {
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const startOfMonthISO = startOfMonth.toISOString();
         
-        // Setup dates for 6 months trend
+        // Setup dates for 3 months trend
         const months = [];
-        for (let i = 5; i >= 0; i--) {
+        for (let i = 2; i >= 0; i--) {
             const d = new Date();
             d.setMonth(d.getMonth() - i);
             months.push({
@@ -142,7 +142,7 @@ export default function OwnerDashboard() {
                     revenue: paidTransactions.filter((t: any) => t.branch_id === br.id).reduce((acc: number, t: any) => acc + Number(t.total_amount), 0)
                 })));
 
-                // Calculate Comparison Data (Last 6 Months) from pre-fetched allTransactions
+                // Calculate Comparison Data (Last 3 Months) from pre-fetched allTransactions
                 const chartColors = ["#2563eb", "#10b981", "#f43f5e", "#f59e0b", "#8b5cf6", "#06b6d4", "#ec4899", "#14b8a6"];
                 const branchesComparisonData = uniqueBranches.map((br: any, index: number) => {
                     const branchMonthlyData = months.map(m => {

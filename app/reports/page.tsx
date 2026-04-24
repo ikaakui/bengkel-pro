@@ -79,8 +79,8 @@ export default function ReportsPage() {
             const { start, end } = getDateRangeFromMonthYear(selectedMonth, selectedYear);
             const prev = getPrevDateRangeFromMonthYear(selectedMonth, selectedYear);
             
-            // 1. Ambil seluruh data 6 bulan terakhir dalam satu tarikan paralel untuk menghindari N+1 queries
-            const sixMonthsAgoStart = new Date(selectedYear, selectedMonth - 5, 1);
+            // 1. Ambil seluruh data 3 bulan terakhir dalam satu tarikan paralel untuk menghindari N+1 queries
+            const sixMonthsAgoStart = new Date(selectedYear, selectedMonth - 2, 1);
             const currentMonthEnd = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59);
 
             let allTransQ = supabase.from('transactions').select('id, total_amount, created_at, branch_id').eq('status', 'Paid')
@@ -195,9 +195,9 @@ export default function ReportsPage() {
             setPrevGrossMargin(pRevenue > 0 ? (pGross / pRevenue) * 100 : 0);
             setPrevNetMargin(0);
 
-            // 5. Kalkulasi Trend 6 Bulan dari data lokal (Sangat Cepat)
+            // 5. Kalkulasi Trend 3 Bulan dari data lokal (Sangat Cepat)
             const trendData: { month: string; revenue: number; profit: number }[] = [];
-            for (let i = 5; i >= 0; i--) {
+            for (let i = 2; i >= 0; i--) {
                 const ms = new Date(selectedYear, selectedMonth - i, 1);
                 const me = new Date(selectedYear, selectedMonth - i + 1, 0, 23, 59, 59);
                 const label = ms.toLocaleDateString('id-ID', { month: 'short', year: ms.getFullYear() !== selectedYear ? '2-digit' : undefined });
@@ -559,7 +559,7 @@ export default function ReportsPage() {
                                     <CardHeader className="p-6 border-b border-slate-100 bg-slate-50/50">
                                         <h3 className="text-lg font-bold flex items-center gap-2">
                                             <TrendingUp size={20} className="text-emerald-500" />
-                                            Tren Revenue 6 Bulan
+                                            Tren Revenue 3 Bulan
                                         </h3>
                                     </CardHeader>
                                     <CardContent className="p-6">
