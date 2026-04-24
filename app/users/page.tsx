@@ -514,14 +514,14 @@ export default function UsersPage() {
                                 className="input-field pl-12 py-3"
                             />
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                             {["all", "owner", "admin", "member"]
                                 .filter(r => currentUserRole === "owner" || (r === "all" || r === "member"))
                                 .map((r) => (
                                     <button
                                         key={r}
                                         onClick={() => setFilterRole(r)}
-                                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${filterRole === r
+                                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${filterRole === r
                                             ? "bg-primary text-white shadow-lg shadow-primary/20"
                                             : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
                                             }`}

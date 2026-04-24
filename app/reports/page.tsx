@@ -611,9 +611,11 @@ export default function ReportsPage() {
 
 function PLRow({ label, value, isNeg, isBold, isSub }: { label: string; value: number; isNeg?: boolean; isBold?: boolean; isSub?: boolean }) {
     return (
-        <div className={cn("flex justify-between items-center", isSub ? "text-sm" : "py-2")}>
-            <span className={cn(isBold ? "font-bold text-slate-900" : isSub ? "text-slate-500" : "font-medium text-slate-600")}>{label}</span>
-            <span className={cn("font-bold", isNeg ? "text-red-500" : isBold ? "font-black text-slate-900" : "text-slate-900")}>
+        <div className={cn("flex justify-between items-start gap-4", isSub ? "text-sm py-1" : "py-2")}>
+            <span className={cn("flex-1", isBold ? "font-bold text-slate-900" : isSub ? "text-slate-500" : "font-medium text-slate-600")}>
+                {label}
+            </span>
+            <span className={cn("font-bold shrink-0 text-right", isNeg ? "text-red-500" : isBold ? "font-black text-slate-900" : "text-slate-900")}>
                 {isNeg && value !== 0 ? "- " : ""}Rp {Math.abs(value).toLocaleString('id-ID')}
             </span>
         </div>

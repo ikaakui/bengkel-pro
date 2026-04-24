@@ -248,8 +248,8 @@ export default function ExpensesPage() {
                         </button>
                     </div>
 
-                    <div className="flex flex-col lg:flex-row gap-4">
-                        <div className="flex-1 relative">
+                    <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+                        <div className="w-full lg:flex-1 relative">
                             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                             <input
                                 type="text"
@@ -260,28 +260,30 @@ export default function ExpensesPage() {
                             />
                         </div>
                         {activeTab === 'operasional' && (
-                            <div className="flex gap-2 p-1.5 bg-white rounded-3xl shadow-xl overflow-x-auto no-scrollbar">
-                                <button
-                                    onClick={() => setFilterCategory('all')}
-                                    className={cn(
-                                        "px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all",
-                                        filterCategory === 'all' ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
-                                    )}
-                                >
-                                    Semua
-                                </button>
-                                {CATEGORIES.filter(c => c.value !== 'stok').map(cat => (
+                            <div className="w-full lg:w-auto flex-none min-w-0 max-w-full">
+                                <div className="flex gap-2 p-1.5 bg-white rounded-3xl shadow-xl overflow-x-auto no-scrollbar scroll-smooth">
                                     <button
-                                        key={cat.value}
-                                        onClick={() => setFilterCategory(cat.value)}
+                                        onClick={() => setFilterCategory('all')}
                                         className={cn(
                                             "px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all",
-                                            filterCategory === cat.value ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                                            filterCategory === 'all' ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
                                         )}
                                     >
-                                        {cat.label}
+                                        Semua
                                     </button>
-                                ))}
+                                    {CATEGORIES.filter(c => c.value !== 'stok').map(cat => (
+                                        <button
+                                            key={cat.value}
+                                            onClick={() => setFilterCategory(cat.value)}
+                                            className={cn(
+                                                "px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all",
+                                                filterCategory === cat.value ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                                            )}
+                                        >
+                                            {cat.label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>

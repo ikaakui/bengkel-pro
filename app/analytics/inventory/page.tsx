@@ -146,7 +146,7 @@ export default function InventoryAnalyticsPage() {
                                             <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 font-black text-xs">
                                                 {i + 1}
                                             </div>
-                                            <p className="font-black text-slate-900 uppercase tracking-tight truncate max-w-[200px]">{item.name}</p>
+                                            <p className="font-black text-slate-900 uppercase tracking-tight truncate flex-1 min-w-0">{item.name}</p>
                                         </div>
                                         <div className="flex items-center gap-6">
                                             <div className="text-right">

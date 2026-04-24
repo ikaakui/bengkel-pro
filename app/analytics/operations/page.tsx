@@ -107,8 +107,8 @@ export default function AdminOperationsPage() {
                                                 b.status === 'in_progress' ? 'bg-blue-500' : b.status === 'ready' ? 'bg-emerald-500' : 'bg-amber-500'
                                             )} />
                                             <div>
-                                                <p className="font-black text-slate-900 uppercase tracking-tight">{b.customer_name} — {b.vehicle_plate}</p>
-                                                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">{b.service_type}</p>
+                                                <p className="font-black text-slate-900 uppercase tracking-tight truncate max-w-[180px] sm:max-w-none">{b.customer_name} — {b.vehicle_plate}</p>
+                                                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1 truncate">{b.service_type}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4">
