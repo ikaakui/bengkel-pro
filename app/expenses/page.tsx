@@ -67,20 +67,6 @@ export default function ExpensesPage() {
         branch_id: ''
     });
 
-    const [supplierItems, setSupplierItems] = useState([{ name: '', qty: 1, cost: 0, sell: 0 }]);
-
-    const addSupplierItem = () => setSupplierItems([...supplierItems, { name: '', qty: 1, cost: 0, sell: 0 }]);
-    const removeSupplierItem = (index: number) => setSupplierItems(supplierItems.filter((_, i) => i !== index));
-    const updateSupplierItem = (index: number, field: string, value: any) => {
-        const newItems = [...supplierItems];
-        (newItems[index] as any)[field] = value;
-        setSupplierItems(newItems);
-        
-        // Auto update total amount
-        const total = newItems.reduce((acc, curr) => acc + (curr.qty * curr.cost), 0);
-        setFormData(prev => ({ ...prev, amount: total }));
-    };
-
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -131,18 +117,12 @@ export default function ExpensesPage() {
                 .from("expenses")
                 .insert({
                     ...formData,
-                    description: activeTab === 'supplier' 
-                        ? `STRUCT_JSON:${JSON.stringify(supplierItems)}` 
-                        : formData.description,
-                    category: activeTab === 'supplier' ? 'stok' : formData.category,
                     created_by: profile?.id
                 })
                 .select()
                 .single();
 
             if (error) throw error;
-
-            const isSupplier = activeTab === 'supplier';
 
             setShowAddForm(false);
             setFormData({
@@ -152,16 +132,6 @@ export default function ExpensesPage() {
                 expense_date: new Date().toISOString().split('T')[0],
                 branch_id: profile?.branch_id || ''
             });
-            setSupplierItems([{ name: '', qty: 1, cost: 0, sell: 0 }]);
-
-            // Auto-send WhatsApp for supplier tab
-            if (isSupplier && inserted) {
-                const enrichedExpense: Expense = {
-                    ...inserted,
-                    branch_name: branches.find(b => b.id === inserted.branch_id)?.name || 'Bengkel'
-                };
-                sendWhatsApp(enrichedExpense);
-            }
 
             fetchData();
         } catch (err: any) {
@@ -191,30 +161,7 @@ export default function ExpensesPage() {
 
     const totalFiltered = filteredExpenses.reduce((acc, curr) => acc + curr.amount, 0);
 
-    const sendWhatsApp = (expense: Expense) => {
-        const branch = branches.find(b => b.id === expense.branch_id)?.name || 'Bengkel';
-        const date = new Date(expense.expense_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-        
-        let descriptionText = expense.description;
-        if (descriptionText.startsWith('STRUCT_JSON:')) {
-            try {
-                const items = JSON.parse(descriptionText.replace('STRUCT_JSON:', ''));
-                descriptionText = items.map((item: any) => `- ${item.name} (${item.qty}x) @ Rp ${item.cost.toLocaleString('id-ID')}`).join('%0A');
-            } catch (e) {
-                console.error("Failed to parse expense description JSON", e);
-            }
-        }
-
-        const text = `*LAPORAN NOTA SUPPLIER BARU - ${branch}*%0A%0A` +
-            `Berikut adalah rincian barang yang baru saja diambil:%0A%0A` +
-            `*Tanggal:* ${date}%0A` +
-            `*Kategori:* ${CATEGORIES.find(c => c.value === expense.category)?.label}%0A` +
-            `*Total Tagihan:* Rp ${expense.amount.toLocaleString('id-ID')}%0A%0A` +
-            `*Rincian Barang:*%0A${descriptionText}%0A%0A` +
-            `_Silakan lampirkan foto nota fisik sebagai bukti._`;
-
-        window.open(`https://wa.me/${ownerWA}?text=${text}`, '_blank');
-    };
+    const totalFiltered = filteredExpenses.reduce((acc, curr) => acc + curr.amount, 0);
 
     return (
         <DashboardLayout>
@@ -277,69 +224,46 @@ export default function ExpensesPage() {
                     </Card>
                 </div>
 
-                {/* Tabs & Search */}
+                {/* Filter & Search */}
                 <div className="space-y-6">
-                    <div className="flex p-1.5 bg-white rounded-3xl shadow-xl w-fit">
-                        <button
-                            onClick={() => { setActiveTab('operasional'); setFilterCategory('all'); }}
-                            className={cn(
-                                "px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2",
-                                activeTab === 'operasional' ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"
-                            )}
-                        >
-                            <TrendingDown size={16} /> Operasional
-                        </button>
-                        <button
-                            onClick={() => { setActiveTab('supplier'); setFilterCategory('stok'); }}
-                            className={cn(
-                                "px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2",
-                                activeTab === 'supplier' ? "bg-emerald-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"
-                            )}
-                        >
-                            <Package size={16} /> Pengambilan Supplier
-                        </button>
-                    </div>
-
                     <div className="space-y-4">
                         <div className="w-full relative">
                             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                             <input
                                 type="text"
-                                placeholder={activeTab === 'supplier' ? "Cari nama supplier atau barang..." : "Cari deskripsi atau cabang..."}
+                                placeholder="Cari deskripsi atau cabang..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full pl-16 pr-6 py-5 bg-white rounded-3xl border-none shadow-xl text-slate-900 font-medium placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all"
                             />
                         </div>
-                        {activeTab === 'operasional' && (
-                            <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                onClick={() => setFilterCategory('all')}
+                                className={cn(
+                                    "px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border",
+                                    filterCategory === 'all' 
+                                        ? "bg-slate-900 text-white border-slate-900 shadow-md" 
+                                        : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-800 shadow-sm"
+                                )}
+                            >
+                                Semua
+                            </button>
+                            {CATEGORIES.filter(c => c.value !== 'stok').map(cat => (
                                 <button
-                                    onClick={() => setFilterCategory('all')}
+                                    key={cat.value}
+                                    onClick={() => setFilterCategory(cat.value)}
                                     className={cn(
                                         "px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border",
-                                        filterCategory === 'all' 
+                                        filterCategory === cat.value 
                                             ? "bg-slate-900 text-white border-slate-900 shadow-md" 
                                             : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-800 shadow-sm"
                                     )}
                                 >
-                                    Semua
+                                    {cat.label}
                                 </button>
-                                {CATEGORIES.filter(c => c.value !== 'stok').map(cat => (
-                                    <button
-                                        key={cat.value}
-                                        onClick={() => setFilterCategory(cat.value)}
-                                        className={cn(
-                                            "px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border",
-                                            filterCategory === cat.value 
-                                                ? "bg-slate-900 text-white border-slate-900 shadow-md" 
-                                                : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-800 shadow-sm"
-                                        )}
-                                    >
-                                        {cat.label}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                            ))}
+                        </div>
                     </div>
                 </div>
 
@@ -408,16 +332,6 @@ export default function ExpensesPage() {
                                         </td>
                                         <td className="px-4 sm:px-8 py-4 sm:py-6 text-center">
                                             <div className="flex items-center justify-center gap-2">
-                                                {e.category === 'stok' && (
-                                                    <button
-                                                        onClick={() => sendWhatsApp(e)}
-                                                        className="p-2 text-emerald-500 hover:bg-emerald-50 rounded-xl transition-all active:scale-95 flex items-center gap-2"
-                                                        title="Kirim Nota ke Owner"
-                                                    >
-                                                        <MessageCircle size={16} />
-                                                        <span className="text-[10px] font-black uppercase hidden sm:inline">WA Nota</span>
-                                                    </button>
-                                                )}
                                                 <button
                                                     onClick={() => handleDelete(e.id)}
                                                     className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all active:scale-95"
@@ -459,12 +373,12 @@ export default function ExpensesPage() {
                                         <div>
                                             <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-3">
                                                 <div className="p-2.5 bg-white/10 rounded-2xl backdrop-blur-sm">
-                                                    {activeTab === 'supplier' ? <Package size={22} className="text-emerald-400" /> : <TrendingDown size={22} className="text-rose-400" />}
+                                                    <TrendingDown size={22} className="text-rose-400" />
                                                 </div>
-                                                {activeTab === 'supplier' ? 'Input Pengambilan Barang' : 'Catat Pengeluaran'}
+                                                Catat Pengeluaran
                                             </h3>
                                             <p className="text-slate-400 text-sm font-medium mt-2 ml-[52px]">
-                                                {activeTab === 'supplier' ? 'Data akan tercatat sebagai stok masuk & penagihan.' : 'Pastikan data sesuai kuitansi/bukti.'}
+                                                Pastikan data sesuai kuitansi/bukti.
                                             </p>
                                         </div>
                                         <button
@@ -487,10 +401,9 @@ export default function ExpensesPage() {
                                                     <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
                                                     <select
                                                         className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-11 pr-5 text-sm font-bold text-slate-700 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-200 focus:outline-none focus:bg-white transition-all appearance-none cursor-pointer"
-                                                        value={activeTab === 'supplier' ? 'stok' : formData.category}
+                                                        value={formData.category}
                                                         onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
                                                         required
-                                                        disabled={activeTab === 'supplier'}
                                                     >
                                                         {CATEGORIES.map(cat => (
                                                             <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -547,88 +460,15 @@ export default function ExpensesPage() {
                                             </div>
                                         </div>
 
-                                        {activeTab === 'supplier' ? (
-                                            <div className="space-y-4">
-                                                <div className="flex items-center justify-between">
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Daftar Barang & Harga</label>
-                                                    <button 
-                                                        type="button" 
-                                                        onClick={addSupplierItem}
-                                                        className="text-[10px] font-black text-blue-600 uppercase hover:bg-blue-50 px-3 py-1 rounded-lg transition-all"
-                                                    >
-                                                        + Tambah Baris
-                                                    </button>
-                                                </div>
-                                                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                                                    {supplierItems.map((item, idx) => (
-                                                        <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3 relative group/item">
-                                                            <div className="grid grid-cols-12 gap-3">
-                                                                <div className="col-span-8">
-                                                                    <input 
-                                                                        placeholder="Nama Barang (Oli, Ban, dll)"
-                                                                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                                                                        value={item.name}
-                                                                        onChange={(e) => updateSupplierItem(idx, 'name', e.target.value)}
-                                                                        required
-                                                                    />
-                                                                </div>
-                                                                <div className="col-span-4">
-                                                                    <input 
-                                                                        type="number"
-                                                                        placeholder="Qty"
-                                                                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                                                                        value={item.qty || ''}
-                                                                        onChange={(e) => updateSupplierItem(idx, 'qty', Number(e.target.value))}
-                                                                        required
-                                                                    />
-                                                                </div>
-                                                                <div className="col-span-6">
-                                                                    <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Harga Modal</label>
-                                                                    <input 
-                                                                        type="number"
-                                                                        placeholder="Modal"
-                                                                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                                                                        value={item.cost || ''}
-                                                                        onChange={(e) => updateSupplierItem(idx, 'cost', Number(e.target.value))}
-                                                                        required
-                                                                    />
-                                                                </div>
-                                                                <div className="col-span-6">
-                                                                    <label className="text-[9px] font-black text-blue-400 uppercase ml-1">Harga Jual</label>
-                                                                    <input 
-                                                                        type="number"
-                                                                        placeholder="Jual"
-                                                                        className="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                                                                        value={item.sell || ''}
-                                                                        onChange={(e) => updateSupplierItem(idx, 'sell', Number(e.target.value))}
-                                                                        required
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                            {supplierItems.length > 1 && (
-                                                                <button 
-                                                                    type="button"
-                                                                    onClick={() => removeSupplierItem(idx)}
-                                                                    className="absolute -top-2 -right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-all shadow-lg"
-                                                                >
-                                                                    <Trash2 size={12} />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Keterangan / Memo</label>
-                                                <textarea
-                                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-5 text-sm font-medium text-slate-700 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-200 focus:outline-none focus:bg-white transition-all min-h-[90px] resize-none"
-                                                    placeholder="Tulis alasan pengeluaran..."
-                                                    value={formData.description}
-                                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                                />
-                                            </div>
-                                        )}
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Keterangan / Memo</label>
+                                            <textarea
+                                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-5 text-sm font-medium text-slate-700 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-200 focus:outline-none focus:bg-white transition-all min-h-[90px] resize-none"
+                                                placeholder="Tulis alasan pengeluaran..."
+                                                value={formData.description}
+                                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                            />
+                                        </div>
                                     </form>
                                 </div>
 
@@ -655,7 +495,7 @@ export default function ExpensesPage() {
                                                 </span>
                                             ) : (
                                                 <span className="flex items-center justify-center gap-2">
-                                                    {activeTab === 'supplier' ? <><MessageCircle size={16} /> Simpan & Kirim WA</> : <><CheckCircle2 size={16} /> Simpan Transaksi</>}
+                                                    <CheckCircle2 size={16} /> Simpan Transaksi
                                                 </span>
                                             )}
                                         </button>

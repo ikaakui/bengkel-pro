@@ -28,14 +28,50 @@ export default function SupplierRecapPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [filterBranch, setFilterBranch] = useState("all");
     const [branches, setBranches] = useState<any[]>([]);
+    
+    // Add Form State
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [ownerWA, setOwnerWA] = useState('6281234567890');
+    
+    const { profile, role } = useAuth();
+
+    const [formData, setFormData] = useState({
+        amount: 0,
+        category: 'stok',
+        description: '',
+        expense_date: new Date().toISOString().split('T')[0],
+        branch_id: ''
+    });
+
+    const [supplierItems, setSupplierItems] = useState([{ name: '', qty: 1, cost: 0, sell: 0 }]);
+
+    const addSupplierItem = () => setSupplierItems([...supplierItems, { name: '', qty: 1, cost: 0, sell: 0 }]);
+    const removeSupplierItem = (index: number) => setSupplierItems(supplierItems.filter((_, i) => i !== index));
+    const updateSupplierItem = (index: number, field: string, value: any) => {
+        const newItems = [...supplierItems];
+        (newItems[index] as any)[field] = value;
+        setSupplierItems(newItems);
+        
+        const total = newItems.reduce((acc, curr) => acc + (curr.qty * curr.cost), 0);
+        setFormData(prev => ({ ...prev, amount: total }));
+    };
 
     const supabase = createClient();
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data: bData } = await supabase.from("branches").select("id, name");
-            setBranches(bData || []);
+            const { data: bData } = await supabase.from("branches").select("id, name").order("name");
+            if (bData) {
+                const uniqueBranches = bData.filter((branch, index, self) =>
+                    index === self.findIndex((t) => t.name === branch.name)
+                );
+                setBranches(uniqueBranches);
+            }
+
+            const { data: sData } = await supabase.from("app_settings").select("*").eq("key", "owner_wa_number").single();
+            if (sData?.value) setOwnerWA(sData.value);
 
             const { data: eData } = await supabase
                 .from("expenses")
@@ -104,7 +140,78 @@ export default function SupplierRecapPage() {
 
     useEffect(() => {
         fetchData();
-    }, []);
+        if (profile?.branch_id) {
+            setFormData(prev => ({ ...prev, branch_id: profile.branch_id! }));
+        }
+    }, [profile]);
+
+    const handleAddExpense = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+        try {
+            const { data: inserted, error } = await supabase
+                .from("expenses")
+                .insert({
+                    ...formData,
+                    description: `STRUCT_JSON:${JSON.stringify(supplierItems)}`,
+                    created_by: profile?.id
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            setShowAddForm(false);
+            setFormData({
+                amount: 0,
+                category: 'stok',
+                description: '',
+                expense_date: new Date().toISOString().split('T')[0],
+                branch_id: profile?.branch_id || ''
+            });
+            setSupplierItems([{ name: '', qty: 1, cost: 0, sell: 0 }]);
+
+            if (inserted) {
+                const enrichedExpense = {
+                    ...inserted,
+                    branch_name: branches.find(b => b.id === inserted.branch_id)?.name || 'Bengkel'
+                };
+                sendWhatsApp(enrichedExpense);
+            }
+
+            fetchData();
+        } catch (err: any) {
+            alert("Gagal menambahkan data: " + (err?.message || 'Unknown error'));
+            console.error(err);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const sendWhatsApp = (expense: any) => {
+        const branch = expense.branch_name;
+        const date = new Date(expense.expense_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        
+        let descriptionText = expense.description;
+        if (descriptionText.startsWith('STRUCT_JSON:')) {
+            try {
+                const items = JSON.parse(descriptionText.replace('STRUCT_JSON:', ''));
+                descriptionText = items.map((item: any) => `- ${item.name} (${item.qty}x) @ Rp ${item.cost.toLocaleString('id-ID')}`).join('%0A');
+            } catch (e) {
+                console.error("Failed to parse expense description JSON", e);
+            }
+        }
+
+        const text = `*LAPORAN NOTA SUPPLIER BARU - ${branch}*%0A%0A` +
+            `Berikut adalah rincian barang yang baru saja diambil:%0A%0A` +
+            `*Tanggal:* ${date}%0A` +
+            `*Kategori:* Pembelian Stok/Sparepart%0A` +
+            `*Total Tagihan:* Rp ${expense.amount.toLocaleString('id-ID')}%0A%0A` +
+            `*Rincian Barang:*%0A${descriptionText}%0A%0A` +
+            `_Silakan lampirkan foto nota fisik sebagai bukti._`;
+
+        window.open(`https://wa.me/${ownerWA}?text=${text}`, '_blank');
+    };
 
     const filteredData = data.filter(item => {
         const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -136,7 +243,14 @@ export default function SupplierRecapPage() {
                         </div>
                         
                         <div className="flex items-center gap-3">
-                             <button 
+                            <button 
+                                onClick={() => setShowAddForm(true)}
+                                className="flex items-center gap-2 bg-emerald-600 text-white px-6 py-4 rounded-3xl font-black text-sm uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95 shadow-2xl shadow-emerald-200"
+                            >
+                                <Package size={20} strokeWidth={3} />
+                                Input Pengambilan
+                            </button>
+                            <button 
                                 onClick={fetchData}
                                 className="p-4 bg-white text-slate-400 hover:text-blue-600 rounded-3xl shadow-xl hover:shadow-2xl transition-all active:scale-95 border border-slate-100"
                             >
@@ -148,6 +262,95 @@ export default function SupplierRecapPage() {
                             </button>
                         </div>
                     </div>
+
+                    {/* Modal Add Form */}
+                    {showAddForm && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowAddForm(false)} />
+                            <div className="relative w-full max-w-xl max-h-[90vh] bg-white rounded-[2rem] shadow-2xl flex flex-col overflow-hidden z-[101]">
+                                <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 p-8 shrink-0">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-3">
+                                                <div className="p-2.5 bg-white/20 rounded-2xl backdrop-blur-sm">
+                                                    <Package size={22} className="text-white" />
+                                                </div>
+                                                Input Pengambilan Barang
+                                            </h3>
+                                            <p className="text-emerald-50 text-sm font-medium mt-2 ml-[52px]">
+                                                Data akan tercatat sebagai stok masuk & penagihan.
+                                            </p>
+                                        </div>
+                                        <button onClick={() => setShowAddForm(false)} className="p-3 text-emerald-100 hover:text-white hover:bg-white/20 rounded-2xl transition-all">
+                                            X
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="overflow-y-auto flex-1 p-8">
+                                    <form id="expense-form" onSubmit={handleAddExpense} className="space-y-5">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Kategori</label>
+                                                <input type="text" value="Pembelian Stok/Sparepart" disabled className="w-full bg-slate-100 border border-slate-200 rounded-2xl py-4 px-5 text-sm font-bold text-slate-500" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tanggal</label>
+                                                <input type="date" className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-5 text-sm font-bold text-slate-700" value={formData.expense_date} onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })} required />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Cabang</label>
+                                            <select className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-5 text-sm font-bold text-slate-700" value={formData.branch_id} onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })} required={role === 'owner'} disabled={role === 'admin'}>
+                                                <option value="">-- Pilih Cabang --</option>
+                                                {branches.map(br => <option key={br.id} value={br.id}>{br.name}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Total Tagihan (Rp)</label>
+                                            <input type="number" className="w-full bg-slate-100 border border-slate-200 rounded-2xl py-4 px-5 text-xl font-black text-slate-500" value={formData.amount} disabled />
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Daftar Barang & Harga</label>
+                                                <button type="button" onClick={addSupplierItem} className="text-[10px] font-black text-emerald-600 uppercase hover:bg-emerald-50 px-3 py-1 rounded-lg transition-all">+ Tambah Baris</button>
+                                            </div>
+                                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                                {supplierItems.map((item, idx) => (
+                                                    <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3 relative group/item">
+                                                        <div className="grid grid-cols-12 gap-3">
+                                                            <div className="col-span-8">
+                                                                <input placeholder="Nama Barang" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" value={item.name} onChange={(e) => updateSupplierItem(idx, 'name', e.target.value)} required />
+                                                            </div>
+                                                            <div className="col-span-4">
+                                                                <input type="number" placeholder="Qty" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" value={item.qty || ''} onChange={(e) => updateSupplierItem(idx, 'qty', Number(e.target.value))} required />
+                                                            </div>
+                                                            <div className="col-span-6">
+                                                                <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Harga Modal</label>
+                                                                <input type="number" placeholder="Modal" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" value={item.cost || ''} onChange={(e) => updateSupplierItem(idx, 'cost', Number(e.target.value))} required />
+                                                            </div>
+                                                            <div className="col-span-6">
+                                                                <label className="text-[9px] font-black text-emerald-600 uppercase ml-1">Harga Jual</label>
+                                                                <input type="number" placeholder="Jual" className="w-full bg-emerald-50/50 border border-emerald-100 rounded-xl px-3 py-2 text-xs font-bold" value={item.sell || ''} onChange={(e) => updateSupplierItem(idx, 'sell', Number(e.target.value))} required />
+                                                            </div>
+                                                        </div>
+                                                        {supplierItems.length > 1 && (
+                                                            <button type="button" onClick={() => removeSupplierItem(idx)} className="absolute -top-2 -right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-all shadow-lg">X</button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div className="p-6 bg-slate-50/80 border-t border-slate-100 shrink-0 flex gap-4">
+                                    <button type="button" onClick={() => setShowAddForm(false)} className="flex-1 py-4 px-6 rounded-2xl bg-white text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-100 border border-slate-200">Batal</button>
+                                    <button type="submit" form="expense-form" disabled={submitting} className="flex-[2] py-4 px-6 rounded-2xl bg-emerald-600 text-white font-black text-xs uppercase tracking-widest hover:bg-emerald-700 disabled:opacity-50">
+                                        {submitting ? 'Menyimpan...' : 'Simpan & Kirim WA'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Quick Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
