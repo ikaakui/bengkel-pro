@@ -21,8 +21,10 @@ import {
     Check,
     X,
     Pencil,
-    ShieldCheck
+    ShieldCheck,
+    ArrowLeftRight
 } from "lucide-react";
+import BranchComparisonChart from "@/components/dashboard/BranchComparisonChart";
 
 interface BranchTarget {
     branchId: string;
@@ -38,6 +40,7 @@ export default function OwnerDashboard() {
     const [branchTargets, setBranchTargets] = useState<BranchTarget[]>([]);
     const [recentBookings, setRecentBookings] = useState<any[]>([]);
     const [quickStats, setQuickStats] = useState({ member: 0, pendingWD: 0 });
+    const [branchComparison, setBranchComparison] = useState<{ labels: string[], branches: any[] }>({ labels: [], branches: [] });
 
     const { profile } = useAuth();
     const supabase = useMemo(() => createClient(), []);
@@ -96,6 +99,44 @@ export default function OwnerDashboard() {
             }
 
             setQuickStats({ member: mCount || 0, pendingWD: pWD || 0 });
+
+            // Fetch Comparison Data (Last 6 Months)
+            if (uniqueBranches.length > 0) {
+                const months = [];
+                for (let i = 5; i >= 0; i--) {
+                    const d = new Date();
+                    d.setMonth(d.getMonth() - i);
+                    months.push({
+                        start: new Date(d.getFullYear(), d.getMonth(), 1).toISOString(),
+                        end: new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59).toISOString(),
+                        label: d.toLocaleDateString('id-ID', { month: 'short' })
+                    });
+                }
+
+                const branchesComparisonData = await Promise.all(uniqueBranches.map(async (br: any) => {
+                    const branchMonthlyData = await Promise.all(months.map(async (m) => {
+                        const { data } = await supabase
+                            .from("transactions")
+                            .select("total_amount")
+                            .eq('status', 'Paid')
+                            .eq('branch_id', br.id)
+                            .gte('created_at', m.start)
+                            .lte('created_at', m.end);
+
+                        return (data || []).reduce((acc: number, t: any) => acc + Number(t.total_amount), 0);
+                    }));
+
+                    return {
+                        name: br.name,
+                        data: branchMonthlyData
+                    };
+                }));
+
+                setBranchComparison({
+                    labels: months.map(m => m.label),
+                    branches: branchesComparisonData
+                });
+            }
 
         } catch (error) {
             console.error("Overview error:", error);
@@ -273,6 +314,28 @@ export default function OwnerDashboard() {
                     </Link>
                 </Card>
             </div>
+
+            {/* Comparison Chart Section */}
+            {branchComparison.branches.length > 0 && (
+                <Card className="border-none shadow-2xl bg-white p-8">
+                    <CardHeader className="px-0 pt-0 mb-8 border-b border-slate-50 pb-6 flex flex-row items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl shadow-inner">
+                                <ArrowLeftRight size={24} />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-black text-slate-900 tracking-tight">Perbandingan Antar Cabang</h3>
+                                <p className="text-sm text-slate-500 font-medium mt-0.5">Visualisasi performa real-time antar lokasi bengkel.</p>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="px-0">
+                        <div className="h-[400px]">
+                            <BranchComparisonChart branches={branchComparison.branches} labels={branchComparison.labels} height={400} />
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
         </div>
     );
 }

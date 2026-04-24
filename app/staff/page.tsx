@@ -53,13 +53,11 @@ interface BranchOption {
 const roleIcons: Record<string, typeof Crown> = {
     owner: Crown,
     admin: Shield,
-    mitra: UserCheck,
 };
 
 const roleColors: Record<string, string> = {
     owner: "bg-purple-100 text-purple-700",
     admin: "bg-blue-100 text-blue-700",
-    mitra: "bg-emerald-100 text-emerald-700",
 };
 
 export default function StaffPage() {
@@ -91,15 +89,7 @@ export default function StaffPage() {
     const [resetTargetName, setResetTargetName] = useState("");
     const [resetPassword, setResetPassword] = useState("");
 
-    // Mitra Detail State
-    const [showDetailModal, setShowDetailModal] = useState(false);
-    const [selectedMitra, setSelectedMitra] = useState<any>(null);
-    const [mitraBookings, setMitraBookings] = useState<any[]>([]);
-    const [mitraWithdrawals, setMitraWithdrawals] = useState<any[]>([]);
-    const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-    const [commissionRate, setCommissionRate] = useState(5);
-
-    // Delete Mitra State
+    // Delete User State
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteTargetId, setDeleteTargetId] = useState("");
     const [deleteTargetName, setDeleteTargetName] = useState("");
@@ -173,19 +163,6 @@ export default function StaffPage() {
         setError("");
         setSuccess("");
 
-        // Admin can only add mitra, owner can add both
-        if (currentUserRole === "admin" && newRole !== "mitra") {
-            setError("Admin hanya bisa menambahkan Mitra.");
-            setFormLoading(false);
-            return;
-        }
-
-        if (newPassword.length < 6) {
-            setError("Password minimal 6 karakter.");
-            setFormLoading(false);
-            return;
-        }
-
         try {
             const res = await fetch("/api/users", {
                 method: "POST",
@@ -213,7 +190,7 @@ export default function StaffPage() {
             setNewEmail("");
             setNewPhone("");
             setNewPassword("");
-            setNewRole("mitra");
+            setNewRole("admin");
             setNewBranchId("");
             setShowForm(false);
 
@@ -260,37 +237,7 @@ export default function StaffPage() {
         setFormLoading(false);
     };
 
-    const fetchMitraDetails = async (mitraId: string) => {
-        setIsLoadingDetails(true);
-        try {
-            // Fetch bookings
-            const { data: bkData } = await supabase
-                .from("bookings")
-                .select("*")
-                .eq("member_id", mitraId)
-                .order("created_at", { ascending: false });
-            if (bkData) setMitraBookings(bkData);
-
-            // Fetch withdrawals
-            const { data: wdData } = await supabase
-                .from("withdrawals")
-                .select("*")
-                .eq("member_id", mitraId)
-                .order("created_at", { ascending: false });
-            if (wdData) setMitraWithdrawals(wdData);
-        } catch (err) {
-            console.error("Error fetching mitra details:", err);
-        }
-        setIsLoadingDetails(false);
-    };
-
-    const handleViewDetails = (user: any) => {
-        setSelectedMitra(user);
-        setShowDetailModal(true);
-        fetchMitraDetails(user.id);
-    };
-
-    const handleDeleteMitra = async () => {
+    const handleDeleteUser = async () => {
         if (!deleteTargetId) return;
 
         setFormLoading(true);
@@ -302,9 +249,9 @@ export default function StaffPage() {
             const data = await res.json();
 
             if (!res.ok) {
-                setError(data.error || "Gagal menghapus data mitra");
+                setError(data.error || "Gagal menghapus data user");
             } else {
-                alert(data.message || "Data mitra berhasil dihapus");
+                alert(data.message || "Data user berhasil dihapus");
                 setShowDeleteModal(false);
                 fetchUsers(); // Refresh list
             }
@@ -472,8 +419,7 @@ export default function StaffPage() {
                             />
                         </div>
                         <div className="flex gap-2">
-                            {["all", "owner", "admin", "mitra"]
-                                .filter(r => currentUserRole === "owner" || (r === "all" || r === "mitra"))
+                            {["all", "owner", "admin"]
                                 .map((r) => (
                                     <button
                                         key={r}
@@ -563,7 +509,7 @@ export default function StaffPage() {
                                                                     setError("");
                                                                 }}
                                                                 className="p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                                                                title="Hapus Mitra"
+                                                                title="Hapus User"
                                                             >
                                                                 <Trash2 size={16} />
                                                             </button>
@@ -682,7 +628,7 @@ export default function StaffPage() {
                                     Batal
                                 </Button>
                                 <Button
-                                    onClick={handleDeleteMitra}
+                                    onClick={handleDeleteUser}
                                     variant="danger"
                                     className="flex-1 py-4 rounded-2xl font-bold shadow-lg shadow-red-200"
                                     disabled={formLoading}

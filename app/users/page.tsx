@@ -102,7 +102,7 @@ export default function UsersPage() {
     const [memberPoints, setMemberPoints] = useState<any[]>([]);
     const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
-    // Delete Mitra State
+    // Delete Member State
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteTargetId, setDeleteTargetId] = useState("");
     const [deleteTargetName, setDeleteTargetName] = useState("");
@@ -323,7 +323,7 @@ export default function UsersPage() {
         fetchMemberDetails(user.id);
     };
 
-    const handleDeleteMitra = async () => {
+    const handleDeleteMember = async () => {
         if (!deleteTargetId) return;
 
         setFormLoading(true);
@@ -335,9 +335,9 @@ export default function UsersPage() {
             const data = await res.json();
 
             if (!res.ok) {
-                setError(data.error || "Gagal menghapus data mitra");
+                setError(data.error || "Gagal menghapus data member");
             } else {
-                alert(data.message || "Data mitra berhasil dihapus");
+                alert(data.message || "Data member berhasil dihapus");
                 setShowDeleteModal(false);
                 fetchUsers(); // Refresh list
             }
@@ -924,7 +924,7 @@ export default function UsersPage() {
                 </div>
             )}
 
-            {/* Modal Konfirmasi Hapus Mitra */}
+            {/* Modal Konfirmasi Hapus Member */}
             {showDeleteModal && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[60] flex items-center justify-center p-4">
                     <motion.div
@@ -940,7 +940,7 @@ export default function UsersPage() {
                                 <h3 className="text-2xl font-black text-slate-900">Hapus Data Member?</h3>
                                 <p className="text-slate-500 text-sm leading-relaxed px-4">
                                     Yakin ingin menghapus <span className="font-bold text-slate-900 italic">"{deleteTargetName}"</span>?
-                                    Semua akses, profil, dan riwayat poin akan dihapus secara permanen.
+                                    Semua akses dan profil akan dihapus secara permanen. Tindakan tidak dapat dibatalkan.
                                 </p>
                             </div>
 
@@ -961,7 +961,7 @@ export default function UsersPage() {
                                     Batal
                                 </Button>
                                 <Button
-                                    onClick={handleDeleteMitra}
+                                    onClick={handleDeleteMember}
                                     variant="danger"
                                     className="flex-1 py-4 rounded-2xl font-bold shadow-lg shadow-red-200"
                                     disabled={formLoading}

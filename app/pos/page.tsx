@@ -898,10 +898,10 @@ function POSContent() {
                                         {bookingData.booking_type === 'direct' ? '🏷️ DIRECT' : '🤝 REFERRAL'}
                                     </Badge>
                                 </div>
-                                {bookingData.mitra && (
+                                {bookingData.member && (
                                     <div className="bg-white/70 rounded-xl p-3">
                                         <p className="text-[10px] text-slate-400 font-bold uppercase">Member</p>
-                                        <p className="font-bold text-amber-700 truncate">{bookingData.mitra.full_name}</p>
+                                        <p className="font-bold text-amber-700 truncate">{bookingData.member.full_name}</p>
                                     </div>
                                 )}
                             </div>

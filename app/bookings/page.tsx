@@ -179,8 +179,8 @@ export default function BookingsPage() {
         }
     };
 
-    // Mitra: save booking with code
-    const handleSaveBookingMitra = async () => {
+    // Member: save booking with code
+    const handleSaveBookingMember = async () => {
         if (!customerName || !customerPhone || !carModel || !licensePlate || !serviceDate || !serviceTime || !selectedBranchId) {
             alert("Harap lengkapi semua data termasuk cabang dan jadwal!");
             return;
@@ -402,7 +402,7 @@ export default function BookingsPage() {
                     </div>
                 </div>
 
-                {/* Mitra: Generated Code Success */}
+                {/* Member: Generated Code Success */}
                 {generatedCode && (
                     <motion.div
                         initial={{ opacity: 0, y: -10 }}
@@ -494,7 +494,7 @@ export default function BookingsPage() {
                                         </div>
                                         <div>
                                             <p className="text-xs text-slate-400 font-bold uppercase">Member</p>
-                                            <p className="font-bold text-blue-600">{foundBooking.mitra?.full_name || '-'}</p>
+                                            <p className="font-bold text-blue-600">{foundBooking.member?.full_name || '-'}</p>
                                         </div>
                                         <div>
                                             <p className="text-xs text-slate-400 font-bold uppercase">Jadwal</p>
@@ -525,7 +525,7 @@ export default function BookingsPage() {
                             <h3 className="text-xl font-bold">
                                 {isAdmin ? '📋 Booking Direct (Walk-in)' : '📋 Daftarkan Customer Baru'}
                             </h3>
-                            {isAdmin && <p className="text-sm text-slate-500 mt-1">Customer langsung datang tanpa kode mitra.</p>}
+                            {isAdmin && <p className="text-sm text-slate-500 mt-1">Customer langsung datang tanpa kode booking.</p>}
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -562,7 +562,7 @@ export default function BookingsPage() {
                                     </div>
                                 </div>
 
-                                {/* Mitra: pilih cabang */}
+                                {/* Member: pilih cabang */}
                                 {!isAdmin && (
                                     <div className="space-y-2">
                                         <label className="text-sm font-semibold opacity-70">Pilih Cabang</label>
@@ -612,7 +612,7 @@ export default function BookingsPage() {
                                 </div>
                                 <div className="flex items-end lg:col-span-3 justify-end mt-2">
                                     <Button className="w-full sm:w-auto px-8 h-11" variant="success"
-                                        onClick={isAdmin ? handleSaveBookingDirect : handleSaveBookingMitra}
+                                        onClick={isAdmin ? handleSaveBookingDirect : handleSaveBookingMember}
                                         disabled={isSaving}
                                     >
                                         {isSaving ? <Loader2 size={18} className="animate-spin mr-2" /> : null}
