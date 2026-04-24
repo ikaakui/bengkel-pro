@@ -254,20 +254,20 @@ export default function ExpensesPage() {
                         </button>
                     </div>
 
-                    <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
-                        <div className="w-full lg:flex-1 relative">
+                    <div className="space-y-4">
+                        <div className="w-full relative">
                             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                             <input
                                 type="text"
                                 placeholder={activeTab === 'supplier' ? "Cari nama supplier atau barang..." : "Cari deskripsi atau cabang..."}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-16 pr-6 py-5 bg-white rounded-3xl border-none shadow-xl text-slate-900 font-medium placeholder:text-slate-300 focus:ring-2 focus:ring-blue-100 transition-all"
+                                className="w-full pl-16 pr-6 py-5 bg-white rounded-3xl border-none shadow-xl text-slate-900 font-medium placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all"
                             />
                         </div>
                         {activeTab === 'operasional' && (
-                            <div className="w-full lg:w-auto flex-none min-w-0 max-w-full">
-                                <div className="flex gap-2 p-1.5 bg-white rounded-3xl shadow-xl overflow-x-auto no-scrollbar scroll-smooth">
+                            <div className="w-full overflow-x-auto no-scrollbar">
+                                <div className="flex gap-2 p-1.5 bg-white rounded-3xl shadow-xl w-fit">
                                     <button
                                         onClick={() => setFilterCategory('all')}
                                         className={cn(
