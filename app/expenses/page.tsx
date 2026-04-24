@@ -67,6 +67,20 @@ export default function ExpensesPage() {
         branch_id: ''
     });
 
+    const [supplierItems, setSupplierItems] = useState([{ name: '', qty: 1, cost: 0, sell: 0 }]);
+
+    const addSupplierItem = () => setSupplierItems([...supplierItems, { name: '', qty: 1, cost: 0, sell: 0 }]);
+    const removeSupplierItem = (index: number) => setSupplierItems(supplierItems.filter((_, i) => i !== index));
+    const updateSupplierItem = (index: number, field: string, value: any) => {
+        const newItems = [...supplierItems];
+        (newItems[index] as any)[field] = value;
+        setSupplierItems(newItems);
+        
+        // Auto update total amount
+        const total = newItems.reduce((acc, curr) => acc + (curr.qty * curr.cost), 0);
+        setFormData(prev => ({ ...prev, amount: total }));
+    };
+
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -113,12 +127,22 @@ export default function ExpensesPage() {
         e.preventDefault();
         setSubmitting(true);
         try {
-            const { error } = await supabase.from("expenses").insert({
-                ...formData,
-                created_by: profile?.id
-            });
+            const { data: inserted, error } = await supabase
+                .from("expenses")
+                .insert({
+                    ...formData,
+                    description: activeTab === 'supplier' 
+                        ? `STRUCT_JSON:${JSON.stringify(supplierItems)}` 
+                        : formData.description,
+                    category: activeTab === 'supplier' ? 'stok' : formData.category,
+                    created_by: profile?.id
+                })
+                .select()
+                .single();
 
             if (error) throw error;
+
+            const isSupplier = activeTab === 'supplier';
 
             setShowAddForm(false);
             setFormData({
@@ -128,9 +152,21 @@ export default function ExpensesPage() {
                 expense_date: new Date().toISOString().split('T')[0],
                 branch_id: profile?.branch_id || ''
             });
+            setSupplierItems([{ name: '', qty: 1, cost: 0, sell: 0 }]);
+
+            // Auto-send WhatsApp for supplier tab
+            if (isSupplier && inserted) {
+                const enrichedExpense: Expense = {
+                    ...inserted,
+                    branch_name: branches.find(b => b.id === inserted.branch_id)?.name || 'Bengkel'
+                };
+                sendWhatsApp(enrichedExpense);
+            }
+
             fetchData();
-        } catch (error) {
-            alert("Gagal menambahkan pengeluaran");
+        } catch (err: any) {
+            alert("Gagal menambahkan pengeluaran: " + (err?.message || 'Unknown error'));
+            console.error(err);
         } finally {
             setSubmitting(false);
         }
@@ -159,12 +195,22 @@ export default function ExpensesPage() {
         const branch = branches.find(b => b.id === expense.branch_id)?.name || 'Bengkel';
         const date = new Date(expense.expense_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
         
-        const text = `*LAPORAN PENGAMBILAN BARANG / SUPPLIER*%0A%0A` +
-            `*Cabang:* ${branch}%0A` +
+        let descriptionText = expense.description;
+        if (descriptionText.startsWith('STRUCT_JSON:')) {
+            try {
+                const items = JSON.parse(descriptionText.replace('STRUCT_JSON:', ''));
+                descriptionText = items.map((item: any) => `- ${item.name} (${item.qty}x) @ Rp ${item.cost.toLocaleString('id-ID')}`).join('%0A');
+            } catch (e) {
+                console.error("Failed to parse expense description JSON", e);
+            }
+        }
+
+        const text = `*LAPORAN NOTA SUPPLIER BARU - ${branch}*%0A%0A` +
+            `Berikut adalah rincian barang yang baru saja diambil:%0A%0A` +
             `*Tanggal:* ${date}%0A` +
             `*Kategori:* ${CATEGORIES.find(c => c.value === expense.category)?.label}%0A` +
-            `*Total Tagihan:* Rp ${expense.amount.toLocaleString('id-ID')}%0A` +
-            `*Rincian Barang:*%0A${expense.description}%0A%0A` +
+            `*Total Tagihan:* Rp ${expense.amount.toLocaleString('id-ID')}%0A%0A` +
+            `*Rincian Barang:*%0A${descriptionText}%0A%0A` +
             `_Silakan lampirkan foto nota fisik sebagai bukti._`;
 
         window.open(`https://wa.me/${ownerWA}?text=${text}`, '_blank');
@@ -501,18 +547,88 @@ export default function ExpensesPage() {
                                             </div>
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                                                {activeTab === 'supplier' ? 'Rincian Barang (Contoh: Oli 10, Ban 2...)' : 'Keterangan / Memo'}
-                                            </label>
-                                            <textarea
-                                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-5 text-sm font-medium text-slate-700 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-200 focus:outline-none focus:bg-white transition-all min-h-[90px] resize-none"
-                                                placeholder={activeTab === 'supplier' ? "Tulis nama supplier & list barang yang diambil..." : "Tulis alasan pengeluaran..."}
-                                                value={formData.description}
-                                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                                required={activeTab === 'supplier'}
-                                            />
-                                        </div>
+                                        {activeTab === 'supplier' ? (
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Daftar Barang & Harga</label>
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={addSupplierItem}
+                                                        className="text-[10px] font-black text-blue-600 uppercase hover:bg-blue-50 px-3 py-1 rounded-lg transition-all"
+                                                    >
+                                                        + Tambah Baris
+                                                    </button>
+                                                </div>
+                                                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                                    {supplierItems.map((item, idx) => (
+                                                        <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3 relative group/item">
+                                                            <div className="grid grid-cols-12 gap-3">
+                                                                <div className="col-span-8">
+                                                                    <input 
+                                                                        placeholder="Nama Barang (Oli, Ban, dll)"
+                                                                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                                        value={item.name}
+                                                                        onChange={(e) => updateSupplierItem(idx, 'name', e.target.value)}
+                                                                        required
+                                                                    />
+                                                                </div>
+                                                                <div className="col-span-4">
+                                                                    <input 
+                                                                        type="number"
+                                                                        placeholder="Qty"
+                                                                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                                        value={item.qty || ''}
+                                                                        onChange={(e) => updateSupplierItem(idx, 'qty', Number(e.target.value))}
+                                                                        required
+                                                                    />
+                                                                </div>
+                                                                <div className="col-span-6">
+                                                                    <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Harga Modal</label>
+                                                                    <input 
+                                                                        type="number"
+                                                                        placeholder="Modal"
+                                                                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                                        value={item.cost || ''}
+                                                                        onChange={(e) => updateSupplierItem(idx, 'cost', Number(e.target.value))}
+                                                                        required
+                                                                    />
+                                                                </div>
+                                                                <div className="col-span-6">
+                                                                    <label className="text-[9px] font-black text-blue-400 uppercase ml-1">Harga Jual</label>
+                                                                    <input 
+                                                                        type="number"
+                                                                        placeholder="Jual"
+                                                                        className="w-full bg-blue-50/50 border border-blue-100 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                                        value={item.sell || ''}
+                                                                        onChange={(e) => updateSupplierItem(idx, 'sell', Number(e.target.value))}
+                                                                        required
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                            {supplierItems.length > 1 && (
+                                                                <button 
+                                                                    type="button"
+                                                                    onClick={() => removeSupplierItem(idx)}
+                                                                    className="absolute -top-2 -right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-all shadow-lg"
+                                                                >
+                                                                    <Trash2 size={12} />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Keterangan / Memo</label>
+                                                <textarea
+                                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-5 text-sm font-medium text-slate-700 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-200 focus:outline-none focus:bg-white transition-all min-h-[90px] resize-none"
+                                                    placeholder="Tulis alasan pengeluaran..."
+                                                    value={formData.description}
+                                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                                />
+                                            </div>
+                                        )}
                                     </form>
                                 </div>
 

@@ -30,6 +30,7 @@ import {
     Activity,
     CalendarPlus,
     MessageSquarePlus,
+    MessageCircle,
     Clock,
     Gift,
     Receipt
@@ -65,6 +66,7 @@ const navigation = [
     { name: 'Booking Service', href: '/bookings', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Operasional' },
     { name: 'Kelola Reward', href: '/rewards', icon: Gift, roles: ['owner', 'spv'], group: 'Manajemen' },
     { name: 'Laporan Audit', href: '/reports', icon: ClipboardList, roles: ['owner', 'spv'], group: 'Keuangan' },
+    { name: 'Rekap Supplier', href: '/reports/supplier', icon: Package, roles: ['owner', 'spv'], group: 'Keuangan' },
     { name: 'Maintenance Alat', href: '/maintenance', icon: Wrench, roles: ['owner', 'spv'], group: 'Manajemen' },
     { name: 'Katalog', href: '/catalog', icon: Package, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd'], group: 'Manajemen' },
     { name: 'Pengeluaran', href: '/expenses', icon: TrendingDown, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Keuangan' },
@@ -72,6 +74,7 @@ const navigation = [
     { name: 'Karyawan & Admin', href: '/staff', icon: Shield, roles: ['owner'], group: 'Manajemen' },
     { name: 'Organisasi', href: '/branches', icon: Building2, roles: ['owner'], group: 'Manajemen' },
     { name: 'Pengaturan', href: '/settings', icon: Settings, roles: ['owner'], group: 'Sistem' },
+    { name: 'Pengaturan WA', href: '/settings/spv', icon: MessageCircle, roles: ['spv'], group: 'Sistem' },
 ];
 
 const roleConfig: Record<UserRole, { label: string; icon: typeof Crown; color: string; bgColor: string }> = {
