@@ -76,11 +76,11 @@ export default function LoginPage() {
 
                 setShowSuccessModal(true);
 
-                // Small delay to let user see the greeting
+                // Quick greeting then navigate immediately
                 setTimeout(() => {
                     router.push("/");
                     router.refresh();
-                }, 2500);
+                }, 1200);
                 return; // Keep loading true during delay
             }
         } catch (err) {

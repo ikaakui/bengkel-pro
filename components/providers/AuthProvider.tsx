@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { createClient } from "@/lib/supabase-client";
 import { useRouter } from "next/navigation";
 import type { User, Session } from "@supabase/supabase-js";
@@ -74,6 +74,7 @@ export default function AuthProvider({
     const [loading, setLoading] = useState(!initialUser);
     const router = useRouter();
     const supabase = useMemo(() => createClient(), []);
+    const initDone = useRef(false);
 
     const setInitialData = useCallback((initialUser: User | null, initialProfile: UserProfile | null) => {
         if (initialUser) setUser(initialUser);
@@ -83,9 +84,7 @@ export default function AuthProvider({
         }
     }, []);
 
-    const fetchProfile = useCallback(async (userId: string) => {
-        console.log("Fetching profile for:", userId);
-
+    const fetchProfile = useCallback(async (userId: string, retryCount = 0): Promise<boolean> => {
         try {
             const { data, error } = await supabase
                 .from("profiles")
@@ -95,25 +94,40 @@ export default function AuthProvider({
 
             if (error) {
                 console.error("Error fetching profile:", error.message);
+                // Retry up to 2 times on failure (except "not found")
+                if (error.code !== 'PGRST116' && retryCount < 2) {
+                    await new Promise(r => setTimeout(r, 800));
+                    return fetchProfile(userId, retryCount + 1);
+                }
                 if (error.code === 'PGRST116') setProfile(null);
-                return;
+                return false;
             }
 
             if (data) {
                 setProfile(data as UserProfile);
+                // Fetch branch name in background (non-blocking for loading state)
                 if (data.branch_id) {
-                    const { data: branchData } = await supabase
+                    supabase
                         .from("branches")
                         .select("name")
                         .eq("id", data.branch_id)
-                        .single();
-                    if (branchData) setBranchName(branchData.name);
+                        .single()
+                        .then(({ data: branchData }) => {
+                            if (branchData) setBranchName(branchData.name);
+                        });
                 } else {
                     setBranchName(null);
                 }
+                return true;
             }
+            return false;
         } catch (err: any) {
             console.error("Profile fetch exception:", err.message);
+            if (retryCount < 2) {
+                await new Promise(r => setTimeout(r, 800));
+                return fetchProfile(userId, retryCount + 1);
+            }
+            return false;
         }
     }, [supabase]);
 
@@ -145,46 +159,26 @@ export default function AuthProvider({
     }, [supabase]);
 
     useEffect(() => {
-        let mounted = true;
+        // Prevent double init in React StrictMode
+        if (initDone.current) return;
+        initDone.current = true;
 
-        // Failsafe timer to force loading to false after 8 seconds just in case everything hangs
-        const maxLoadingTimer = setTimeout(() => {
-            if (mounted && loading) {
-                console.warn("Auth initialization took too long, forcing loading to false.");
-                setLoading(false);
-            }
-        }, 8000);
+        let mounted = true;
 
         const initAuth = async () => {
             try {
-                // Fetch global logo in parallel (non-blocking)
+                // Fire logo fetch in parallel — don't block auth flow
                 refreshGlobalLogo();
 
-                // Timeout for getting session
-                const timeoutPromise = new Promise<void>((_, reject) => {
-                    setTimeout(() => reject(new Error("Session check timed out")), 5000);
-                });
-
-                // Single session check — middleware already validated auth
-                const sessionPromise = supabase.auth.getSession();
-                const sessionResult = await Promise.race([sessionPromise, timeoutPromise]) as { data: { session: Session | null } };
+                // Get session — middleware already validated, so this should be fast
+                const { data: { session } } = await supabase.auth.getSession();
 
                 if (!mounted) return;
 
-                const session = sessionResult?.data?.session;
-
                 if (session?.user) {
                     setUser(session.user);
-                    // Fetch profile with timeout
-                    try {
-                        const fetchPromise = fetchProfile(session.user.id);
-                        const fetchTimeout = new Promise<void>((_, reject) => {
-                            setTimeout(() => reject(new Error("Profile fetch timed out")), 5000);
-                        });
-                        await Promise.race([fetchPromise, fetchTimeout]);
-                    } catch (profileErr) {
-                        console.error("Profile fetch timeout inside session check:", profileErr);
-                    }
+                    // Fetch profile with built-in retry
+                    await fetchProfile(session.user.id);
                 }
             } catch (err) {
                 console.error("Auth init error:", err);
@@ -203,15 +197,7 @@ export default function AuthProvider({
 
                 setUser(session?.user ?? null);
                 if (session?.user) {
-                    try {
-                        const fetchPromise = fetchProfile(session.user.id);
-                        const fetchTimeout = new Promise<void>((_, reject) => {
-                            setTimeout(() => reject(new Error("Profile fetch on auth change timed out")), 5000);
-                        });
-                        await Promise.race([fetchPromise, fetchTimeout]);
-                    } catch (err) {
-                        console.error("Profile fetch error on auth state change:", err);
-                    }
+                    await fetchProfile(session.user.id);
                 } else {
                     setProfile(null);
                     setBranchName(null);
@@ -222,7 +208,6 @@ export default function AuthProvider({
 
         return () => {
             mounted = false;
-            clearTimeout(maxLoadingTimer);
             subscription.unsubscribe();
         };
     }, [supabase, fetchProfile, refreshGlobalLogo]);

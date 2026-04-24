@@ -22,10 +22,12 @@ export default function RoleGuard({ children, allowedRoles, fallbackUrl = "/" }:
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-[50vh]">
-                <div className="text-center">
-                    <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                    <p className="text-slate-500 mt-3 text-sm">Memuat...</p>
+            <div className="space-y-6 w-full p-2 animate-pulse">
+                <div className="h-8 w-48 bg-slate-200/60 rounded-2xl" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="bg-white border border-slate-100 rounded-3xl h-[140px] w-full" />
+                    ))}
                 </div>
             </div>
         );
