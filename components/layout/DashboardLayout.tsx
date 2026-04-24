@@ -55,7 +55,7 @@ const navigation = [
 
     // Owner Analytics
     { name: 'Analisis Member', href: '/analytics/member', icon: Users2, roles: ['owner'], group: 'Analisis' },
-    { name: 'Retensi & Servis', href: '/analytics/customers', icon: PieChart, roles: ['owner', 'spv'], group: 'Analisis' },
+
     { name: 'Status Inventori', href: '/analytics/inventory', icon: Package, roles: ['owner', 'spv'], group: 'Analisis' },
     // Admin Analytics
     { name: 'Operasional Live', href: '/analytics/operations', icon: Activity, roles: ['admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Analisis' },
