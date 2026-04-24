@@ -104,23 +104,29 @@ export default function OwnerDashboard() {
             let totalLoyaltyCost = 0;
             const transIds = paidTransactions.map((t: any) => t.id);
             if (transIds.length > 0) {
-                // Chunk the array to prevent 414 URI Too Long error on Supabase requests
-                const chunkSize = 200;
-                let grossSales = 0;
-                
-                for (let i = 0; i < transIds.length; i += chunkSize) {
-                    const chunk = transIds.slice(i, i + chunkSize);
-                    const { data: itemsData, error } = await supabase
-                        .from('transaction_items')
-                        .select('price_at_sale, qty')
-                        .in('transaction_id', chunk);
+                try {
+                    const chunkSize = 200;
+                    let grossSales = 0;
                     
-                    if (!error && itemsData) {
-                        grossSales += itemsData.reduce((a, item) => a + (Number(item.price_at_sale) * item.qty), 0);
+                    // Limit to max 3 chunks (600 transactions) to prevent hanging
+                    const maxChunks = Math.min(Math.ceil(transIds.length / chunkSize), 3);
+                    for (let i = 0; i < maxChunks; i++) {
+                        const chunk = transIds.slice(i * chunkSize, (i + 1) * chunkSize);
+                        const { data: itemsData, error } = await supabase
+                            .from('transaction_items')
+                            .select('price_at_sale, qty')
+                            .in('transaction_id', chunk);
+                        
+                        if (!error && itemsData) {
+                            grossSales += itemsData.reduce((a, item) => a + (Number(item.price_at_sale) * item.qty), 0);
+                        }
                     }
+                    
+                    totalLoyaltyCost = Math.max(0, grossSales - revenueSum);
+                } catch (e) {
+                    console.warn("Loyalty cost calc failed, skipping:", e);
+                    totalLoyaltyCost = 0;
                 }
-                
-                totalLoyaltyCost = Math.max(0, grossSales - revenueSum);
             }
 
             let targetMap: Record<string, { name: string; target: number }> = {};

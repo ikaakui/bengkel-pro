@@ -65,10 +65,13 @@ export default function ExpensesPage() {
     const fetchData = async () => {
         setLoading(true);
         try {
+            const timeoutMs = 12000;
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
             // Fetch branches
             const { data: bData } = await supabase.from("branches").select("id, name").order("name");
             if (bData) {
-                // Filter duplicates by name to prevent visual redundancy
                 const uniqueBranches = bData.filter((branch, index, self) =>
                     index === self.findIndex((t) => t.name === branch.name)
                 );
@@ -76,9 +79,7 @@ export default function ExpensesPage() {
             }
 
             // Fetch expenses
-            const query = supabase.from("expenses").select("*").order("expense_date", { ascending: false });
-
-            const { data: eData } = await query;
+            const { data: eData } = await supabase.from("expenses").select("*").order("expense_date", { ascending: false });
             if (eData) {
                 const enriched = eData.map(e => ({
                     ...e,
@@ -87,9 +88,9 @@ export default function ExpensesPage() {
                 setExpenses(enriched);
             }
 
-
-        } catch (error) {
-            console.error(error);
+            clearTimeout(timeout);
+        } catch (error: any) {
+            console.error("Expenses fetch error:", error?.message || error);
         } finally {
             setLoading(false);
         }
@@ -100,7 +101,8 @@ export default function ExpensesPage() {
         if (profile?.branch_id) {
             setFormData(prev => ({ ...prev, branch_id: profile.branch_id! }));
         }
-    }, [profile]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleAddExpense = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -147,8 +149,9 @@ export default function ExpensesPage() {
 
     const filteredExpenses = expenses.filter(e => {
         const matchesCategory = filterCategory === 'all' || e.category === filterCategory;
-        const matchesSearch = e.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            e.branch_name?.toLowerCase().includes(searchTerm.toLowerCase());
+        const desc = (e.description || '').toLowerCase();
+        const branch = (e.branch_name || '').toLowerCase();
+        const matchesSearch = desc.includes(searchTerm.toLowerCase()) || branch.includes(searchTerm.toLowerCase());
         return matchesCategory && matchesSearch;
     });
 

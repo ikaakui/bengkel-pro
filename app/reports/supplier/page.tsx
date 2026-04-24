@@ -70,8 +70,11 @@ export default function SupplierRecapPage() {
                 setBranches(uniqueBranches);
             }
 
-            const { data: sData } = await supabase.from("app_settings").select("*").eq("key", "owner_wa_number").single();
-            if (sData?.value) setOwnerWA(sData.value);
+            // Fetch owner WA safely (don't crash if setting doesn't exist)
+            try {
+                const { data: sData } = await supabase.from("app_settings").select("*").eq("key", "owner_wa_number").single();
+                if (sData?.value) setOwnerWA(sData.value);
+            } catch (_) { /* setting may not exist yet */ }
 
             const { data: eData } = await supabase
                 .from("expenses")
@@ -80,7 +83,6 @@ export default function SupplierRecapPage() {
                 .order("expense_date", { ascending: false });
 
             if (eData) {
-                // Flatten structured JSON data
                 const flattened: any[] = [];
                 eData.forEach(exp => {
                     const branchName = bData?.find(b => b.id === exp.branch_id)?.name || 'General';
@@ -101,13 +103,13 @@ export default function SupplierRecapPage() {
                                 });
                             });
                         } catch (e) {
-                            // Fallback if JSON parse fails
                             flattened.push({
                                 name: exp.description,
                                 qty: 1,
                                 cost: exp.amount,
                                 sell: 0,
                                 date: exp.expense_date,
+                                branch_id: exp.branch_id,
                                 branch_name: branchName,
                                 total_cost: exp.amount,
                                 profit: 0,
@@ -115,13 +117,13 @@ export default function SupplierRecapPage() {
                             });
                         }
                     } else {
-                        // Legacy data
                         flattened.push({
                             name: exp.description || 'Tanpa Keterangan',
                             qty: 1,
                             cost: exp.amount,
                             sell: 0,
                             date: exp.expense_date,
+                            branch_id: exp.branch_id,
                             branch_name: branchName,
                             total_cost: exp.amount,
                             profit: 0,
@@ -131,8 +133,8 @@ export default function SupplierRecapPage() {
                 });
                 setData(flattened);
             }
-        } catch (error) {
-            console.error(error);
+        } catch (error: any) {
+            console.error("Supplier recap fetch error:", error?.message || error);
         } finally {
             setLoading(false);
         }
@@ -143,7 +145,8 @@ export default function SupplierRecapPage() {
         if (profile?.branch_id) {
             setFormData(prev => ({ ...prev, branch_id: profile.branch_id! }));
         }
-    }, [profile]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleAddExpense = async (e: React.FormEvent) => {
         e.preventDefault();
