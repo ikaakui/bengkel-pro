@@ -18,8 +18,7 @@ import {
     Filter,
     CheckCircle2,
     MessageCircle,
-    Package,
-    ArrowRight
+    Package
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -53,6 +52,7 @@ export default function ExpensesPage() {
     const [submitting, setSubmitting] = useState(false);
     const [showAddForm, setShowAddForm] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterCategory, setFilterCategory] = useState<string>('all');
     const [activeTab, setActiveTab] = useState<'operasional' | 'supplier'>('operasional');
     const [ownerWA, setOwnerWA] = useState('6281234567890'); // Default fallback
 
