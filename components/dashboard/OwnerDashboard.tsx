@@ -68,15 +68,8 @@ export default function OwnerDashboard() {
             const startOfToday = new Date();
             startOfToday.setHours(0, 0, 0, 0);
 
-            const [
-                { data: branches },
-                { data: allTransactions },
-                { data: targetSetting },
-                { count: mCount },
-                { count: tBookings },
-                { count: rCount },
-                { data: recent }
-            ] = await Promise.all([
+            console.log("Starting Overview Data Fetch...");
+            const fetchPromise = Promise.all([
                 supabase.from("branches").select("id, name").order("name"),
                 supabase.from("transactions").select("id, total_amount, branch_id, created_at").eq('status', 'Paid').gte('created_at', sixMonthsAgoISO),
                 supabase.from('app_settings').select('value').eq('key', 'branch_targets').single(),
@@ -86,6 +79,22 @@ export default function OwnerDashboard() {
                 supabase.from("bookings").select("id, customer_name, car_model, branch_id, status").order("created_at", { ascending: false }).limit(5)
             ]);
 
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Overview fetch timeout exceeded (15s)")), 15000)
+            );
+
+            const [
+                { data: branches },
+                { data: allTransactions },
+                { data: targetSetting },
+                { count: mCount },
+                { count: tBookings },
+                { count: rCount },
+                { data: recent }
+            ] = await Promise.race([fetchPromise, timeoutPromise]) as any;
+
+            console.log("Overview data queries completed.");
+
             // Filter Current Month Transactions
             const paidTransactions = (allTransactions || []).filter(t => new Date(t.created_at) >= startOfMonth);
             const revenueSum = paidTransactions.reduce((acc: number, t: any) => acc + Number(t.total_amount), 0);
@@ -93,14 +102,24 @@ export default function OwnerDashboard() {
 
             // Calculate Loyalty Cost (Discount from point redemptions)
             let totalLoyaltyCost = 0;
-            const transIds = paidTransactions.map(t => t.id);
+            const transIds = paidTransactions.map((t: any) => t.id);
             if (transIds.length > 0) {
-                const { data: itemsData } = await supabase
-                    .from('transaction_items')
-                    .select('price_at_sale, qty')
-                    .in('transaction_id', transIds);
+                // Chunk the array to prevent 414 URI Too Long error on Supabase requests
+                const chunkSize = 200;
+                let grossSales = 0;
                 
-                const grossSales = itemsData?.reduce((a, i) => a + (Number(i.price_at_sale) * i.qty), 0) || 0;
+                for (let i = 0; i < transIds.length; i += chunkSize) {
+                    const chunk = transIds.slice(i, i + chunkSize);
+                    const { data: itemsData, error } = await supabase
+                        .from('transaction_items')
+                        .select('price_at_sale, qty')
+                        .in('transaction_id', chunk);
+                    
+                    if (!error && itemsData) {
+                        grossSales += itemsData.reduce((a, item) => a + (Number(item.price_at_sale) * item.qty), 0);
+                    }
+                }
+                
                 totalLoyaltyCost = Math.max(0, grossSales - revenueSum);
             }
 
@@ -160,8 +179,11 @@ export default function OwnerDashboard() {
             });
 
         } catch (error) {
-            console.error("Overview error:", error);
+            console.error("Overview error details:", error);
+            // Even if it fails, set some default state so it doesn't appear broken
+            setQuickStats({ member: 0, todayBookings: 0, loyaltyCost: 0 });
         } finally {
+            console.log("Overview fetch finished. Setting loading to false.");
             setLoading(false);
         }
     }, [supabase]);
