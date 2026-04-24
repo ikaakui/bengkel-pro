@@ -266,30 +266,32 @@ export default function ExpensesPage() {
                             />
                         </div>
                         {activeTab === 'operasional' && (
-                            <div className="w-full max-w-full overflow-x-auto no-scrollbar rounded-3xl shadow-xl bg-white p-1.5">
-                                <div className="flex gap-2 w-max">
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    onClick={() => setFilterCategory('all')}
+                                    className={cn(
+                                        "px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border",
+                                        filterCategory === 'all' 
+                                            ? "bg-slate-900 text-white border-slate-900 shadow-md" 
+                                            : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-800 shadow-sm"
+                                    )}
+                                >
+                                    Semua
+                                </button>
+                                {CATEGORIES.filter(c => c.value !== 'stok').map(cat => (
                                     <button
-                                        onClick={() => setFilterCategory('all')}
+                                        key={cat.value}
+                                        onClick={() => setFilterCategory(cat.value)}
                                         className={cn(
-                                            "px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all",
-                                            filterCategory === 'all' ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                                            "px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border",
+                                            filterCategory === cat.value 
+                                                ? "bg-slate-900 text-white border-slate-900 shadow-md" 
+                                                : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-800 shadow-sm"
                                         )}
                                     >
-                                        Semua
+                                        {cat.label}
                                     </button>
-                                    {CATEGORIES.filter(c => c.value !== 'stok').map(cat => (
-                                        <button
-                                            key={cat.value}
-                                            onClick={() => setFilterCategory(cat.value)}
-                                            className={cn(
-                                                "px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all",
-                                                filterCategory === cat.value ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
-                                            )}
-                                        >
-                                            {cat.label}
-                                        </button>
-                                    ))}
-                                </div>
+                                ))}
                             </div>
                         )}
                     </div>
