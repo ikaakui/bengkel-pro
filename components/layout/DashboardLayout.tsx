@@ -62,18 +62,12 @@ const navigation = [
     { name: 'Operasional Live', href: '/analytics/operations', icon: Activity, roles: ['admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Analisis' },
     { name: 'Keuangan Cabang', href: '/analytics/finance', icon: Banknote, roles: ['admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Analisis' },
 
-    { name: 'POS (Kasir)', href: '/pos', icon: ShoppingCart, roles: ['admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Utama' },
-    { name: 'Antrian Service', href: '/antrian', icon: ClipboardList, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Utama' },
-    { name: 'Booking Service', href: '/bookings', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Operasional' },
     { name: 'Kelola Reward', href: '/rewards', icon: Gift, roles: ['owner', 'spv'], group: 'Manajemen' },
     { name: 'Laporan Audit', href: '/reports', icon: ClipboardList, roles: ['owner', 'spv'], group: 'Keuangan' },
     { name: 'Maintenance Alat', href: '/maintenance', icon: Wrench, roles: ['owner', 'spv'], group: 'Manajemen' },
     { name: 'Katalog', href: '/catalog', icon: Package, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd'], group: 'Manajemen' },
     { name: 'Pengeluaran', href: '/expenses', icon: TrendingDown, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Keuangan' },
-    { name: 'Data Member', href: '/users', icon: Users2, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Manajemen' },
     { name: 'Karyawan & Admin', href: '/staff', icon: Shield, roles: ['owner'], group: 'Manajemen' },
-    { name: 'Organisasi', href: '/branches', icon: Building2, roles: ['owner', 'spv'], group: 'Manajemen' },
-    { name: 'Pengaturan', href: '/settings', icon: Settings, roles: ['owner', 'spv'], group: 'Sistem' },
 ];
 
 const roleConfig: Record<UserRole, { label: string; icon: typeof Crown; color: string; bgColor: string }> = {
