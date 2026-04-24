@@ -143,7 +143,8 @@ export default function OwnerDashboard() {
                 })));
 
                 // Calculate Comparison Data (Last 6 Months) from pre-fetched allTransactions
-                const branchesComparisonData = uniqueBranches.map((br: any) => {
+                const chartColors = ["#2563eb", "#10b981", "#f43f5e", "#f59e0b", "#8b5cf6", "#06b6d4", "#ec4899", "#14b8a6"];
+                const branchesComparisonData = uniqueBranches.map((br: any, index: number) => {
                     const branchMonthlyData = months.map(m => {
                         const mTrans = (allTransactions || []).filter(t => 
                             t.branch_id === br.id && 
@@ -155,7 +156,8 @@ export default function OwnerDashboard() {
 
                     return {
                         name: br.name,
-                        data: branchMonthlyData
+                        color: chartColors[index % chartColors.length],
+                        values: branchMonthlyData
                     };
                 });
 
