@@ -64,31 +64,38 @@ export default function MaintenancePage() {
         setLoading(true);
         try {
             // Fetch branches
-            const { data: bData } = await supabase.from("branches").select("id, name").order("name");
+            const { data: bData, error: bError } = await supabase.from("branches").select("id, name").order("name");
+            if (bError) console.error("Error fetching branches:", bError);
             if (bData) setBranches(bData);
 
             // Fetch maintenance assets
-            const { data: aData } = await supabase
+            const { data: aData, error: aError } = await supabase
                 .from("maintenance_assets")
                 .select("*, branches(name)")
                 .order("next_maintenance", { ascending: true });
 
-            if (aData) {
-                const formatted = aData.map((a: any) => ({
-                    ...a,
-                    branch_name: a.branches?.name || 'General'
-                }));
+            if (aError) console.error("Error fetching assets:", aError);
+            if (aData && Array.isArray(aData)) {
+                const formatted = aData.map((a: any) => {
+                    // Handle potential array/object return from Supabase join
+                    const branchInfo = Array.isArray(a.branches) ? a.branches[0] : a.branches;
+                    return {
+                        ...a,
+                        branch_name: branchInfo?.name || 'General'
+                    };
+                });
                 setTasks(formatted);
             }
 
             // Fetch logs
-            const { data: lData } = await supabase
+            const { data: lData, error: lError } = await supabase
                 .from("maintenance_logs")
                 .select("*, maintenance_assets(asset_name)")
                 .order("maintenance_date", { ascending: false })
                 .limit(5);
             
-            if (lData) setLogs(lData);
+            if (lError) console.error("Error fetching logs:", lError);
+            if (lData && Array.isArray(lData)) setLogs(lData);
         } catch (error) {
             console.error("Error fetching maintenance data:", error);
         } finally {
@@ -132,21 +139,21 @@ export default function MaintenancePage() {
             fetchData();
         } catch (error) {
             console.error("Error adding asset:", error);
-            alert("Gagal menambahkan aset");
+            alert("Gagal menambahkan aset. Pastikan tabel database sudah dibuat.");
         } finally {
             setSubmitting(false);
         }
     };
 
-    const filteredTasks = tasks.filter(t => 
-        t.asset_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.branch_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredTasks = (tasks || []).filter(t => 
+        (t.asset_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (t.branch_name || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const stats = {
-        urgent: tasks.filter(t => t.status === 'urgent').length,
-        scheduled: tasks.filter(t => t.status === 'scheduled').length,
-        done: tasks.filter(t => t.status === 'done').length
+        urgent: (tasks || []).filter(t => t.status === 'urgent').length,
+        scheduled: (tasks || []).filter(t => t.status === 'scheduled').length,
+        done: (tasks || []).filter(t => t.status === 'done').length
     };
 
     return (
@@ -248,11 +255,11 @@ export default function MaintenancePage() {
                                         ) : filteredTasks.map((task) => (
                                             <tr key={task.id} className="hover:bg-slate-50/50 transition-all group">
                                                 <td className="px-8 py-5">
-                                                    <p className="font-black text-slate-900 uppercase tracking-tight">{task.asset_name}</p>
+                                                    <p className="font-black text-slate-900 uppercase tracking-tight">{task.asset_name || "Aset Tanpa Nama"}</p>
                                                     <p className="text-[10px] text-slate-400 font-bold">Terakhir: {task.last_maintenance ? new Date(task.last_maintenance).toLocaleDateString('id-ID') : '-'}</p>
                                                 </td>
                                                 <td className="px-8 py-5">
-                                                    <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black text-slate-600 uppercase">{task.branch_name}</span>
+                                                    <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black text-slate-600 uppercase">{task.branch_name || "General"}</span>
                                                 </td>
                                                 <td className="px-8 py-5">
                                                     <p className="font-black text-slate-900 italic tracking-tighter">{task.next_maintenance ? new Date(task.next_maintenance).toLocaleDateString('id-ID') : '-'}</p>
@@ -263,7 +270,7 @@ export default function MaintenancePage() {
                                                         task.status === 'urgent' ? 'bg-rose-100 text-rose-600' : 
                                                         task.status === 'scheduled' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'
                                                     )}>
-                                                        {task.status}
+                                                        {task.status || 'Scheduled'}
                                                     </span>
                                                 </td>
                                                 <td className="px-8 py-5 text-right">
@@ -286,25 +293,28 @@ export default function MaintenancePage() {
                                     <h3 className="text-xl font-black italic tracking-tight">Log Maintenance</h3>
                                 </div>
                                 <div className="space-y-6">
-                                    {logs.length === 0 ? (
+                                    {(logs || []).length === 0 ? (
                                         <p className="text-[10px] text-slate-500 italic">Belum ada riwayat maintenance.</p>
-                                    ) : logs.map((log) => (
-                                        <div key={log.id} className="flex gap-4 group cursor-pointer">
-                                            <div className={cn(
-                                                "w-1 h-12 rounded-full shrink-0",
-                                                log.status === 'Optimal' ? 'bg-emerald-500' : 'bg-blue-500'
-                                            )} />
-                                            <div>
-                                                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">
-                                                    {new Date(log.maintenance_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                                                </p>
-                                                <p className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
-                                                    {log.maintenance_assets?.asset_name || 'Asset'} - {log.description}
-                                                </p>
-                                                <p className="text-[10px] text-slate-400 font-medium">Oleh: {log.technician || 'Staff'}</p>
+                                    ) : logs.map((log) => {
+                                        const assetName = (Array.isArray(log.maintenance_assets) ? log.maintenance_assets[0]?.asset_name : log.maintenance_assets?.asset_name) || 'Asset';
+                                        return (
+                                            <div key={log.id} className="flex gap-4 group cursor-pointer">
+                                                <div className={cn(
+                                                    "w-1 h-12 rounded-full shrink-0",
+                                                    log.status === 'Optimal' ? 'bg-emerald-500' : 'bg-blue-500'
+                                                )} />
+                                                <div>
+                                                    <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">
+                                                        {log.maintenance_date ? new Date(log.maintenance_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'}
+                                                    </p>
+                                                    <p className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
+                                                        {assetName} - {log.description || 'No description'}
+                                                    </p>
+                                                    <p className="text-[10px] text-slate-400 font-medium">Oleh: {log.technician || 'Staff'}</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                                 <button className="w-full mt-10 py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] hover:bg-white/10 transition-all">Lihat Seluruh Log</button>
                             </div>
@@ -318,6 +328,7 @@ export default function MaintenancePage() {
                     {showAddModal && (
                         <>
                             <motion.div
+                                key="modal-backdrop"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
@@ -325,6 +336,7 @@ export default function MaintenancePage() {
                                 className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100]"
                             />
                             <motion.div
+                                key="modal-content"
                                 initial={{ opacity: 0, scale: 0.9, y: 30 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.9, y: 30 }}
