@@ -76,8 +76,33 @@ export default function ReportsPage() {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            // Fetch branches
-            const { data: bData } = await supabase.from('branches').select('id, name').order('name');
+            const { start, end } = getDateRangeFromMonthYear(selectedMonth, selectedYear);
+            const prev = getPrevDateRangeFromMonthYear(selectedMonth, selectedYear);
+            
+            // 1. Ambil seluruh data 6 bulan terakhir dalam satu tarikan paralel untuk menghindari N+1 queries
+            const sixMonthsAgoStart = new Date(selectedYear, selectedMonth - 5, 1);
+            const currentMonthEnd = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59);
+
+            let allTransQ = supabase.from('transactions').select('id, total_amount, created_at, branch_id').eq('status', 'Paid')
+                .gte('created_at', sixMonthsAgoStart.toISOString()).lte('created_at', currentMonthEnd.toISOString());
+            if (branchFilter !== 'all') allTransQ = allTransQ.eq('branch_id', branchFilter);
+
+            let allExpQ = supabase.from('expenses').select('amount, category, expense_date, branch_id')
+                .gte('expense_date', sixMonthsAgoStart.toISOString().split('T')[0])
+                .lte('expense_date', currentMonthEnd.toISOString().split('T')[0]);
+            if (branchFilter !== 'all') allExpQ = allExpQ.eq('branch_id', branchFilter);
+
+            const [
+                { data: bData },
+                { data: allTransData },
+                { data: allExpData }
+            ] = await Promise.all([
+                supabase.from('branches').select('id, name').order('name'),
+                allTransQ,
+                allExpQ
+            ]);
+
+            // Filter Branches
             if (bData) {
                 const uniqueBranches = bData.filter((branch, index, self) =>
                     index === self.findIndex((t) => t.name === branch.name)
@@ -85,40 +110,56 @@ export default function ReportsPage() {
                 setBranches(uniqueBranches);
             }
 
-            const { start, end } = getDateRangeFromMonthYear(selectedMonth, selectedYear);
-            const prev = getPrevDateRangeFromMonthYear(selectedMonth, selectedYear);
-
-            // Helper: build query with optional date & branch filters
-            const filterTrans = (query: any, s: Date, e: Date) => {
-                let q = query.eq('status', 'Paid');
-                q = q.gte('created_at', s.toISOString());
-                q = q.lte('created_at', e.toISOString());
-                if (branchFilter !== 'all') q = q.eq('branch_id', branchFilter);
-                return q;
-            };
-
-            // CURRENT PERIOD
-            let transQ = supabase.from('transactions').select('id, total_amount, created_at, branch_id');
-            transQ = filterTrans(transQ, start, end);
-            const { data: transData } = await transQ;
-            const totalRevenue = transData?.reduce((a, t) => a + Number(t.total_amount), 0) || 0;
+            // 2. Filter data untuk BULAN INI dari allTransData & allExpData
+            const transData = allTransData?.filter(t => new Date(t.created_at) >= start && new Date(t.created_at) <= end) || [];
+            const totalRevenue = transData.reduce((a, t) => a + Number(t.total_amount), 0);
             setRevenue(totalRevenue);
 
-            // COGS
-            const transIds = transData?.map(t => t.id) || [];
-            let totalCogs = 0;
+            const expData = allExpData?.filter(e => {
+                const ed = new Date(e.expense_date);
+                return ed.getFullYear() === start.getFullYear() && ed.getMonth() === start.getMonth();
+            }) || [];
+
+            const sumCat = (cat: string) => expData.filter(e => e.category === cat).reduce((a, c) => a + Number(c.amount), 0);
+            setExpenses({
+                salaries: sumCat('gaji'),
+                utilities: sumCat('listrik'),
+                marketing: sumCat('pemasaran'),
+                others: sumCat('lainnya') + sumCat('operasional') + sumCat('sewa') + sumCat('stok'),
+            });
+
+            // 3. Filter data untuk BULAN SEBELUMNYA (Prev Period)
+            const prevTransData = allTransData?.filter(t => new Date(t.created_at) >= prev.start && new Date(t.created_at) <= prev.end) || [];
+            const pRevenue = prevTransData.reduce((a, t) => a + Number(t.total_amount), 0);
+            setPrevRevenue(pRevenue);
+
+            // 4. Tarik item transaksi untuk COGS (Hanya untuk transaksi bulan ini & sebelumnya)
+            const transIds = transData.map(t => t.id);
+            const pTransIds = prevTransData.map(t => t.id);
+
+            const itemsPromises = [];
             if (transIds.length > 0) {
-                const { data: itemsData } = await supabase
-                    .from('transaction_items')
+                itemsPromises.push(supabase.from('transaction_items')
                     .select('cost_at_sale, price_at_sale, qty, transaction_id, catalog(name, category)')
-                    .in('transaction_id', transIds);
-                totalCogs = itemsData?.reduce((a, i) => a + (Number(i.cost_at_sale) * i.qty), 0) || 0;
+                    .in('transaction_id', transIds));
+            } else itemsPromises.push(Promise.resolve({ data: null }));
+
+            if (pTransIds.length > 0) {
+                itemsPromises.push(supabase.from('transaction_items')
+                    .select('cost_at_sale, qty')
+                    .in('transaction_id', pTransIds));
+            } else itemsPromises.push(Promise.resolve({ data: null }));
+
+            const [{ data: itemsData }, { data: pItemsData }] = await Promise.all(itemsPromises);
+
+            // Hitung COGS Bulan Ini
+            if (transIds.length > 0) {
+                const totalCogs = itemsData?.reduce((a, i) => a + (Number(i.cost_at_sale) * i.qty), 0) || 0;
                 setCogs(totalCogs);
 
                 const totalGrossSales = itemsData?.reduce((a, i) => a + (Number(i.price_at_sale) * i.qty), 0) || 0;
                 setLoyaltyCost(Math.max(0, totalGrossSales - totalRevenue));
 
-                // Top selling
                 const itemMap: any = {};
                 itemsData?.forEach((item: any) => {
                     const catalog = Array.isArray(item.catalog) ? item.catalog[0] : item.catalog;
@@ -132,80 +173,32 @@ export default function ReportsPage() {
                 setTopProducts(sorted.filter((i: any) => i.category === 'Spare Part').slice(0, 3));
                 setTopServices(sorted.filter((i: any) => i.category === 'Service').slice(0, 3));
             } else {
-                setCogs(0);
-                setTopProducts([]);
-                setTopServices([]);
+                setCogs(0); setTopProducts([]); setTopServices([]); setLoyaltyCost(0);
             }
 
-            // EXPENSES
-            let expQ = supabase.from('expenses').select('*');
-            expQ = expQ.gte('expense_date', start.toISOString().split('T')[0]);
-            expQ = expQ.lte('expense_date', end.toISOString().split('T')[0]);
-            if (branchFilter !== 'all') expQ = expQ.eq('branch_id', branchFilter);
-            const { data: expData } = await expQ;
+            // Hitung COGS & Margin Bulan Sebelumnya
+            const pCogs = pItemsData?.reduce((a, i) => a + (Number(i.cost_at_sale) * i.qty), 0) || 0;
+            const pGross = pRevenue - pCogs;
+            setPrevGrossMargin(pRevenue > 0 ? (pGross / pRevenue) * 100 : 0);
+            setPrevNetMargin(0);
 
-            const sumCat = (cat: string) => (expData || []).filter(e => e.category === cat).reduce((a, c) => a + Number(c.amount), 0);
-            const currentExp = {
-                salaries: sumCat('gaji'),
-                utilities: sumCat('listrik'),
-                marketing: sumCat('pemasaran'),
-                others: sumCat('lainnya') + sumCat('operasional') + sumCat('sewa'),
-            };
-            setExpenses(currentExp);
-
-            // PREVIOUS PERIOD (for trend comparison)
-            {
-                let prevTransQ = supabase.from('transactions').select('id, total_amount, created_at, branch_id');
-                prevTransQ = filterTrans(prevTransQ, prev.start, prev.end);
-                const { data: prevTransData } = await prevTransQ;
-                const pRevenue = prevTransData?.reduce((a, t) => a + Number(t.total_amount), 0) || 0;
-                setPrevRevenue(pRevenue);
-
-                const pTransIds = prevTransData?.map(t => t.id) || [];
-                let pCogs = 0;
-                if (pTransIds.length > 0) {
-                    const { data: pItemsData } = await supabase
-                        .from('transaction_items')
-                        .select('cost_at_sale, qty')
-                        .in('transaction_id', pTransIds);
-                    pCogs = pItemsData?.reduce((a, i) => a + (Number(i.cost_at_sale) * i.qty), 0) || 0;
-                }
-
-                let pExpQ = supabase.from('expenses').select('amount, category');
-                pExpQ = pExpQ.gte('expense_date', prev.start.toISOString().split('T')[0]);
-                pExpQ = pExpQ.lte('expense_date', prev.end.toISOString().split('T')[0]);
-                if (branchFilter !== 'all') pExpQ = pExpQ.eq('branch_id', branchFilter);
-                const { data: pExpData } = await pExpQ;
-                const pTotalExp = (pExpData || []).reduce((a, c) => a + Number(c.amount), 0);
-                const pGross = pRevenue - pCogs;
-                // For previous net margin, we'll use a simplified calc or fetch point_transactions if needed
-                // But for now, let's just use the revenue trend as primary
-                setPrevGrossMargin(pRevenue > 0 ? (pGross / pRevenue) * 100 : 0);
-                setPrevNetMargin(0); // Simplified for trend comparison
-            }
-
-            // MONTHLY TREND (6 months relative to selected period)
+            // 5. Kalkulasi Trend 6 Bulan dari data lokal (Sangat Cepat)
             const trendData: { month: string; revenue: number; profit: number }[] = [];
             for (let i = 5; i >= 0; i--) {
                 const ms = new Date(selectedYear, selectedMonth - i, 1);
                 const me = new Date(selectedYear, selectedMonth - i + 1, 0, 23, 59, 59);
                 const label = ms.toLocaleDateString('id-ID', { month: 'short', year: ms.getFullYear() !== selectedYear ? '2-digit' : undefined });
 
-                let mq = supabase.from('transactions').select('total_amount').eq('status', 'Paid')
-                    .gte('created_at', ms.toISOString()).lte('created_at', me.toISOString());
-                if (branchFilter !== 'all') mq = mq.eq('branch_id', branchFilter);
-                const { data: mData } = await mq;
-                const mRev = mData?.reduce((a, t) => a + Number(t.total_amount), 0) || 0;
+                const mTrans = allTransData?.filter(t => new Date(t.created_at) >= ms && new Date(t.created_at) <= me) || [];
+                const mRev = mTrans.reduce((a, t) => a + Number(t.total_amount), 0);
 
-                let meq = supabase.from('expenses').select('amount')
-                    .gte('expense_date', ms.toISOString().split('T')[0])
-                    .lte('expense_date', me.toISOString().split('T')[0]);
-                if (branchFilter !== 'all') meq = meq.eq('branch_id', branchFilter);
-                const { data: meData } = await meq;
-                const mExp = meData?.reduce((a, c) => a + Number(c.amount), 0) || 0;
-                const mProfit = mRev - mExp; // Simplified monthly trend profit without exact point calc for speed
+                const mExpData = allExpData?.filter(e => {
+                    const ed = new Date(e.expense_date);
+                    return ed.getFullYear() === ms.getFullYear() && ed.getMonth() === ms.getMonth();
+                }) || [];
+                const mExp = mExpData.reduce((a, c) => a + Number(c.amount), 0);
 
-                trendData.push({ month: label, revenue: mRev, profit: mProfit });
+                trendData.push({ month: label, revenue: mRev, profit: mRev - mExp });
             }
             setMonthlyTrend(trendData);
 
