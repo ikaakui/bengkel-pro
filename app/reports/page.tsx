@@ -440,62 +440,52 @@ export default function ReportsPage() {
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                                 {/* P&L Breakdown */}
-                                <Card className="lg:col-span-2 p-0 overflow-hidden border-slate-200/60 shadow-sm">
-                                    <CardHeader className="p-6 border-b border-slate-100 bg-slate-50/50">
-                                        <h3 className="text-lg font-bold flex items-center gap-2">
-                                            <BarChart3 size={20} className="text-primary" />
-                                            Rincian Laba Rugi
-                                        </h3>
-                                    </CardHeader>
-                                {role !== 'spv' ? (
-                                    <CardContent className="p-6">
-                                        <div className="space-y-4">
-                                            <PLRow label="Total Penjualan (Revenue)" value={revenue} />
-                                            <PLRow label="Harga Pokok Penjualan (COGS)" value={-cogs} isNeg />
-                                            <div className="h-px bg-slate-100 w-full" />
-                                            <PLRow label="Laba Kotor (Gross Profit)" value={grossProfit} isBold />
+                                {role !== 'spv' && (
+                                    <Card className="lg:col-span-2 p-0 overflow-hidden border-slate-200/60 shadow-sm">
+                                        <CardHeader className="p-6 border-b border-slate-100 bg-slate-50/50">
+                                            <h3 className="text-lg font-bold flex items-center gap-2">
+                                                <BarChart3 size={20} className="text-primary" />
+                                                Rincian Laba Rugi
+                                            </h3>
+                                        </CardHeader>
+                                        <CardContent className="p-6">
+                                            <div className="space-y-4">
+                                                <PLRow label="Total Penjualan (Revenue)" value={revenue} />
+                                                <PLRow label="Harga Pokok Penjualan (COGS)" value={-cogs} isNeg />
+                                                <div className="h-px bg-slate-100 w-full" />
+                                                <PLRow label="Laba Kotor (Gross Profit)" value={grossProfit} isBold />
 
-                                            <div className="pt-2">
-                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Beban Operasional & Lainnya</p>
-                                                <div className="space-y-3 pl-4 border-l-2 border-slate-100">
-                                                    <PLRow label="Beban Program Loyalitas (Redeem Poin)" value={-loyaltyCost} isNeg isSub />
-                                                    <PLRow label="Gaji Mekanik & Karyawan" value={-expenses.salaries} isNeg isSub />
-                                                    <PLRow label="Listrik, Air & Biaya Rutin" value={-expenses.utilities} isNeg isSub />
-                                                    <PLRow label="Marketing & Iklan" value={-expenses.marketing} isNeg isSub />
-                                                    <PLRow label="Sewa & Lainnya" value={-expenses.others} isNeg isSub />
-                                                </div>
-                                            </div>
-
-                                            {/* Net Profit Box */}
-                                            <div className="mt-6 p-6 bg-slate-900 rounded-2xl text-white shadow-xl relative overflow-hidden">
-                                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full -translate-y-16 translate-x-16 blur-2xl" />
-                                                <div className="flex justify-between items-center relative z-10">
-                                                    <div>
-                                                        <p className="text-white/60 font-bold uppercase tracking-widest text-[10px]">Net Profit (Laba Bersih Akhir)</p>
-                                                        <h4 className={cn("text-2xl sm:text-4xl font-black mt-2", netProfit < 0 ? "text-red-400" : "text-white")}>
-                                                            Rp {netProfit.toLocaleString('id-ID')}
-                                                        </h4>
+                                                <div className="pt-2">
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Beban Operasional & Lainnya</p>
+                                                    <div className="space-y-3 pl-4 border-l-2 border-slate-100">
+                                                        <PLRow label="Beban Program Loyalitas (Redeem Poin)" value={-loyaltyCost} isNeg isSub />
+                                                        <PLRow label="Gaji Mekanik & Karyawan" value={-expenses.salaries} isNeg isSub />
+                                                        <PLRow label="Listrik, Air & Biaya Rutin" value={-expenses.utilities} isNeg isSub />
+                                                        <PLRow label="Marketing & Iklan" value={-expenses.marketing} isNeg isSub />
+                                                        <PLRow label="Sewa & Lainnya" value={-expenses.others} isNeg isSub />
                                                     </div>
-                                                    <DollarSign size={48} className="text-white/10" />
+                                                </div>
+
+                                                {/* Net Profit Box */}
+                                                <div className="mt-6 p-6 bg-slate-900 rounded-2xl text-white shadow-xl relative overflow-hidden">
+                                                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full -translate-y-16 translate-x-16 blur-2xl" />
+                                                    <div className="flex justify-between items-center relative z-10">
+                                                        <div>
+                                                            <p className="text-white/60 font-bold uppercase tracking-widest text-[10px]">Net Profit (Laba Bersih Akhir)</p>
+                                                            <h4 className={cn("text-2xl sm:text-4xl font-black mt-2", netProfit < 0 ? "text-red-400" : "text-white")}>
+                                                                Rp {netProfit.toLocaleString('id-ID')}
+                                                            </h4>
+                                                        </div>
+                                                        <DollarSign size={48} className="text-white/10" />
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </CardContent>
-                                ) : (
-                                    <CardContent className="p-10 text-center">
-                                        <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                            <Activity size={32} />
-                                        </div>
-                                        <h4 className="text-xl font-bold text-slate-900 mb-2">Monitor Operasional Cabang</h4>
-                                        <p className="text-slate-500 text-sm max-w-md mx-auto">
-                                            Bagian finansial sensitif hanya dapat diakses oleh Owner. Gunakan panel di samping untuk memantau performa layanan dan stok barang.
-                                        </p>
-                                    </CardContent>
+                                        </CardContent>
+                                    </Card>
                                 )}
-                                </Card>
 
                                 {/* Side Panels */}
-                                <div className="space-y-6">
+                                <div className={cn("space-y-6", role === 'spv' && "lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 space-y-0 items-start")}>
                                     {/* Top Sparepart */}
                                     <Card className="p-0 border-slate-200/60 overflow-hidden">
                                         <CardHeader className="p-4 border-b border-slate-50 bg-slate-50/50">
