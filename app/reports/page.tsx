@@ -92,15 +92,19 @@ export default function ReportsPage() {
                 .lte('expense_date', currentMonthEnd.toISOString().split('T')[0]);
             if (branchFilter !== 'all') allExpQ = allExpQ.eq('branch_id', branchFilter);
 
-            const [
-                { data: bData },
-                { data: allTransData },
-                { data: allExpData }
-            ] = await Promise.all([
+            const fetchPromise = Promise.all([
                 supabase.from('branches').select('id, name').order('name'),
                 allTransQ,
                 allExpQ
             ]);
+
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Report fetch timeout exceeded (15s)")), 15000));
+
+            const [
+                { data: bData },
+                { data: allTransData },
+                { data: allExpData }
+            ] = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
             // Filter Branches
             if (bData) {
@@ -133,24 +137,33 @@ export default function ReportsPage() {
             const pRevenue = prevTransData.reduce((a, t) => a + Number(t.total_amount), 0);
             setPrevRevenue(pRevenue);
 
-            // 4. Tarik item transaksi untuk COGS (Hanya untuk transaksi bulan ini & sebelumnya)
-            const transIds = transData.map(t => t.id);
-            const pTransIds = prevTransData.map(t => t.id);
+            // 4. Tarik item transaksi untuk COGS dengan chunking untuk mencegah error URL Too Long
+            const transIds = transData.map((t: any) => t.id);
+            const pTransIds = prevTransData.map((t: any) => t.id);
 
-            const itemsPromises = [];
+            let itemsData: any[] = [];
+            let pItemsData: any[] = [];
+            const chunkSize = 200;
+
             if (transIds.length > 0) {
-                itemsPromises.push(supabase.from('transaction_items')
-                    .select('cost_at_sale, price_at_sale, qty, transaction_id, catalog(name, category)')
-                    .in('transaction_id', transIds));
-            } else itemsPromises.push(Promise.resolve({ data: null }));
+                for (let i = 0; i < transIds.length; i += chunkSize) {
+                    const chunk = transIds.slice(i, i + chunkSize);
+                    const { data } = await supabase.from('transaction_items')
+                        .select('cost_at_sale, price_at_sale, qty, transaction_id, catalog(name, category)')
+                        .in('transaction_id', chunk);
+                    if (data) itemsData.push(...data);
+                }
+            }
 
             if (pTransIds.length > 0) {
-                itemsPromises.push(supabase.from('transaction_items')
-                    .select('cost_at_sale, qty')
-                    .in('transaction_id', pTransIds));
-            } else itemsPromises.push(Promise.resolve({ data: null }));
-
-            const [{ data: itemsData }, { data: pItemsData }] = await Promise.all(itemsPromises);
+                for (let i = 0; i < pTransIds.length; i += chunkSize) {
+                    const chunk = pTransIds.slice(i, i + chunkSize);
+                    const { data } = await supabase.from('transaction_items')
+                        .select('cost_at_sale, qty')
+                        .in('transaction_id', chunk);
+                    if (data) pItemsData.push(...data);
+                }
+            }
 
             // Hitung COGS Bulan Ini
             if (transIds.length > 0) {
@@ -204,6 +217,8 @@ export default function ReportsPage() {
 
         } catch (error) {
             console.error("Error fetching report:", error);
+            // Default states on error
+            setRevenue(0); setCogs(0); setLoyaltyCost(0);
         } finally {
             setLoading(false);
         }
