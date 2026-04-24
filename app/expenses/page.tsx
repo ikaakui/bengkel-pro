@@ -16,8 +16,10 @@ import {
     Building2,
     DollarSign,
     Filter,
-    ArrowUpDown,
-    CheckCircle2
+    CheckCircle2,
+    MessageCircle,
+    Package,
+    ArrowRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -50,8 +52,9 @@ export default function ExpensesPage() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [showAddForm, setShowAddForm] = useState(false);
-    const [filterCategory, setFilterCategory] = useState<string>('all');
     const [searchTerm, setSearchTerm] = useState('');
+    const [activeTab, setActiveTab] = useState<'operasional' | 'supplier'>('operasional');
+    const [ownerWA, setOwnerWA] = useState('6281234567890'); // Default fallback
 
     const supabase = createClient();
 
@@ -82,6 +85,10 @@ export default function ExpensesPage() {
                 }));
                 setExpenses(enriched);
             }
+
+            // Fetch Owner WA from settings
+            const { data: sData } = await supabase.from("app_settings").select("*").eq("key", "owner_wa_number").single();
+            if (sData?.value) setOwnerWA(sData.value);
         } catch (error) {
             console.error(error);
         } finally {
@@ -141,6 +148,21 @@ export default function ExpensesPage() {
     });
 
     const totalFiltered = filteredExpenses.reduce((acc, curr) => acc + curr.amount, 0);
+
+    const sendWhatsApp = (expense: Expense) => {
+        const branch = branches.find(b => b.id === expense.branch_id)?.name || 'Bengkel';
+        const date = new Date(expense.expense_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        
+        const text = `*LAPORAN PENGAMBILAN BARANG / SUPPLIER*%0A%0A` +
+            `*Cabang:* ${branch}%0A` +
+            `*Tanggal:* ${date}%0A` +
+            `*Kategori:* ${CATEGORIES.find(c => c.value === expense.category)?.label}%0A` +
+            `*Total Tagihan:* Rp ${expense.amount.toLocaleString('id-ID')}%0A` +
+            `*Rincian Barang:*%0A${expense.description}%0A%0A` +
+            `_Silakan lampirkan foto nota fisik sebagai bukti._`;
+
+        window.open(`https://wa.me/${ownerWA}?text=${text}`, '_blank');
+    };
 
     return (
         <DashboardLayout>
@@ -203,40 +225,65 @@ export default function ExpensesPage() {
                     </Card>
                 </div>
 
-                {/* Filters & Search */}
-                <div className="flex flex-col lg:flex-row gap-4">
-                    <div className="flex-1 relative">
-                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                        <input
-                            type="text"
-                            placeholder="Cari deskripsi atau cabang..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-16 pr-6 py-5 bg-white rounded-3xl border-none shadow-xl text-slate-900 font-medium placeholder:text-slate-300 focus:ring-2 focus:ring-blue-100 transition-all"
-                        />
-                    </div>
-                    <div className="flex gap-2 p-1.5 bg-white rounded-3xl shadow-xl overflow-x-auto no-scrollbar">
+                {/* Tabs & Search */}
+                <div className="space-y-6">
+                    <div className="flex p-1.5 bg-white rounded-3xl shadow-xl w-fit">
                         <button
-                            onClick={() => setFilterCategory('all')}
+                            onClick={() => { setActiveTab('operasional'); setFilterCategory('all'); }}
                             className={cn(
-                                "px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all",
-                                filterCategory === 'all' ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                                "px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2",
+                                activeTab === 'operasional' ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"
                             )}
                         >
-                            Semua
+                            <TrendingDown size={16} /> Operasional
                         </button>
-                        {CATEGORIES.map(cat => (
-                            <button
-                                key={cat.value}
-                                onClick={() => setFilterCategory(cat.value)}
-                                className={cn(
-                                    "px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all",
-                                    filterCategory === cat.value ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
-                                )}
-                            >
-                                {cat.label}
-                            </button>
-                        ))}
+                        <button
+                            onClick={() => { setActiveTab('supplier'); setFilterCategory('stok'); }}
+                            className={cn(
+                                "px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2",
+                                activeTab === 'supplier' ? "bg-emerald-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"
+                            )}
+                        >
+                            <Package size={16} /> Pengambilan Supplier
+                        </button>
+                    </div>
+
+                    <div className="flex flex-col lg:flex-row gap-4">
+                        <div className="flex-1 relative">
+                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                            <input
+                                type="text"
+                                placeholder={activeTab === 'supplier' ? "Cari nama supplier atau barang..." : "Cari deskripsi atau cabang..."}
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-16 pr-6 py-5 bg-white rounded-3xl border-none shadow-xl text-slate-900 font-medium placeholder:text-slate-300 focus:ring-2 focus:ring-blue-100 transition-all"
+                            />
+                        </div>
+                        {activeTab === 'operasional' && (
+                            <div className="flex gap-2 p-1.5 bg-white rounded-3xl shadow-xl overflow-x-auto no-scrollbar">
+                                <button
+                                    onClick={() => setFilterCategory('all')}
+                                    className={cn(
+                                        "px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all",
+                                        filterCategory === 'all' ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                                    )}
+                                >
+                                    Semua
+                                </button>
+                                {CATEGORIES.filter(c => c.value !== 'stok').map(cat => (
+                                    <button
+                                        key={cat.value}
+                                        onClick={() => setFilterCategory(cat.value)}
+                                        className={cn(
+                                            "px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all",
+                                            filterCategory === cat.value ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                                        )}
+                                    >
+                                        {cat.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -304,12 +351,24 @@ export default function ExpensesPage() {
                                             </span>
                                         </td>
                                         <td className="px-4 sm:px-8 py-4 sm:py-6 text-center">
-                                            <button
-                                                onClick={() => handleDelete(e.id)}
-                                                className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all active:scale-95"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                            <div className="flex items-center justify-center gap-2">
+                                                {e.category === 'stok' && (
+                                                    <button
+                                                        onClick={() => sendWhatsApp(e)}
+                                                        className="p-2 text-emerald-500 hover:bg-emerald-50 rounded-xl transition-all active:scale-95 flex items-center gap-2"
+                                                        title="Kirim Nota ke Owner"
+                                                    >
+                                                        <MessageCircle size={16} />
+                                                        <span className="text-[10px] font-black uppercase hidden sm:inline">WA Nota</span>
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => handleDelete(e.id)}
+                                                    className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all active:scale-95"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -344,11 +403,13 @@ export default function ExpensesPage() {
                                         <div>
                                             <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-3">
                                                 <div className="p-2.5 bg-white/10 rounded-2xl backdrop-blur-sm">
-                                                    <TrendingDown size={22} className="text-rose-400" />
+                                                    {activeTab === 'supplier' ? <Package size={22} className="text-emerald-400" /> : <TrendingDown size={22} className="text-rose-400" />}
                                                 </div>
-                                                Catat Pengeluaran
+                                                {activeTab === 'supplier' ? 'Input Pengambilan Barang' : 'Catat Pengeluaran'}
                                             </h3>
-                                            <p className="text-slate-400 text-sm font-medium mt-2 ml-[52px]">Pastikan data sesuai kuitansi/bukti.</p>
+                                            <p className="text-slate-400 text-sm font-medium mt-2 ml-[52px]">
+                                                {activeTab === 'supplier' ? 'Data akan tercatat sebagai stok masuk & penagihan.' : 'Pastikan data sesuai kuitansi/bukti.'}
+                                            </p>
                                         </div>
                                         <button
                                             type="button"
@@ -370,9 +431,10 @@ export default function ExpensesPage() {
                                                     <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
                                                     <select
                                                         className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-11 pr-5 text-sm font-bold text-slate-700 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-200 focus:outline-none focus:bg-white transition-all appearance-none cursor-pointer"
-                                                        value={formData.category}
+                                                        value={activeTab === 'supplier' ? 'stok' : formData.category}
                                                         onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
                                                         required
+                                                        disabled={activeTab === 'supplier'}
                                                     >
                                                         {CATEGORIES.map(cat => (
                                                             <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -430,12 +492,15 @@ export default function ExpensesPage() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Keterangan / Memo</label>
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                                                {activeTab === 'supplier' ? 'Rincian Barang (Contoh: Oli 10, Ban 2...)' : 'Keterangan / Memo'}
+                                            </label>
                                             <textarea
                                                 className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-5 text-sm font-medium text-slate-700 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-200 focus:outline-none focus:bg-white transition-all min-h-[90px] resize-none"
-                                                placeholder="Tulis alasan pengeluaran..."
+                                                placeholder={activeTab === 'supplier' ? "Tulis nama supplier & list barang yang diambil..." : "Tulis alasan pengeluaran..."}
                                                 value={formData.description}
                                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                                required={activeTab === 'supplier'}
                                             />
                                         </div>
                                     </form>
@@ -464,8 +529,7 @@ export default function ExpensesPage() {
                                                 </span>
                                             ) : (
                                                 <span className="flex items-center justify-center gap-2">
-                                                    <CheckCircle2 size={16} />
-                                                    Simpan Transaksi
+                                                    {activeTab === 'supplier' ? <><MessageCircle size={16} /> Simpan & Kirim WA</> : <><CheckCircle2 size={16} /> Simpan Transaksi</>}
                                                 </span>
                                             )}
                                         </button>

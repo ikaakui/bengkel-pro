@@ -26,6 +26,9 @@ export default function SettingsPage() {
     const [commissionRate, setCommissionRate] = useState("");
     const [originalRate, setOriginalRate] = useState("");
     
+    const [ownerWA, setOwnerWA] = useState("");
+    const [originalOwnerWA, setOriginalOwnerWA] = useState("");
+    
     // AI Settings
     const [aiDuration, setAiDuration] = useState("30");
     const [originalAiDuration, setOriginalAiDuration] = useState("30");
@@ -63,6 +66,10 @@ export default function SettingsPage() {
             const fee = data.find((d: any) => d.key === "booking_fee_amount")?.value || "50000";
             setBookingFee(fee);
             setOriginalBookingFee(fee);
+
+            const wa = data.find((d: any) => d.key === "owner_wa_number")?.value || "";
+            setOwnerWA(wa);
+            setOriginalOwnerWA(wa);
         }
         setLoading(false);
     };
@@ -100,6 +107,10 @@ export default function SettingsPage() {
             updates.push({ key: "booking_fee_amount", value: bookingFee, updated_at: new Date().toISOString() });
         }
 
+        if (ownerWA !== originalOwnerWA) {
+            updates.push({ key: "owner_wa_number", value: ownerWA, updated_at: new Date().toISOString() });
+        }
+
         if (updates.length > 0) {
             const { error: updateError } = await supabase
                 .from("app_settings")
@@ -113,6 +124,7 @@ export default function SettingsPage() {
                 setOriginalAiDuration(aiDuration);
                 setOriginalAiQuota(aiQuota);
                 setOriginalBookingFee(bookingFee);
+                setOriginalOwnerWA(ownerWA);
                 setTimeout(() => setSuccess(""), 3000);
             }
         }
@@ -120,7 +132,7 @@ export default function SettingsPage() {
         setSaving(false);
     };
 
-    const hasChanges = commissionRate !== originalRate || aiDuration !== originalAiDuration || aiQuota !== originalAiQuota || bookingFee !== originalBookingFee;
+    const hasChanges = commissionRate !== originalRate || aiDuration !== originalAiDuration || aiQuota !== originalAiQuota || bookingFee !== originalBookingFee || ownerWA !== originalOwnerWA;
 
     return (
         <DashboardLayout>
@@ -331,17 +343,17 @@ export default function SettingsPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Booking Fee Setting */}
+                    {/* WhatsApp Setting */}
                     <Card>
                         <CardHeader>
                             <div className="flex items-center gap-3">
                                 <div className="p-3 bg-emerald-100 rounded-xl">
-                                    <Banknote size={24} className="text-emerald-600" />
+                                    <MessageCircle size={24} className="text-emerald-600" />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold">Biaya DP / Booking Online</h3>
+                                    <h3 className="text-xl font-bold">Nomor WhatsApp Owner</h3>
                                     <p className="text-sm text-slate-500 mt-0.5">
-                                        Besaran Down Payment yang wajib ditransfer pelanggan saat melakukan booking online.
+                                        Nomor tujuan untuk pengiriman laporan nota supplier dan penagihan.
                                     </p>
                                 </div>
                             </div>
@@ -356,18 +368,17 @@ export default function SettingsPage() {
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-4">
                                         <div className="relative flex-1 max-w-xs">
-                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg">Rp</span>
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">+</span>
                                             <input
-                                                type="number"
-                                                value={bookingFee}
-                                                onChange={(e) => setBookingFee(e.target.value)}
-                                                min="0"
-                                                step="1000"
-                                                className="input-field pl-12 text-xl font-bold text-left"
+                                                type="text"
+                                                value={ownerWA}
+                                                onChange={(e) => setOwnerWA(e.target.value)}
+                                                placeholder="628123456789"
+                                                className="input-field pl-10 text-lg font-bold"
                                             />
                                         </div>
                                         <div className="text-sm text-slate-500">
-                                            <p>Nominal ini akan ditagihkan pada <strong className="text-primary">Invoice Booking Online</strong>.</p>
+                                            <p>Gunakan format kode negara (contoh: <strong className="text-primary">62812...</strong>).</p>
                                         </div>
                                     </div>
 
@@ -385,20 +396,6 @@ export default function SettingsPage() {
                                             )}
                                             {saving ? "Menyimpan..." : "Simpan Perubahan"}
                                         </Button>
-                                        {hasChanges && (
-                                            <button
-                                                onClick={() => {
-                                                    setCommissionRate(originalRate);
-                                                    setAiDuration(originalAiDuration);
-                                                    setAiQuota(originalAiQuota);
-                                                    setBookingFee(originalBookingFee);
-                                                }}
-                                                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
-                                            >
-                                                <RefreshCw size={14} />
-                                                Reset
-                                            </button>
-                                        )}
                                     </div>
                                 </div>
                             )}
