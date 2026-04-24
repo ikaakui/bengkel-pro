@@ -48,7 +48,21 @@ export default function OwnerDashboard() {
     const fetchOverviewData = useCallback(async () => {
         setLoading(true);
         const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfMonthISO = startOfMonth.toISOString();
+        
+        // Setup dates for 6 months trend
+        const months = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date();
+            d.setMonth(d.getMonth() - i);
+            months.push({
+                start: new Date(d.getFullYear(), d.getMonth(), 1),
+                end: new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59),
+                label: d.toLocaleDateString('id-ID', { month: 'short' })
+            });
+        }
+        const sixMonthsAgoISO = months[0].start.toISOString();
 
         try {
             const startOfToday = new Date();
@@ -56,7 +70,7 @@ export default function OwnerDashboard() {
 
             const [
                 { data: branches },
-                { data: transactionsData },
+                { data: allTransactions },
                 { data: targetSetting },
                 { count: mCount },
                 { count: tBookings },
@@ -64,15 +78,16 @@ export default function OwnerDashboard() {
                 { data: recent }
             ] = await Promise.all([
                 supabase.from("branches").select("id, name").order("name"),
-                supabase.from("transactions").select("total_amount, branch_id").eq('status', 'Paid').gte('created_at', startOfMonth),
+                supabase.from("transactions").select("id, total_amount, branch_id, created_at").eq('status', 'Paid').gte('created_at', sixMonthsAgoISO),
                 supabase.from('app_settings').select('value').eq('key', 'branch_targets').single(),
                 supabase.from("profiles").select("id", { count: 'exact', head: true }).eq("role", "member"),
                 supabase.from("bookings").select("id", { count: 'exact', head: true }).gte("created_at", startOfToday.toISOString()),
-                supabase.from("point_transactions").select("id", { count: 'exact', head: true }).eq("type", "redeem").gte("created_at", startOfMonth),
+                supabase.from("point_transactions").select("id", { count: 'exact', head: true }).eq("type", "redeem").gte("created_at", startOfMonthISO),
                 supabase.from("bookings").select("id, customer_name, car_model, branch_id, status").order("created_at", { ascending: false }).limit(5)
             ]);
 
-            const paidTransactions = transactionsData || [];
+            // Filter Current Month Transactions
+            const paidTransactions = (allTransactions || []).filter(t => new Date(t.created_at) >= startOfMonth);
             const revenueSum = paidTransactions.reduce((acc: number, t: any) => acc + Number(t.total_amount), 0);
             setCurrentMonthRevenue(revenueSum);
 
@@ -95,12 +110,12 @@ export default function OwnerDashboard() {
             }
             setMonthlyTarget(Object.values(targetMap).reduce((acc: number, t: any) => acc + t.target, 0) || 500000000);
 
-            if (branches) {
-                // Deduplicate branches by name to prevent double data display
-                const uniqueBranches = branches.filter((br: any, index: number, self: any[]) =>
-                    index === self.findIndex((t: any) => t.name === br.name)
-                );
+            // Deduplicate branches by name
+            const uniqueBranches = branches ? branches.filter((br: any, index: number, self: any[]) =>
+                index === self.findIndex((t: any) => t.name === br.name)
+            ) : [];
 
+            if (uniqueBranches.length > 0) {
                 setBranchTargets(uniqueBranches.map((br: any) => ({
                     branchId: br.id,
                     branchName: br.name,
@@ -108,12 +123,34 @@ export default function OwnerDashboard() {
                     revenue: paidTransactions.filter((t: any) => t.branch_id === br.id).reduce((acc: number, t: any) => acc + Number(t.total_amount), 0)
                 })));
 
-                if (recent) {
-                    setRecentBookings(recent.map((r: any) => ({
-                        ...r,
-                        branch_name: branches.find((b: any) => b.id === r.branch_id)?.name || 'Unknown'
-                    })));
-                }
+                // Calculate Comparison Data (Last 6 Months) from pre-fetched allTransactions
+                const branchesComparisonData = uniqueBranches.map((br: any) => {
+                    const branchMonthlyData = months.map(m => {
+                        const mTrans = (allTransactions || []).filter(t => 
+                            t.branch_id === br.id && 
+                            new Date(t.created_at) >= m.start && 
+                            new Date(t.created_at) <= m.end
+                        );
+                        return mTrans.reduce((acc: number, t: any) => acc + Number(t.total_amount), 0);
+                    });
+
+                    return {
+                        name: br.name,
+                        data: branchMonthlyData
+                    };
+                });
+
+                setBranchComparison({
+                    labels: months.map(m => m.label),
+                    branches: branchesComparisonData
+                });
+            }
+
+            if (recent && uniqueBranches.length > 0) {
+                setRecentBookings(recent.map((r: any) => ({
+                    ...r,
+                    branch_name: uniqueBranches.find((b: any) => b.id === r.branch_id)?.name || 'Unknown'
+                })));
             }
 
             setQuickStats({
@@ -121,44 +158,6 @@ export default function OwnerDashboard() {
                 todayBookings: tBookings || 0,
                 loyaltyCost: totalLoyaltyCost
             });
-
-            // Fetch Comparison Data (Last 6 Months)
-            if (uniqueBranches.length > 0) {
-                const months = [];
-                for (let i = 5; i >= 0; i--) {
-                    const d = new Date();
-                    d.setMonth(d.getMonth() - i);
-                    months.push({
-                        start: new Date(d.getFullYear(), d.getMonth(), 1).toISOString(),
-                        end: new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59).toISOString(),
-                        label: d.toLocaleDateString('id-ID', { month: 'short' })
-                    });
-                }
-
-                const branchesComparisonData = await Promise.all(uniqueBranches.map(async (br: any) => {
-                    const branchMonthlyData = await Promise.all(months.map(async (m) => {
-                        const { data } = await supabase
-                            .from("transactions")
-                            .select("total_amount")
-                            .eq('status', 'Paid')
-                            .eq('branch_id', br.id)
-                            .gte('created_at', m.start)
-                            .lte('created_at', m.end);
-
-                        return (data || []).reduce((acc: number, t: any) => acc + Number(t.total_amount), 0);
-                    }));
-
-                    return {
-                        name: br.name,
-                        data: branchMonthlyData
-                    };
-                }));
-
-                setBranchComparison({
-                    labels: months.map(m => m.label),
-                    branches: branchesComparisonData
-                });
-            }
 
         } catch (error) {
             console.error("Overview error:", error);
