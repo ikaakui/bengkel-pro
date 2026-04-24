@@ -87,9 +87,7 @@ export default function ExpensesPage() {
                 setExpenses(enriched);
             }
 
-            // Fetch Owner WA from settings
-            const { data: sData } = await supabase.from("app_settings").select("*").eq("key", "owner_wa_number").single();
-            if (sData?.value) setOwnerWA(sData.value);
+
         } catch (error) {
             console.error(error);
         } finally {
@@ -172,7 +170,7 @@ export default function ExpensesPage() {
                         onClick={() => setShowAddForm(true)}
                         className="flex items-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-3xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-2xl shadow-slate-200"
                     >
-                        <Plus size={20} strokeWidth={3} />
+                        <TrendingDown size={20} strokeWidth={3} />
                         Tambah Pengeluaran
                     </button>
                 </div>
