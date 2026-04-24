@@ -266,8 +266,8 @@ export default function ExpensesPage() {
                             />
                         </div>
                         {activeTab === 'operasional' && (
-                            <div className="w-full overflow-x-auto no-scrollbar">
-                                <div className="flex gap-2 p-1.5 bg-white rounded-3xl shadow-xl w-fit">
+                            <div className="w-full max-w-full overflow-x-auto no-scrollbar rounded-3xl shadow-xl bg-white p-1.5">
+                                <div className="flex gap-2 w-max">
                                     <button
                                         onClick={() => setFilterCategory('all')}
                                         className={cn(
