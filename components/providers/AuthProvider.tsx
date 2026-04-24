@@ -161,36 +161,19 @@ export default function AuthProvider({
     useEffect(() => {
 
         let mounted = true;
-
-        const initAuth = async () => {
-            try {
-                // Fire logo fetch in parallel — don't block auth flow
-                refreshGlobalLogo();
-
-                // Get session — middleware already validated, so this should be fast
-                const { data: { session } } = await supabase.auth.getSession();
-
-                if (!mounted) return;
-
-                if (session?.user) {
-                    setUser(session.user);
-                    // Fetch profile with built-in retry
-                    await fetchProfile(session.user.id);
-                }
-            } catch (err) {
-                console.error("Auth init error:", err);
-            } finally {
-                if (mounted) {
-                    setLoading(false);
-                }
-            }
-        };
-
-        initAuth();
+        
+        // Fire logo fetch in parallel 
+        refreshGlobalLogo();
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event: any, session: Session | null) => {
                 if (!mounted) return;
+                
+                // Skip redundant client fetch if server already provided the profile on initial mount
+                if (event === 'INITIAL_SESSION' && profile && session?.user?.id === profile.id) {
+                    setLoading(false);
+                    return;
+                }
 
                 setUser(session?.user ?? null);
                 if (session?.user) {
