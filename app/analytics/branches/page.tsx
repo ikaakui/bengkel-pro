@@ -75,7 +75,12 @@ export default function BranchAnalyticsPage() {
             setMonthlyTarget(Object.values(targetMap).reduce((acc, t) => acc + t.target, 0));
 
             if (branches) {
-                setBranchTargets(branches.map(br => ({
+                // Deduplicate branches by name to prevent double data display
+                const uniqueBranches = branches.filter((br: any, index: number, self: any[]) =>
+                    index === self.findIndex((t: any) => t.name === br.name)
+                );
+
+                setBranchTargets(uniqueBranches.map(br => ({
                     branchId: br.id,
                     branchName: br.name,
                     target: targetMap[br.id]?.target || 250000000,

@@ -75,7 +75,12 @@ export default function OwnerDashboard() {
             setMonthlyTarget(Object.values(targetMap).reduce((acc: number, t: any) => acc + t.target, 0) || 500000000);
 
             if (branches) {
-                setBranchTargets(branches.map((br: any) => ({
+                // Deduplicate branches by name to prevent double data display
+                const uniqueBranches = branches.filter((br: any, index: number, self: any[]) =>
+                    index === self.findIndex((t: any) => t.name === br.name)
+                );
+
+                setBranchTargets(uniqueBranches.map((br: any) => ({
                     branchId: br.id,
                     branchName: br.name,
                     target: targetMap[br.id]?.target || 250000000,
