@@ -24,6 +24,7 @@ import {
     Wrench,
     Activity,
     Check,
+    Users2,
 } from "lucide-react";
 
 interface VehicleInProgress {
@@ -43,7 +44,8 @@ export default function AdminDashboard() {
         in: 0,
         processing: 0,
         completed: 0,
-        revenue: 0
+        revenue: 0,
+        members: 0
     });
     const [branchTarget, setBranchTarget] = useState(250000000);
     const [currentMonthRevenue, setCurrentMonthRevenue] = useState(0);
@@ -75,11 +77,13 @@ export default function AdminDashboard() {
             const [
                 { data: bookings },
                 { data: transactions },
-                { data: targetSetting }
+                { data: targetSetting },
+                { count: membersCount }
             ] = await Promise.all([
                 supabase.from("bookings").select("*").eq("branch_id", branchId).gte('created_at', startOfMonth),
                 supabase.from("transactions").select("total_amount, status, created_at").eq("branch_id", branchId).gte('created_at', startOfMonth),
-                supabase.from('app_settings').select('value').eq('key', 'branch_targets').single()
+                supabase.from('app_settings').select('value').eq('key', 'branch_targets').single(),
+                supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'member')
             ]);
 
             const monthBookings = bookings || [];
@@ -90,7 +94,8 @@ export default function AdminDashboard() {
                 in: todayBookings.length,
                 processing: todayBookings.filter(b => b.status === 'processing').length,
                 completed: todayBookings.filter(b => b.status === 'completed').length,
-                revenue: paidTxs.filter(t => t.created_at?.startsWith(todayStr)).reduce((acc, t) => acc + Number(t.total_amount), 0)
+                revenue: paidTxs.filter(t => t.created_at?.startsWith(todayStr)).reduce((acc, t) => acc + Number(t.total_amount), 0),
+                members: membersCount || 0
             });
 
             setCurrentMonthRevenue(paidTxs.reduce((acc, t) => acc + Number(t.total_amount), 0));
@@ -289,6 +294,22 @@ export default function AdminDashboard() {
 
                 {/* Quick Actions & Short Menu */}
                 <div className="space-y-6">
+                    <Link href="/users" className="block">
+                        <div className="p-8 bg-blue-600 rounded-3xl shadow-xl flex items-center justify-between hover:bg-blue-700 transition-all border border-blue-500 active:scale-95 group overflow-hidden relative">
+                            <div className="flex items-center gap-5 relative z-10">
+                                <div className="p-4 bg-white/20 text-white rounded-2xl group-hover:scale-110 transition-transform">
+                                    <Users2 size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="text-3xl font-black text-white tracking-tighter italic">{todayStats.members}</h3>
+                                    <p className="text-[10px] font-black text-blue-200 uppercase tracking-widest mt-1">Total Member Terdaftar</p>
+                                </div>
+                            </div>
+                            <ArrowRight size={20} className="text-white/50 group-hover:text-white transition-colors relative z-10" />
+                            <Users2 size={100} className="absolute -right-6 -bottom-6 text-white/10 transform rotate-12" />
+                        </div>
+                    </Link>
+
                     <Link href="/pos" className="block">
                         <div className="p-8 bg-white rounded-3xl shadow-xl flex items-center justify-between hover:bg-slate-50 transition-all border border-slate-50 active:scale-95 group">
                             <div className="flex items-center gap-5">

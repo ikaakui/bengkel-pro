@@ -107,6 +107,9 @@ export default function UsersPage() {
     const [deleteTargetId, setDeleteTargetId] = useState("");
     const [deleteTargetName, setDeleteTargetName] = useState("");
 
+    // MVP Leaderboard State
+    const [memberMVP, setMemberMVP] = useState<any[]>([]);
+
     const { role: currentUserRole, branchId: currentBranchId } = useAuth();
     const supabase = createClient();
 
@@ -141,9 +144,28 @@ export default function UsersPage() {
         }
     };
 
+    const fetchMVP = async () => {
+        const { data: transactionsData } = await supabase.from("transactions").select("total_amount, status, member_id").eq('status', 'Paid');
+        if (!transactionsData) return;
+
+        const memberMap = new Map<string, { revenue: number, visits: number }>();
+        transactionsData.forEach(t => {
+            if (t.member_id) {
+                const existing = memberMap.get(t.member_id) || { revenue: 0, visits: 0 };
+                memberMap.set(t.member_id, {
+                    revenue: existing.revenue + Number(t.total_amount),
+                    visits: existing.visits + 1
+                });
+            }
+        });
+
+        setMemberMVP(Array.from(memberMap.entries()).sort((a, b) => b[1].revenue - a[1].revenue).slice(0, 3));
+    };
+
     useEffect(() => {
         fetchUsers();
         fetchBranches();
+        fetchMVP();
     }, []);
 
     useEffect(() => {
@@ -509,6 +531,29 @@ export default function UsersPage() {
                                 ))}
                         </div>
                     </div>
+
+                    {/* MVP Leaderboard (Top 3) */}
+                    {memberMVP.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            {memberMVP.map(([id, stats], index) => {
+                                const user = users.find(u => u.id === id);
+                                return (
+                                    <Card key={id} className="p-4 bg-gradient-to-br from-amber-50 to-white border-amber-100 flex items-center justify-between relative overflow-hidden group hover:shadow-lg transition-all">
+                                        <div className="flex items-center gap-4 z-10">
+                                            <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center font-black text-xl shrink-0">
+                                                #{index + 1}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-slate-900 line-clamp-1">{user ? user.full_name : 'Member'}</p>
+                                                <p className="text-[10px] text-amber-600 font-bold uppercase tracking-widest mt-0.5">{stats.visits} Transaksi</p>
+                                            </div>
+                                        </div>
+                                        <Crown size={64} className="absolute -right-4 -bottom-4 text-amber-500/10 transform rotate-12 group-hover:scale-110 transition-transform" />
+                                    </Card>
+                                )
+                            })}
+                        </div>
+                    )}
 
                     {/* User List */}
                     {loading ? (

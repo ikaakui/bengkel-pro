@@ -28,7 +28,7 @@ export default function MemberAnalyticsPage() {
     const { role } = useAuth();
     const supabase = createClient();
 
-    const fetchMitraData = async () => {
+    const fetchMemberData = async () => {
         setLoading(true);
         try {
             const [
@@ -73,21 +73,21 @@ export default function MemberAnalyticsPage() {
             setPendingWD(pWD || 0);
 
         } catch (error) {
-            console.error("Error fetching mitra analytics:", error);
+            console.error("Error fetching member analytics:", error);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        if (role === 'owner' || role === 'spv') fetchMitraData();
+        if (role === 'owner') fetchMemberData();
     }, [role]);
 
     if (loading) {
         return (
             <div className="py-20 flex flex-col items-center justify-center">
                 <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                <p className="text-slate-500 mt-4 font-medium italic">memetakan performa mitra...</p>
+                <p className="text-slate-500 mt-4 font-medium italic">memetakan performa member...</p>
             </div>
         );
     }
@@ -97,7 +97,7 @@ export default function MemberAnalyticsPage() {
 
     return (
         <DashboardLayout>
-            <RoleGuard allowedRoles={['owner', 'spv']}>
+            <RoleGuard allowedRoles={['owner']}>
                 <div className="space-y-10">
                 <div>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
@@ -152,7 +152,7 @@ export default function MemberAnalyticsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                    {/* Mitra MVP Table */}
+                    {/* Member MVP Table */}
                     <Card className="xl:col-span-2 border-none shadow-2xl bg-white p-0 overflow-hidden">
                         <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
                             <div className="flex items-center gap-4">
@@ -170,7 +170,7 @@ export default function MemberAnalyticsPage() {
                                 <thead className="bg-slate-50/50">
                                     <tr>
                                         <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Rank</th>
-                                        <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Nama Mitra</th>
+                                        <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Nama Member</th>
                                         <th className="px-8 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Referral</th>
                                         <th className="px-8 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Revenue</th>
                                     </tr>
