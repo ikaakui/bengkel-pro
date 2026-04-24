@@ -1,0 +1,111 @@
+﻿- info Loaded env from C:\BENGKEL APPS\.env.local
+npx : - warn Invalid next.config.mjs options detected: 
+At line:1 char:1
++ npx next build 2>&1 | Out-File -FilePath ".\build_output.txt" -Encodi ...
++ ~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (- warn Invalid ...ions detected: :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+- warn     The value at .experimental has an unexpected property, optimizePackageImports, which is not in the list of 
+allowed properties (appDocumentPreloading, adjustFontFallbacks, adjustFontFallbacksWithSizeAdjust, 
+allowedRevalidateHeaderKeys, amp, clientRouterFilter, clientRouterFilterRedirects, clientRouterFilterAllowedRate, 
+cpus, memoryBasedWorkersCount, craCompat, caseSensitiveRoutes, useDeploymentId, useDeploymentIdServerActions, 
+deploymentId, disableOptimizedLoading, disablePostcssPresetEnv, esmExternals, appDir, serverActions, 
+serverActionsBodySizeLimit, extensionAlias, externalDir, externalMiddlewareRewritesResolve, fallbackNodePolyfills, 
+fetchCacheKeyPrefix, forceSwcTransforms, fullySpecified, gzipSize, incrementalCacheHandlerPath, isrFlushToDisk, 
+isrMemoryCacheSize, largePageDataBytes, legacyBrowsers, manualClientBasePath, middlewarePrefetch, newNextLinkBehavior, 
+nextScriptWorkers, optimizeCss, optimisticClientCache, outputFileTracingRoot, outputFileTracingExcludes, 
+outputFileTracingIgnores, outputFileTracingIncludes, pageEnv, proxyTimeout, serverComponentsExternalPackages, 
+scrollRestoration, sharedPool, sri, strictNextHead, swcFileReading, swcMinify, swcPlugins, swcTraceProfiling, 
+urlImports, workerThreads, webVitalsAttribution, mdxRs, typedRoutes, webpackBuildWorker, turbo, instrumentationHook, 
+turbotrace, logging, serverMinification, serverSourceMaps).
+- warn See more info here: https://nextjs.org/docs/messages/invalid-next-config
+- warn You have enabled experimental feature (optimizePackageImports) in next.config.mjs.
+- warn Experimental features are not covered by semver, and may cause unexpected or broken application behavior. Use 
+at your own risk.
+
+- info Creating an optimized production build...
+- info Compiled successfully
+- info Skipping validation of types
+- info Skipping linting
+- info Collecting page data...
+ΓÜá∩╕Å  Node.js 18 and below are deprecated and will no longer be supported in future versions of 
+@supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: 
+https://github.com/orgs/supabase/discussions/37217
+ΓÜá∩╕Å  Node.js 18 and below are deprecated and will no longer be supported in future versions of 
+@supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: 
+https://github.com/orgs/supabase/discussions/37217
+ΓÜá∩╕Å  Node.js 18 and below are deprecated and will no longer be supported in future versions of 
+@supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: 
+https://github.com/orgs/supabase/discussions/37217
+ΓÜá∩╕Å  Node.js 18 and below are deprecated and will no longer be supported in future versions of 
+@supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: 
+https://github.com/orgs/supabase/discussions/37217
+ΓÜá∩╕Å  Node.js 18 and below are deprecated and will no longer be supported in future versions of 
+@supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: 
+https://github.com/orgs/supabase/discussions/37217
+- info Generating static pages (0/38)
+- info Generating static pages (9/38)
+- info Generating static pages (18/38)
+- info Generating static pages (28/38)
+- info Generating static pages (38/38)
+- info Finalizing page optimization...
+
+Route (app)                                Size     First Load JS
+Γöî ╬╗ /                                      4.29 kB         201 kB
+Γö£ ╬╗ /analytics/branches                    6.94 kB         204 kB
+Γö£ ╬╗ /analytics/customers                   4.86 kB         201 kB
+Γö£ ╬╗ /analytics/finance                     4.5 kB          201 kB
+Γö£ ╬╗ /analytics/inventory                   4.92 kB         202 kB
+Γö£ ╬╗ /analytics/member                      5.29 kB         202 kB
+Γö£ ╬╗ /analytics/operations                  4.15 kB         201 kB
+Γö£ ╬╗ /antrian                               6.38 kB         203 kB
+Γö£ ╬╗ /api/auth/signout                      0 B                0 B
+Γö£ ╬╗ /api/branches                          0 B                0 B
+Γö£ ╬╗ /api/montir-ai                         0 B                0 B
+Γö£ Γùï /api/setup-settings                    0 B                0 B
+Γö£ ╬╗ /api/users                             0 B                0 B
+Γö£ ╬╗ /booking-online                        6.48 kB         203 kB
+Γö£ ╬╗ /booking-online/invoice/[code]         7.87 kB         207 kB
+Γö£ ╬╗ /bookings                              9.73 kB         206 kB
+Γö£ ╬╗ /branches                              9.2 kB          206 kB
+Γö£ ╬╗ /catalog                               8.93 kB         206 kB
+Γö£ ╬╗ /complain                              5.55 kB         202 kB
+Γö£ ╬╗ /expenses                              6.66 kB         203 kB
+Γö£ ╬╗ /invoice/[id]                          7.41 kB         194 kB
+Γö£ ╬╗ /login                                 8.97 kB         188 kB
+Γö£ ╬╗ /maintenance                           7.25 kB         204 kB
+Γö£ ╬╗ /montir-ai                             6.57 kB         203 kB
+Γö£ ╬╗ /pembayaran                            5.48 kB         202 kB
+Γö£ ╬╗ /pos                                   11.9 kB         208 kB
+Γö£ ╬╗ /profil-member                         5.32 kB         202 kB
+Γö£ ╬╗ /register                              4.19 kB         183 kB
+Γö£ ╬╗ /reports                               9.53 kB         206 kB
+Γö£ ╬╗ /reports/supplier                      7.85 kB         204 kB
+Γö£ ╬╗ /rewards                               7.98 kB         205 kB
+Γö£ ╬╗ /rewards-member                        5.72 kB         202 kB
+Γö£ ╬╗ /riwayat-servis                        6.02 kB         203 kB
+Γö£ ╬╗ /settings                              6.03 kB         203 kB
+Γö£ ╬╗ /settings/bank                         5.13 kB         202 kB
+Γö£ ╬╗ /settings/spv                          5.24 kB         202 kB
+Γö£ ╬╗ /staff                                 7.36 kB         204 kB
+Γöö ╬╗ /users                                 10.1 kB         207 kB
++ First Load JS shared by all              78.6 kB
+  Γö£ chunks/596-fd2307c35347d7af.js         26 kB
+  Γö£ chunks/fd9d1056-691a7ba93e671f15.js    50.5 kB
+  Γö£ chunks/main-app-190f6e3c74ed4081.js    220 B
+  Γöö chunks/webpack-b41a3223c8fb8ffa.js     1.82 kB
+
+Route (pages)                              Size     First Load JS
+ΓöÇ Γùï /404                                   184 B          76.9 kB
++ First Load JS shared by all              76.7 kB
+  Γö£ chunks/framework-964c2d6016b0d731.js   45.1 kB
+  Γö£ chunks/main-49cfeba87815e8ed.js        29.6 kB
+  Γö£ chunks/pages/_app-c39a67c97d2e85f6.js  197 B
+  Γöö chunks/webpack-b41a3223c8fb8ffa.js     1.82 kB
+
+╞Æ Middleware                               149 kB
+
+╬╗  (Server)  server-side renders at runtime (uses getInitialProps or getServerSideProps)
+Γùï  (Static)  automatically rendered as static HTML (uses no initial props)
+

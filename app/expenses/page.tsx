@@ -156,8 +156,6 @@ export default function ExpensesPage() {
 
     const totalFiltered = filteredExpenses.reduce((acc, curr) => acc + curr.amount, 0);
 
-    const totalFiltered = filteredExpenses.reduce((acc, curr) => acc + curr.amount, 0);
-
     return (
         <DashboardLayout>
             <div className="space-y-8 pb-20">
