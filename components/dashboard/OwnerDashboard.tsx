@@ -39,7 +39,7 @@ export default function OwnerDashboard() {
     const [monthlyTarget, setMonthlyTarget] = useState(0);
     const [branchTargets, setBranchTargets] = useState<BranchTarget[]>([]);
     const [recentBookings, setRecentBookings] = useState<any[]>([]);
-    const [quickStats, setQuickStats] = useState({ member: 0, todayBookings: 0, redemptions: 0 });
+    const [quickStats, setQuickStats] = useState({ member: 0, todayBookings: 0, loyaltyCost: 0 });
     const [branchComparison, setBranchComparison] = useState<{ labels: string[], branches: any[] }>({ labels: [], branches: [] });
 
     const { profile } = useAuth();
@@ -76,6 +76,19 @@ export default function OwnerDashboard() {
             const revenueSum = paidTransactions.reduce((acc: number, t: any) => acc + Number(t.total_amount), 0);
             setCurrentMonthRevenue(revenueSum);
 
+            // Calculate Loyalty Cost (Discount from point redemptions)
+            let totalLoyaltyCost = 0;
+            const transIds = paidTransactions.map(t => t.id);
+            if (transIds.length > 0) {
+                const { data: itemsData } = await supabase
+                    .from('transaction_items')
+                    .select('price_at_sale, qty')
+                    .in('transaction_id', transIds);
+                
+                const grossSales = itemsData?.reduce((a, i) => a + (Number(i.price_at_sale) * i.qty), 0) || 0;
+                totalLoyaltyCost = Math.max(0, grossSales - revenueSum);
+            }
+
             let targetMap: Record<string, { name: string; target: number }> = {};
             if (targetSetting?.value) {
                 try { targetMap = JSON.parse(targetSetting.value); } catch (e) { }
@@ -106,7 +119,7 @@ export default function OwnerDashboard() {
             setQuickStats({
                 member: mCount || 0,
                 todayBookings: tBookings || 0,
-                redemptions: rCount || 0
+                loyaltyCost: totalLoyaltyCost
             });
 
             // Fetch Comparison Data (Last 6 Months)
@@ -214,13 +227,13 @@ export default function OwnerDashboard() {
 
                 <Card className="p-6 border-none shadow-xl bg-white flex flex-col justify-between">
                     <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl">
-                            <Zap size={24} />
+                        <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl">
+                            <Target size={24} />
                         </div>
                     </div>
                     <div>
-                        <p className="text-2xl font-black text-slate-900 tracking-tighter italic">{quickStats.redemptions}</p>
-                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Penukaran Poin Bulan Ini</p>
+                        <p className="text-2xl font-black text-slate-900 tracking-tighter italic">Rp {quickStats.loyaltyCost.toLocaleString('id-ID')}</p>
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Beban Loyalty (Redeem)</p>
                     </div>
                 </Card>
 

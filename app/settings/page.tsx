@@ -185,9 +185,9 @@ export default function SettingsPage() {
                                     <Percent size={24} className="text-amber-600" />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold">Persentase Komisi Affiliate</h3>
+                                    <h3 className="text-xl font-bold">Alokasi Beban Loyalty Member</h3>
                                     <p className="text-sm text-slate-500 mt-0.5">
-                                        Komisi yang diberikan ke mitra untuk setiap transaksi yang direferensikan.
+                                        Estimasi porsi pendapatan yang dialokasikan untuk biaya poin/reward member.
                                     </p>
                                 </div>
                             </div>
@@ -215,7 +215,7 @@ export default function SettingsPage() {
                                         </div>
                                         <div className="text-sm text-slate-500">
                                             <p>Contoh: Transaksi <strong>Rp 1.000.000</strong></p>
-                                            <p>Komisi mitra = <strong className="text-primary">Rp {((1000000 * parseFloat(commissionRate || "0")) / 100).toLocaleString("id-ID")}</strong></p>
+                                            <p>Beban Loyalitas = <strong className="text-primary">Rp {((1000000 * parseFloat(commissionRate || "0")) / 100).toLocaleString("id-ID")}</strong></p>
                                         </div>
                                     </div>
 
@@ -410,8 +410,8 @@ export default function SettingsPage() {
                             <div className="text-sm text-slate-500">
                                 <p className="font-semibold text-slate-700 mb-1">Catatan</p>
                                 <ul className="list-disc list-inside space-y-1">
-                                    <li>Perubahan komisi akan berlaku untuk transaksi baru.</li>
-                                    <li>Komisi untuk transaksi lama tidak akan berubah.</li>
+                                    <li>Perubahan alokasi beban akan berlaku untuk transaksi baru di dashboard estimasi.</li>
+                                    <li>Beban untuk transaksi lama tidak akan berubah di laporan historis.</li>
                                     <li>Harga layanan & produk bisa diubah di halaman <strong>Katalog</strong>.</li>
                                 </ul>
                             </div>

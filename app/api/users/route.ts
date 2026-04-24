@@ -43,18 +43,18 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Owner can create admin and mitra
-        if (currentProfile.role === "owner" && !["admin", "mitra"].includes(role)) {
+        // Owner can create admin, spv, and staff
+        if (currentProfile.role === "owner" && !["admin", "spv", "mitra"].includes(role)) {
             return NextResponse.json(
-                { error: "Role tidak valid. Hanya admin atau mitra yang bisa dibuat." },
+                { error: "Role tidak valid. Pilih role yang tersedia." },
                 { status: 400 }
             );
         }
 
-        // Admin can only create mitra
-        if (currentProfile.role === "admin" && role !== "mitra") {
+        // Admin can only create staff/spv
+        if (currentProfile.role === "admin" && !["spv", "mitra"].includes(role)) {
             return NextResponse.json(
-                { error: "Admin hanya bisa menambahkan Mitra." },
+                { error: "Admin hanya bisa menambahkan Staff/Supervisor." },
                 { status: 403 }
             );
         }
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
             }
         );
 
-        // Generate referral code for mitra
+        // Generate referral code for staff
         const referralCode =
             role === "mitra"
                 ? (() => {
@@ -181,9 +181,9 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
         }
 
-        // Admin can only change password for mitra
+        // Admin can only change password for staff
         if (currentProfile.role === "admin" && targetProfile.role !== "mitra") {
-            return NextResponse.json({ error: "Admin hanya bisa merubah password Mitra" }, { status: 403 });
+            return NextResponse.json({ error: "Admin hanya bisa merubah password Staff" }, { status: 403 });
         }
 
         const supabaseAdmin = createClient(
@@ -250,9 +250,9 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
         }
 
-        // Admin can only delete mitra
+        // Admin can only delete staff
         if (currentProfile.role === "admin" && targetProfile.role !== "mitra") {
-            return NextResponse.json({ error: "Admin hanya bisa menghapus data Mitra" }, { status: 403 });
+            return NextResponse.json({ error: "Admin hanya bisa menghapus data Staff" }, { status: 403 });
         }
 
         const supabaseAdmin = createClient(
@@ -269,7 +269,7 @@ export async function DELETE(request: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            message: `Data Mitra "${targetProfile.full_name}" berhasil dihapus.`,
+            message: `Data Staff "${targetProfile.full_name}" berhasil dihapus.`,
         });
     } catch (error: any) {
         console.error("Error deleting user:", error);

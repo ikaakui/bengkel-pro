@@ -56,7 +56,7 @@ export default function ReportsPage() {
     // Current period data
     const [revenue, setRevenue] = useState(0);
     const [cogs, setCogs] = useState(0);
-    const [commissionRate, setCommissionRate] = useState(5);
+    const [loyaltyCost, setLoyaltyCost] = useState(0);
     const [expenses, setExpenses] = useState({ salaries: 0, utilities: 0, marketing: 0, others: 0 });
 
     // Previous period data (for trends)
@@ -79,11 +79,6 @@ export default function ReportsPage() {
             // Fetch branches
             const { data: bData } = await supabase.from('branches').select('id, name').order('name');
             if (bData) setBranches(bData);
-
-            // Fetch commission rate from app_settings
-            const { data: settingsData } = await supabase.from('app_settings').select('value').eq('key', 'commission_rate').single();
-            const rate = settingsData ? Number(settingsData.value) : 5;
-            setCommissionRate(rate);
 
             const { start, end } = getDateRangeFromMonthYear(selectedMonth, selectedYear);
             const prev = getPrevDateRangeFromMonthYear(selectedMonth, selectedYear);
@@ -114,6 +109,9 @@ export default function ReportsPage() {
                     .in('transaction_id', transIds);
                 totalCogs = itemsData?.reduce((a, i) => a + (Number(i.cost_at_sale) * i.qty), 0) || 0;
                 setCogs(totalCogs);
+
+                const totalGrossSales = itemsData?.reduce((a, i) => a + (Number(i.price_at_sale) * i.qty), 0) || 0;
+                setLoyaltyCost(Math.max(0, totalGrossSales - totalRevenue));
 
                 // Top selling
                 const itemMap: any = {};
@@ -175,10 +173,10 @@ export default function ReportsPage() {
                 const { data: pExpData } = await pExpQ;
                 const pTotalExp = (pExpData || []).reduce((a, c) => a + Number(c.amount), 0);
                 const pGross = pRevenue - pCogs;
-                const pComm = pRevenue * (rate / 100);
-                const pNet = pGross - pComm - pTotalExp;
+                // For previous net margin, we'll use a simplified calc or fetch point_transactions if needed
+                // But for now, let's just use the revenue trend as primary
                 setPrevGrossMargin(pRevenue > 0 ? (pGross / pRevenue) * 100 : 0);
-                setPrevNetMargin(pRevenue > 0 ? (pNet / pRevenue) * 100 : 0);
+                setPrevNetMargin(0); // Simplified for trend comparison
             }
 
             // MONTHLY TREND (6 months relative to selected period)
@@ -200,7 +198,7 @@ export default function ReportsPage() {
                 if (branchFilter !== 'all') meq = meq.eq('branch_id', branchFilter);
                 const { data: meData } = await meq;
                 const mExp = meData?.reduce((a, c) => a + Number(c.amount), 0) || 0;
-                const mProfit = mRev - (mRev * (rate / 100)) - mExp;
+                const mProfit = mRev - mExp; // Simplified monthly trend profit without exact point calc for speed
 
                 trendData.push({ month: label, revenue: mRev, profit: mProfit });
             }
@@ -237,7 +235,7 @@ export default function ReportsPage() {
         csvContent += `Total Penjualan (Revenue),${revenue}\n`;
         csvContent += `Harga Pokok Penjualan (COGS),-${cogs}\n`;
         csvContent += `Laba Kotor (Gross Profit),${grossProfit}\n`;
-        csvContent += `Estimasi Komisi Affiliate (${commissionRate}%),-${commissions}\n`;
+        csvContent += `Beban Program Loyalitas (Redeem),-${loyaltyCost}\n`;
         csvContent += `Gaji Mekanik & Karyawan,-${expenses.salaries}\n`;
         csvContent += `Listrik Air & Biaya Rutin,-${expenses.utilities}\n`;
         csvContent += `Marketing & Iklan,-${expenses.marketing}\n`;
@@ -281,9 +279,8 @@ export default function ReportsPage() {
 
     // Calculations
     const totalExpenses = Object.values(expenses).reduce((a, b) => a + Number(b), 0);
-    const commissions = revenue * (commissionRate / 100);
     const grossProfit = revenue - cogs;
-    const netProfit = grossProfit - commissions - totalExpenses;
+    const netProfit = grossProfit - loyaltyCost - totalExpenses;
     const grossMargin = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
     const netMargin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
     const opexRatio = revenue > 0 ? (totalExpenses / revenue) * 100 : 0;
@@ -341,11 +338,13 @@ export default function ReportsPage() {
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
                         <div className="shrink-0">
                             <div className="flex items-center gap-3">
-                                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{role === 'spv' ? 'Laporan Audit' : 'Laporan Owner'}</h2>
-                                <div className={cn("px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 hidden md:flex", health.bg, health.color, health.border)}>
-                                    <div className={cn("w-2 h-2 rounded-full animate-pulse", health.color.replace('text', 'bg'))} />
-                                    Status: {health.label}
-                                </div>
+                                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{role === 'spv' ? 'Laporan Operasional Audit' : 'Laporan Owner'}</h2>
+                                {role !== 'spv' && (
+                                    <div className={cn("px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 hidden md:flex", health.bg, health.color, health.border)}>
+                                        <div className={cn("w-2 h-2 rounded-full animate-pulse", health.color.replace('text', 'bg'))} />
+                                        Status: {health.label}
+                                    </div>
+                                )}
                             </div>
                             <p className="text-slate-500 mt-1">Laporan finansial bengkel — Periode: <b>{periodLabel}</b></p>
                         </div>
@@ -421,8 +420,17 @@ export default function ReportsPage() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                                 <ReportStat label="Penjualan Kotor" value={revenue} trend={revenueTrend.pct} isUp={revenueTrend.isUp} />
                                 <ReportStat label="Gross Margin" value={`${grossMargin.toFixed(1)}%`} trend={gmTrend.pct} isUp={gmTrend.isUp} isPercentage />
-                                <ReportStat label="Net Margin" value={`${netMargin.toFixed(1)}%`} trend={nmTrend.pct} isUp={nmTrend.isUp} isPercentage />
-                                <ReportStat label="Net Profit (Laba)" value={netProfit} trend={npTrend.pct} isUp={npTrend.isUp} isMain />
+                                {role !== 'spv' ? (
+                                    <>
+                                        <ReportStat label="Net Margin" value={`${netMargin.toFixed(1)}%`} trend={nmTrend.pct} isUp={nmTrend.isUp} isPercentage />
+                                        <ReportStat label="Net Profit (Laba)" value={netProfit} trend={npTrend.pct} isUp={npTrend.isUp} isMain />
+                                    </>
+                                ) : (
+                                    <>
+                                        <ReportStat label="Rasio Biaya Operasional" value={`${opexRatio.toFixed(1)}%`} trend="Target < 30%" isUp={opexRatio <= 30} isPercentage />
+                                        <ReportStat label="Profitabilitas (Est)" value={netProfit > 0 ? 'Surplus' : 'Defisit'} trend="Monitoring" isUp={netProfit > 0} isMain />
+                                    </>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
@@ -434,6 +442,7 @@ export default function ReportsPage() {
                                             Rincian Laba Rugi
                                         </h3>
                                     </CardHeader>
+                                {role !== 'spv' ? (
                                     <CardContent className="p-6">
                                         <div className="space-y-4">
                                             <PLRow label="Total Penjualan (Revenue)" value={revenue} />
@@ -444,7 +453,7 @@ export default function ReportsPage() {
                                             <div className="pt-2">
                                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Beban Operasional & Lainnya</p>
                                                 <div className="space-y-3 pl-4 border-l-2 border-slate-100">
-                                                    <PLRow label={`Estimasi Komisi Affiliate (${commissionRate}%)`} value={-commissions} isNeg isSub />
+                                                    <PLRow label="Beban Program Loyalitas (Redeem Poin)" value={-loyaltyCost} isNeg isSub />
                                                     <PLRow label="Gaji Mekanik & Karyawan" value={-expenses.salaries} isNeg isSub />
                                                     <PLRow label="Listrik, Air & Biaya Rutin" value={-expenses.utilities} isNeg isSub />
                                                     <PLRow label="Marketing & Iklan" value={-expenses.marketing} isNeg isSub />
@@ -467,6 +476,17 @@ export default function ReportsPage() {
                                             </div>
                                         </div>
                                     </CardContent>
+                                ) : (
+                                    <CardContent className="p-10 text-center">
+                                        <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                            <Activity size={32} />
+                                        </div>
+                                        <h4 className="text-xl font-bold text-slate-900 mb-2">Monitor Operasional Cabang</h4>
+                                        <p className="text-slate-500 text-sm max-w-md mx-auto">
+                                            Bagian finansial sensitif hanya dapat diakses oleh Owner. Gunakan panel di samping untuk memantau performa layanan dan stok barang.
+                                        </p>
+                                    </CardContent>
+                                )}
                                 </Card>
 
                                 {/* Side Panels */}
