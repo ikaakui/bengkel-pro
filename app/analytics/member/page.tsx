@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import RoleGuard from "@/components/auth/RoleGuard";
 import {
     Users2,
     Trophy,
@@ -79,7 +80,7 @@ export default function MemberAnalyticsPage() {
     };
 
     useEffect(() => {
-        if (role === 'owner') fetchMitraData();
+        if (role === 'owner' || role === 'spv') fetchMitraData();
     }, [role]);
 
     if (loading) {
@@ -96,7 +97,8 @@ export default function MemberAnalyticsPage() {
 
     return (
         <DashboardLayout>
-            <div className="space-y-10">
+            <RoleGuard allowedRoles={['owner', 'spv']}>
+                <div className="space-y-10">
                 <div>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
                         <Users2 className="text-emerald-600" /> Analisis Member
@@ -253,7 +255,8 @@ export default function MemberAnalyticsPage() {
                         </div>
                     </Card>
                 </div>
-            </div>
+                </div>
+            </RoleGuard>
         </DashboardLayout>
     );
 }

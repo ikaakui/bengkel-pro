@@ -345,29 +345,31 @@ export default function BranchesPage() {
 
     return (
         <DashboardLayout>
-            <RoleGuard allowedRoles={["owner"]}>
+            <RoleGuard allowedRoles={["owner", "spv"]}>
                 <div className="space-y-10 pb-20">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
                         <div>
                             <h2 className="text-3xl font-black text-slate-900 tracking-tight">Manajemen Organisasi</h2>
                             <p className="text-slate-500 mt-1 font-medium">Kelola cabang, admin, dan struktur kepemilikan bengkel.</p>
                         </div>
-                        <div className="grid grid-cols-2 sm:flex gap-3 w-full sm:w-auto">
-                            <Button
-                                onClick={() => { setStaffRole("owner"); setShowStaffForm(true); }}
-                                className="h-14 px-4 sm:px-8 rounded-2xl bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/25 text-white border-0 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 transition-all duration-300"
-                            >
-                                <Crown size={20} className="sm:mr-1" />
-                                <span className="whitespace-nowrap font-black text-[13px] sm:text-base tracking-tight">Pemilik Baru</span>
-                            </Button>
-                            <Button
-                                onClick={() => { resetBranchForm(); setShowBranchForm(true); }}
-                                className="h-14 px-4 sm:px-8 rounded-2xl bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/25 text-white border-0 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 transition-all duration-300"
-                            >
-                                <Plus size={22} className="sm:mr-1" />
-                                <span className="whitespace-nowrap font-black text-[13px] sm:text-base tracking-tight">Tambah Cabang</span>
-                            </Button>
-                        </div>
+                        {role === 'owner' && (
+                            <div className="grid grid-cols-2 sm:flex gap-3 w-full sm:w-auto">
+                                <Button
+                                    onClick={() => { setStaffRole("owner"); setShowStaffForm(true); }}
+                                    className="h-14 px-4 sm:px-8 rounded-2xl bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/25 text-white border-0 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 transition-all duration-300"
+                                >
+                                    <Crown size={20} className="sm:mr-1" />
+                                    <span className="whitespace-nowrap font-black text-[13px] sm:text-base tracking-tight">Pemilik Baru</span>
+                                </Button>
+                                <Button
+                                    onClick={() => { resetBranchForm(); setShowBranchForm(true); }}
+                                    className="h-14 px-4 sm:px-8 rounded-2xl bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/25 text-white border-0 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 transition-all duration-300"
+                                >
+                                    <Plus size={22} className="sm:mr-1" />
+                                    <span className="whitespace-nowrap font-black text-[13px] sm:text-base tracking-tight">Tambah Cabang</span>
+                                </Button>
+                            </div>
+                        )}
                     </div>
 
                     {success && (
@@ -385,14 +387,16 @@ export default function BranchesPage() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {owners.map(owner => (
                                 <Card key={owner.id} className="relative overflow-hidden group border-purple-100 bg-purple-50/30 hover:shadow-xl transition-all duration-300">
-                                    <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                                        <button onClick={() => { setResetId(owner.id); setResetName(owner.full_name); setShowResetModal(true); }} className="p-2 bg-white/80 backdrop-blur shadow-sm rounded-xl text-slate-500 hover:text-amber-600 transition-colors">
-                                            <Key size={14} />
-                                        </button>
-                                        <button onClick={() => { setDeleteType("staff"); setDeleteId(owner.id); setDeleteName(owner.full_name); setShowDeleteModal(true); }} className="p-2 bg-white/80 backdrop-blur shadow-sm rounded-xl text-slate-500 hover:text-red-500 transition-colors">
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
+                                    {role === 'owner' && (
+                                        <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                            <button onClick={() => { setResetId(owner.id); setResetName(owner.full_name); setShowResetModal(true); }} className="p-2 bg-white/80 backdrop-blur shadow-sm rounded-xl text-slate-500 hover:text-amber-600 transition-colors">
+                                                <Key size={14} />
+                                            </button>
+                                            <button onClick={() => { setDeleteType("staff"); setDeleteId(owner.id); setDeleteName(owner.full_name); setShowDeleteModal(true); }} className="p-2 bg-white/80 backdrop-blur shadow-sm rounded-xl text-slate-500 hover:text-red-500 transition-colors">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    )}
                                     <CardContent className="p-6 flex items-center gap-4">
                                         <div className="w-14 h-14 rounded-2xl bg-purple-100 flex items-center justify-center text-purple-600 shadow-inner">
                                             <Crown size={28} />
@@ -413,65 +417,67 @@ export default function BranchesPage() {
                             <ImageIcon className="text-emerald-500" size={20} />
                             <h3 className="text-lg font-black text-slate-900 uppercase tracking-widest">Pengaturan Logo Struk/Invoice</h3>
                         </div>
-                        <Card className="border-emerald-100 bg-emerald-50/20 shadow-sm">
-                            <CardContent className="p-5 sm:p-6">
-                                <div className="flex flex-col sm:flex-row gap-5 items-start">
-                                    <div className="shrink-0 w-20 h-20 sm:w-24 sm:h-24 bg-white border border-slate-200 rounded-2xl flex items-center justify-center p-2 shadow-inner">
-                                        {globalLogoUrl ? (
-                                            <img src={globalLogoUrl} alt="Preview Logo" className="max-w-full max-h-full object-contain" onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/80?text=Error'; }} />
-                                        ) : (
-                                            <ImageIcon size={28} className="text-slate-300" />
-                                        )}
-                                    </div>
-                                    <div className="flex-1 space-y-3 w-full max-w-lg">
-                                        <div>
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Logo Bengkel</label>
-                                            <p className="text-xs text-slate-500 mb-1">Maks. 2MB. Logo ini akan digunakan di cetakan struk kasir.</p>
-                                            <div className="text-[10px] text-slate-400 font-medium">
-                                                <p>• <b>Persegi (Kotak):</b> 300x300 s/d 500x500 px</p>
-                                                <p>• <b>Persegi Panjang:</b> 500x150 s/d 600x200 px</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="file"
-                                                accept="image/png, image/jpeg, image/webp"
-                                                ref={fileInputRef}
-                                                onChange={handleFileChange}
-                                                className="hidden"
-                                            />
-                                            <Button
-                                                variant="outline"
-                                                type="button"
-                                                onClick={() => fileInputRef.current?.click()}
-                                                className="flex-1 h-11 bg-white border-2 border-emerald-100 hover:border-emerald-200 rounded-xl font-medium focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all justify-start text-emerald-700 px-4"
-                                            >
-                                                <UploadCloud className="w-4 h-4 mr-2 shrink-0" />
-                                                <span className="truncate text-sm">Pilih Gambar...</span>
-                                            </Button>
-                                            <Button
-                                                onClick={handleSaveLogo}
-                                                disabled={savingLogo || !globalLogoUrl}
-                                                className="h-11 px-5 rounded-xl font-black bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-500/20 border-0 text-white shrink-0 text-sm"
-                                            >
-                                                {savingLogo ? <Loader2 className="animate-spin w-4 h-4" /> : <Save className="w-4 h-4" />}
-                                            </Button>
-                                            {globalLogoUrl && (
-                                                <Button
-                                                    onClick={handleDeleteLogo}
-                                                    disabled={savingLogo}
-                                                    variant="outline"
-                                                    title="Hapus Logo"
-                                                    className="h-11 w-11 px-0 rounded-xl font-black border-2 border-red-100 hover:border-red-200 hover:bg-red-50 text-red-500 shrink-0 flex items-center justify-center transition-all"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
+                        {role === 'owner' && (
+                            <Card className="border-emerald-100 bg-emerald-50/20 shadow-sm">
+                                <CardContent className="p-5 sm:p-6">
+                                    <div className="flex flex-col sm:flex-row gap-5 items-start">
+                                        <div className="shrink-0 w-20 h-20 sm:w-24 sm:h-24 bg-white border border-slate-200 rounded-2xl flex items-center justify-center p-2 shadow-inner">
+                                            {globalLogoUrl ? (
+                                                <img src={globalLogoUrl} alt="Preview Logo" className="max-w-full max-h-full object-contain" onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/80?text=Error'; }} />
+                                            ) : (
+                                                <ImageIcon size={28} className="text-slate-300" />
                                             )}
                                         </div>
+                                        <div className="flex-1 space-y-3 w-full max-w-lg">
+                                            <div>
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Logo Bengkel</label>
+                                                <p className="text-xs text-slate-500 mb-1">Maks. 2MB. Logo ini akan digunakan di cetakan struk kasir.</p>
+                                                <div className="text-[10px] text-slate-400 font-medium">
+                                                    <p>• <b>Persegi (Kotak):</b> 300x300 s/d 500x500 px</p>
+                                                    <p>• <b>Persegi Panjang:</b> 500x150 s/d 600x200 px</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="file"
+                                                    accept="image/png, image/jpeg, image/webp"
+                                                    ref={fileInputRef}
+                                                    onChange={handleFileChange}
+                                                    className="hidden"
+                                                />
+                                                <Button
+                                                    variant="outline"
+                                                    type="button"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    className="flex-1 h-11 bg-white border-2 border-emerald-100 hover:border-emerald-200 rounded-xl font-medium focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all justify-start text-emerald-700 px-4"
+                                                >
+                                                    <UploadCloud className="w-4 h-4 mr-2 shrink-0" />
+                                                    <span className="truncate text-sm">Pilih Gambar...</span>
+                                                </Button>
+                                                <Button
+                                                    onClick={handleSaveLogo}
+                                                    disabled={savingLogo || !globalLogoUrl}
+                                                    className="h-11 px-5 rounded-xl font-black bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-500/20 border-0 text-white shrink-0 text-sm"
+                                                >
+                                                    {savingLogo ? <Loader2 className="animate-spin w-4 h-4" /> : <Save className="w-4 h-4" />}
+                                                </Button>
+                                                {globalLogoUrl && (
+                                                    <Button
+                                                        onClick={handleDeleteLogo}
+                                                        disabled={savingLogo}
+                                                        variant="outline"
+                                                        title="Hapus Logo"
+                                                        className="h-11 w-11 px-0 rounded-xl font-black border-2 border-red-100 hover:border-red-200 hover:bg-red-50 text-red-500 shrink-0 flex items-center justify-center transition-all"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
+                        )}
                     </section>
 
                     {/* Section: Branches */}
@@ -505,14 +511,16 @@ export default function BranchesPage() {
                                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Cabang Bengkel</p>
                                                     </div>
                                                 </div>
-                                                <div className="flex gap-1">
-                                                    <button onClick={() => { setEditingBranch(branch); setBranchName(branch.name); setBranchAddress(branch.address || ""); setBranchPhone(branch.phone || ""); setShowBranchForm(true); }} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
-                                                        <Pencil size={16} />
-                                                    </button>
-                                                    <button onClick={() => { setDeleteType("branch"); setDeleteId(branch.id); setDeleteName(branch.name); setShowDeleteModal(true); }} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
+                                                {role === 'owner' && (
+                                                    <div className="flex gap-1">
+                                                        <button onClick={() => { setEditingBranch(branch); setBranchName(branch.name); setBranchAddress(branch.address || ""); setBranchPhone(branch.phone || ""); setShowBranchForm(true); }} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                                                            <Pencil size={16} />
+                                                        </button>
+                                                        <button onClick={() => { setDeleteType("branch"); setDeleteId(branch.id); setDeleteName(branch.name); setShowDeleteModal(true); }} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                             <CardContent className="p-6 space-y-4">
                                                 <div className="space-y-2">
@@ -531,9 +539,11 @@ export default function BranchesPage() {
                                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                                                             <Shield size={12} className="text-blue-500" /> Admin Cabang
                                                         </p>
-                                                        <button onClick={() => { setStaffRole("admin"); setStaffBranchId(branch.id); setShowStaffForm(true); }} className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline flex items-center gap-1">
-                                                            <Plus size={10} /> Tambah Admin
-                                                        </button>
+                                                        {role === 'owner' && (
+                                                            <button onClick={() => { setStaffRole("admin"); setStaffBranchId(branch.id); setShowStaffForm(true); }} className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline flex items-center gap-1">
+                                                                <Plus size={10} /> Tambah Admin
+                                                            </button>
+                                                        )}
                                                     </div>
 
                                                     <div className="space-y-3">
@@ -549,14 +559,16 @@ export default function BranchesPage() {
                                                                             <p className="text-[10px] text-slate-500 font-bold">{admin.phone || admin.email || "No contact"}</p>
                                                                         </div>
                                                                     </div>
-                                                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                        <button onClick={() => { setResetId(admin.id); setResetName(admin.full_name); setShowResetModal(true); }} className="p-1.5 text-slate-400 hover:text-amber-600 transition-colors" title="Ubah Password">
-                                                                            <Key size={14} />
-                                                                        </button>
-                                                                        <button onClick={() => { setDeleteType("staff"); setDeleteId(admin.id); setDeleteName(admin.full_name); setShowDeleteModal(true); }} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors" title="Hapus">
-                                                                            <Trash2 size={14} />
-                                                                        </button>
-                                                                    </div>
+                                                                    {role === 'owner' && (
+                                                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                            <button onClick={() => { setResetId(admin.id); setResetName(admin.full_name); setShowResetModal(true); }} className="p-1.5 text-slate-400 hover:text-amber-600 transition-colors" title="Ubah Password">
+                                                                                <Key size={14} />
+                                                                            </button>
+                                                                            <button onClick={() => { setDeleteType("staff"); setDeleteId(admin.id); setDeleteName(admin.full_name); setShowDeleteModal(true); }} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors" title="Hapus">
+                                                                                <Trash2 size={14} />
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             ))
                                                         ) : (

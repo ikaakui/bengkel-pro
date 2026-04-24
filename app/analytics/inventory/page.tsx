@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import RoleGuard from "@/components/auth/RoleGuard";
 import {
     Package,
     AlertTriangle,
@@ -54,7 +55,7 @@ export default function InventoryAnalyticsPage() {
     };
 
     useEffect(() => {
-        if (role === 'owner') fetchInventoryData();
+        if (role === 'owner' || role === 'spv') fetchInventoryData();
     }, [role]);
 
     if (loading) {
@@ -68,7 +69,8 @@ export default function InventoryAnalyticsPage() {
 
     return (
         <DashboardLayout>
-            <div className="space-y-10">
+            <RoleGuard allowedRoles={['owner', 'spv']}>
+                <div className="space-y-10">
                 <div>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
                         <Package className="text-orange-600" /> Status Inventori
@@ -205,7 +207,8 @@ export default function InventoryAnalyticsPage() {
                         <Layers size={300} className="absolute -left-20 -top-20 text-slate-50 opacity-10" />
                     </Card>
                 </div>
-            </div>
+                </div>
+            </RoleGuard>
         </DashboardLayout>
     );
 }

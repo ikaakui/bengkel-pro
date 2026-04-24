@@ -14,6 +14,8 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { createClient } from "@/lib/supabase-client";
 import { motion } from "framer-motion";
 
+import { useAuth } from "@/components/providers/AuthProvider";
+
 // Types
 type BranchOption = { id: string; name: string };
 
@@ -49,6 +51,7 @@ export default function ReportsPage() {
     const [selectedYear, setSelectedYear] = useState(now.getFullYear());
     const [branchFilter, setBranchFilter] = useState<string>('all');
     const [branches, setBranches] = useState<BranchOption[]>([]);
+    const { role } = useAuth();
 
     // Current period data
     const [revenue, setRevenue] = useState(0);
@@ -332,13 +335,13 @@ export default function ReportsPage() {
 
     return (
         <DashboardLayout>
-            <RoleGuard allowedRoles={["owner", "admin"]}>
+            <RoleGuard allowedRoles={["owner", "admin", "spv"]}>
                 <div className="space-y-8 pb-10 print:space-y-4">
                     {/* Header */}
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
                         <div className="shrink-0">
                             <div className="flex items-center gap-3">
-                                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Laporan Owner</h2>
+                                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{role === 'spv' ? 'Laporan Audit' : 'Laporan Owner'}</h2>
                                 <div className={cn("px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 hidden md:flex", health.bg, health.color, health.border)}>
                                     <div className={cn("w-2 h-2 rounded-full animate-pulse", health.color.replace('text', 'bg'))} />
                                     Status: {health.label}

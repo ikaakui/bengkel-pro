@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import RoleGuard from "@/components/auth/RoleGuard";
 import {
     ClipboardList,
     Clock,
@@ -57,7 +58,7 @@ export default function AdminOperationsPage() {
     };
 
     useEffect(() => {
-        if (role === 'admin') fetchOpsData();
+        if (role && ['admin', 'spv', 'admin_depok', 'admin_bsd'].includes(role)) fetchOpsData();
     }, [role]);
 
     if (loading) {
@@ -71,7 +72,8 @@ export default function AdminOperationsPage() {
 
     return (
         <DashboardLayout>
-            <div className="space-y-10">
+            <RoleGuard allowedRoles={['admin', 'spv', 'admin_depok', 'admin_bsd']}>
+                <div className="space-y-10">
                 <div>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
                         <Activity className="text-blue-600" /> Operasional Live
@@ -148,7 +150,8 @@ export default function AdminOperationsPage() {
                         </div>
                     </Card>
                 </div>
-            </div>
+                </div>
+            </RoleGuard>
         </DashboardLayout>
     );
 }

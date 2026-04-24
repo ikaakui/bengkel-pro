@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import RoleGuard from "@/components/auth/RoleGuard";
 import {
     Banknote,
     ArrowUpCircle,
@@ -55,7 +56,7 @@ export default function AdminFinancePage() {
     };
 
     useEffect(() => {
-        if (role === 'admin') fetchFinanceData();
+        if (role && ['admin', 'spv', 'admin_depok', 'admin_bsd'].includes(role)) fetchFinanceData();
     }, [role]);
 
     if (loading) {
@@ -71,7 +72,8 @@ export default function AdminFinancePage() {
 
     return (
         <DashboardLayout>
-            <div className="space-y-10">
+            <RoleGuard allowedRoles={['admin', 'spv', 'admin_depok', 'admin_bsd']}>
+                <div className="space-y-10">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
@@ -145,7 +147,8 @@ export default function AdminFinancePage() {
                         </button>
                     </div>
                 </Card>
-            </div>
+                </div>
+            </RoleGuard>
         </DashboardLayout>
     );
 }

@@ -83,9 +83,9 @@ export default function ClientDashboardWrapper({ initialUser, initialProfile }: 
         <>
             {activeRole === "member" ? (
                 <MemberDashboard />
-            ) : activeRole === "owner" ? (
+            ) : activeRole === "owner" || activeRole === "spv" ? (
                 <OwnerDashboard />
-            ) : activeRole === "admin" || activeRole === "spv" || activeRole === "admin_depok" || activeRole === "admin_bsd" ? (
+            ) : activeRole === "admin" || activeRole === "admin_depok" || activeRole === "admin_bsd" ? (
                 <AdminDashboard />
             ) : (
                 <DashboardLoading />

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import RoleGuard from "@/components/auth/RoleGuard";
 import {
     Building2,
     Target,
@@ -108,7 +109,7 @@ export default function BranchAnalyticsPage() {
     };
 
     useEffect(() => {
-        if (role === 'owner') fetchBranchData();
+        if (role === 'owner' || role === 'spv') fetchBranchData();
     }, [role]);
 
     if (loading) {
@@ -124,7 +125,8 @@ export default function BranchAnalyticsPage() {
 
     return (
         <DashboardLayout>
-            <div className="space-y-10">
+            <RoleGuard allowedRoles={['owner', 'spv']}>
+                <div className="space-y-10">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
@@ -249,7 +251,8 @@ export default function BranchAnalyticsPage() {
                         </div>
                     </CardContent>
                 </Card>
-            </div>
+                </div>
+            </RoleGuard>
         </DashboardLayout>
     );
 }
