@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase-client";
 import { useRouter } from "next/navigation";
 import type { User, Session } from "@supabase/supabase-js";
@@ -74,7 +74,7 @@ export default function AuthProvider({
     const [loading, setLoading] = useState(!initialUser);
     const router = useRouter();
     const supabase = useMemo(() => createClient(), []);
-    const initDone = useRef(false);
+
 
     const setInitialData = useCallback((initialUser: User | null, initialProfile: UserProfile | null) => {
         if (initialUser) setUser(initialUser);
@@ -159,9 +159,6 @@ export default function AuthProvider({
     }, [supabase]);
 
     useEffect(() => {
-        // Prevent double init in React StrictMode
-        if (initDone.current) return;
-        initDone.current = true;
 
         let mounted = true;
 
