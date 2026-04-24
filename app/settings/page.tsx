@@ -19,7 +19,8 @@ import {
     Bot,
     Calendar,
     Hash,
-    Banknote
+    Banknote,
+    MessageCircle
 } from "lucide-react";
 
 export default function SettingsPage() {
