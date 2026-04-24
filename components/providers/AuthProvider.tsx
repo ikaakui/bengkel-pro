@@ -96,7 +96,7 @@ export default function AuthProvider({
                 console.error("Error fetching profile:", error.message);
                 // Retry up to 2 times on failure (except "not found")
                 if (error.code !== 'PGRST116' && retryCount < 2) {
-                    await new Promise(r => setTimeout(r, 800));
+                    await new Promise(r => setTimeout(r, 400));
                     return fetchProfile(userId, retryCount + 1);
                 }
                 if (error.code === 'PGRST116') setProfile(null);
@@ -124,7 +124,7 @@ export default function AuthProvider({
         } catch (err: any) {
             console.error("Profile fetch exception:", err.message);
             if (retryCount < 2) {
-                await new Promise(r => setTimeout(r, 800));
+                await new Promise(r => setTimeout(r, 400));
                 return fetchProfile(userId, retryCount + 1);
             }
             return false;

@@ -27,12 +27,16 @@ export default async function RootLayout({
   
   let profile = null;
   if (session?.user) {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", session.user.id)
-      .single();
-    profile = data;
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.user.id)
+        .single();
+      profile = data;
+    } catch (e) {
+      console.error("Server-side profile fetch failed:", e);
+    }
   }
 
   return (

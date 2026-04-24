@@ -94,7 +94,7 @@ export default function ClientDashboardWrapper({ initialUser, initialProfile }: 
             retryTimerRef.current = setTimeout(async () => {
                 await refreshProfile();
                 setRetryCount(prev => prev + 1);
-            }, 1500);
+            }, 800);
         }
         
         // Only show error after all retries exhausted

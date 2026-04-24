@@ -76,10 +76,11 @@ export default function LoginPage() {
 
                 setShowSuccessModal(true);
 
-                // Quick greeting then navigate immediately
+                // Faster transition with router.push
                 setTimeout(() => {
-                    window.location.assign("/");
-                }, 1200);
+                    router.push("/");
+                    router.refresh();
+                }, 600);
                 return; // Keep loading true during delay
             }
         } catch (err) {
