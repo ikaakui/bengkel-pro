@@ -32,6 +32,8 @@ export default function ComplainPage() {
 
     const [rating, setRating] = useState<number>(0);
     const [subject, setSubject] = useState("");
+    const [message, setMessage] = useState("");
+    const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [ownerWA, setOwnerWA] = useState('6281234567890');
 
