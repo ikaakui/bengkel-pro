@@ -45,9 +45,22 @@ export default function RewardsMemberPage() {
     const [redeemSuccess, setRedeemSuccess] = useState<string | null>(null);
 
     useEffect(() => {
+        console.log("RewardsMemberPage: useEffect running");
+        let isMounted = true;
+
+        // Safety timeout: stop loading after 5 seconds no matter what
+        const safetyTimeout = setTimeout(() => {
+            if (isMounted) {
+                console.log("RewardsMemberPage: safety timeout reached");
+                setLoading(false);
+            }
+        }, 5000);
+
         const fetchRewards = async () => {
             try {
+                console.log("RewardsMemberPage: fetchRewards starting");
                 setLoading(true);
+                
                 // Fetch from both tables in parallel
                 const [rewardsRes, catalogRes] = await Promise.all([
                     supabase
@@ -61,6 +74,8 @@ export default function RewardsMemberPage() {
                         .eq("is_active", true)
                 ]);
 
+                if (!isMounted) return;
+
                 if (rewardsRes.error) console.error("Error fetching rewards:", rewardsRes.error);
                 if (catalogRes.error) console.error("Error fetching catalog rewards:", catalogRes.error);
 
@@ -71,15 +86,25 @@ export default function RewardsMemberPage() {
                 }));
 
                 const combined = [...rewardsList, ...catalogList].sort((a, b) => a.points_required - b.points_required);
+                console.log("RewardsMemberPage: rewards fetched", combined.length);
                 setRewards(combined);
             } catch (err) {
                 console.error("Unexpected error fetching rewards:", err);
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    console.log("RewardsMemberPage: setting loading false");
+                    setLoading(false);
+                    clearTimeout(safetyTimeout);
+                }
             }
         };
+
         fetchRewards();
-    }, [supabase]);
+        return () => { 
+            isMounted = false; 
+            clearTimeout(safetyTimeout);
+        };
+    }, []);
 
     const handleRedeem = async (reward: any) => {
         if (!profile || (profile.total_points || 0) < reward.points_required) {
