@@ -253,15 +253,15 @@ export default function SupplierRecapPage() {
                                 <Package size={20} strokeWidth={3} />
                                 Input Pengambilan
                             </button>
+                            <button className="flex items-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-3xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-2xl shadow-slate-200">
+                                <Download size={18} />
+                                Export CSV
+                            </button>
                             <button 
                                 onClick={fetchData}
                                 className="p-4 bg-white text-slate-400 hover:text-blue-600 rounded-3xl shadow-xl hover:shadow-2xl transition-all active:scale-95 border border-slate-100"
                             >
                                 <TrendingUp size={20} />
-                            </button>
-                            <button className="flex items-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-3xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-2xl shadow-slate-200">
-                                <Download size={18} />
-                                Export CSV
                             </button>
                         </div>
                     </div>

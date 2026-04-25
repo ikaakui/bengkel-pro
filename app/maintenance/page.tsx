@@ -66,7 +66,12 @@ export default function MaintenancePage() {
             // Fetch branches
             const { data: bData, error: bError } = await supabase.from("branches").select("id, name").order("name");
             if (bError) console.error("Error fetching branches:", bError);
-            if (bData) setBranches(bData);
+            if (bData) {
+                const uniqueBranches = bData.filter((branch, index, self) =>
+                    index === self.findIndex((t) => t.name === branch.name)
+                );
+                setBranches(uniqueBranches);
+            }
 
             // Fetch maintenance assets
             const { data: aData, error: aError } = await supabase
