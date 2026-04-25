@@ -161,15 +161,13 @@ export default function RewardsMemberPage() {
                             <p className="text-slate-500 mt-1 font-medium">Tukarkan poin Anda dengan voucher layanan pilihan.</p>
                         </div>
 
-                        <Card className="border-none bg-gradient-to-br from-amber-400 to-orange-500 p-0 overflow-hidden min-w-[260px] shadow-2xl shadow-amber-500/20 rounded-[2rem]">
-                            <div className="p-6 flex items-center gap-5 text-white">
-                                <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-inner">
-                                    <Coins size={32} />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.25em] opacity-80">Poin Tersedia</p>
-                                    <p className="text-4xl font-black tracking-tighter leading-none">{points.toLocaleString()}</p>
-                                </div>
+                        <Card className="border-slate-100 text-center space-y-3 p-6 min-w-[260px] shadow-sm rounded-3xl">
+                            <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto">
+                                <Star size={32} fill="currentColor" />
+                            </div>
+                            <div>
+                                <p className="text-3xl font-black text-slate-900">{points.toLocaleString()}</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Poin Loyalitas</p>
                             </div>
                         </Card>
                     </div>

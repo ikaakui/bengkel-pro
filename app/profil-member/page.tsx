@@ -129,20 +129,7 @@ export default function ProfilMemberPage() {
                                 </div>
                             </motion.div>
 
-                            <Card className="border-slate-100 text-center space-y-4">
-                                <div className="w-20 h-20 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto ring-4 ring-amber-50">
-                                    <Star size={40} fill="currentColor" />
-                                </div>
-                                <div>
-                                    <p className="text-3xl font-black text-slate-900">{points.toLocaleString()}</p>
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Poin Loyalitas</p>
-                                </div>
-                                <Link href="/rewards-member" className="w-full">
-                                    <Button variant="outline" className="w-full rounded-2xl border-amber-200 text-amber-600 hover:bg-amber-50">
-                                        TUKAR POIN
-                                    </Button>
-                                </Link>
-                            </Card>
+
                         </div>
 
                         {/* Details Section */}
