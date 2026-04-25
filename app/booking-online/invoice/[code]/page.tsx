@@ -216,8 +216,8 @@ export default function BookingInvoicePage() {
                                 <ArrowLeft size={20} />
                             </button>
                             <div>
-                                <h1 className="text-2xl font-black text-slate-900">Invoice Booking</h1>
-                                <p className="text-slate-500 text-sm font-medium">Selesaikan proses reservasi Anda.</p>
+                                <h1 className="text-2xl font-black text-slate-900">Konfirmasi Booking</h1>
+                                <p className="text-slate-500 text-sm font-medium">Gunakan invoice ini sebagai bukti reservasi ke Admin Cabang.</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 w-full sm:w-auto">

@@ -77,8 +77,8 @@ export default function PembayaranPage() {
                 <div className="max-w-5xl mx-auto space-y-8 pb-20">
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                         <div>
-                            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Pembayaran & Invoice</h1>
-                            <p className="text-slate-500 mt-1">Kelola tagihan dan invoice booking Anda.</p>
+                            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Konfirmasi Bayar Booking</h1>
+                            <p className="text-slate-500 mt-1">Kelola bukti pembayaran dan invoice booking Anda.</p>
                         </div>
                         <div className="flex bg-slate-100 p-1 rounded-2xl w-full md:w-auto">
                             <button 
@@ -172,7 +172,7 @@ export default function PembayaranPage() {
                                                     className="bg-slate-50 hover:bg-primary hover:text-white border-t md:border-t-0 md:border-l border-slate-100 p-6 md:w-48 flex flex-col items-center justify-center gap-2 transition-all group/btn"
                                                 >
                                                     <Receipt size={24} className="group-hover/btn:scale-110 transition-transform" />
-                                                    <span className="text-xs font-black uppercase tracking-widest">Lihat Invoice</span>
+                                                    <span className="text-xs font-black uppercase tracking-widest">Lihat Konfirmasi</span>
                                                     <ArrowRight size={16} className="opacity-0 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
                                                 </Link>
                                             </div>

@@ -48,7 +48,7 @@ const navigation = [
     // Member Exclusive
     { name: 'Booking Online', href: '/booking-online', icon: CalendarPlus, roles: ['member'], group: 'Layanan' },
     { name: 'Riwayat Servis', href: '/riwayat-servis', icon: Clock, roles: ['member'], group: 'Layanan' },
-    { name: 'Pembayaran & Invoice', href: '/pembayaran', icon: Receipt, roles: ['member'], group: 'Layanan' },
+    { name: 'Konfirmasi Bayar Booking', href: '/pembayaran', icon: Receipt, roles: ['member'], group: 'Layanan' },
     { name: 'Poin & Reward', href: '/rewards-member', icon: Gift, roles: ['member'], group: 'Loyalty' },
     { name: 'Montir AI', href: '/montir-ai', icon: Bot, roles: ['member'], group: 'Asisten' },
     { name: 'Profil Akun Member', href: '/profil-member', icon: UserCircle, roles: ['member'], group: 'Akun' },
