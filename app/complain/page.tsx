@@ -38,8 +38,12 @@ export default function ComplainPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!rating || !message) {
-            alert("Harap isi rating dan pesan Anda.");
+        if (!rating) {
+            alert("Harap pilih rating terlebih dahulu (Kecewa - Sangat Rekomended).");
+            return;
+        }
+        if (!message.trim()) {
+            alert("Harap isi detail masukan atau keluhan Anda.");
             return;
         }
 
@@ -191,10 +195,10 @@ export default function ComplainPage() {
 
                                         <div className="pt-4">
                                             <Button 
-                                                disabled={loading || !rating || !message}
-                                                className="w-full h-16 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl shadow-2xl shadow-slate-900/20 gap-3 font-black text-lg"
+                                                isLoading={loading}
+                                                className="w-full h-16 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-2xl shadow-blue-500/20 gap-3 font-black text-lg transition-all active:scale-[0.98]"
                                             >
-                                                {loading ? <Loader2 className="animate-spin" /> : <Send size={24} />}
+                                                {!loading && <Send size={24} />}
                                                 KIRIM MASUKAN SEKARANG
                                             </Button>
                                         </div>
