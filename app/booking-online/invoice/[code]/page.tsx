@@ -444,15 +444,7 @@ export default function BookingInvoicePage() {
                     {/* Bottom Action no-print */}
                     <div className="no-print mt-8 text-center space-y-4">
                         <p className="text-slate-400 text-xs font-medium">Invoice ini sah diterbitkan secara digital oleh sistem reservasi Inka Otoservice.</p>
-                        <div className="flex justify-center gap-4">
-                            <button className="text-slate-500 hover:text-primary transition-colors text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                                <Smartphone size={14} /> Hubungi Admin
-                            </button>
-                            <span className="text-slate-200">|</span>
-                            <button className="text-slate-500 hover:text-primary transition-colors text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                                <MapPin size={14} /> Lihat Lokasi
-                            </button>
-                        </div>
+
                     </div>
                 </div>
             </RoleGuard>
