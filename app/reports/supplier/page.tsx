@@ -34,11 +34,10 @@ export default function SupplierRecapPage() {
     const [submitting, setSubmitting] = useState(false);
     const [ownerWA, setOwnerWA] = useState('6281234567890');
     
-    // Set Price State
-    const [editingItem, setEditingItem] = useState<any>(null);
-    const [markupType, setMarkupType] = useState<'rp' | 'percent'>('percent');
-    const [markupValue, setMarkupValue] = useState<number>(0);
-    const [savingPrice, setSavingPrice] = useState(false);
+    // Edit State
+    const [editItemModal, setEditItemModal] = useState<any>(null);
+    const [editForm, setEditForm] = useState({ name: '', qty: 1, cost: 0 });
+    const [savingEdit, setSavingEdit] = useState(false);
 
     const { profile, role } = useAuth();
 
@@ -101,41 +100,36 @@ export default function SupplierRecapPage() {
                                     date: exp.expense_date,
                                     branch_id: exp.branch_id,
                                     branch_name: branchName,
-                                    total_cost: item.qty * item.cost,
-                                    profit: item.sell > 0 ? (item.sell - item.cost) * item.qty : 0,
-                                    margin: item.sell > 0 && item.cost > 0 ? ((item.sell - item.cost) / item.cost) * 100 : 0
+                                    total_cost: item.qty * item.cost
                                 });
                             });
                         } catch (e) {
                             flattened.push({
-                                name: exp.description,
+                                name: exp.description || 'Barang Stok',
                                 qty: 1,
                                 cost: exp.amount,
-                                sell: 0,
                                 id: exp.id,
                                 item_index: 0,
                                 date: exp.expense_date,
                                 branch_id: exp.branch_id,
                                 branch_name: branchName,
-                                total_cost: exp.amount,
-                                profit: 0,
-                                margin: 0
+                                total_cost: exp.amount
                             });
                         }
                     } else {
+                        // Jika description berupa angka, ubah jadi teks yang masuk akal
+                        const desc = exp.description;
+                        const isNum = desc && !isNaN(Number(desc));
                         flattened.push({
-                            name: exp.description || 'Tanpa Keterangan',
+                            name: isNum ? 'Item Pembelian (Edit untuk ubah nama)' : (desc || 'Tanpa Keterangan'),
                             qty: 1,
                             cost: exp.amount,
-                            sell: 0,
                             id: exp.id,
                             item_index: 0,
                             date: exp.expense_date,
                             branch_id: exp.branch_id,
                             branch_name: branchName,
-                            total_cost: exp.amount,
-                            profit: 0,
-                            margin: 0
+                            total_cost: exp.amount
                         });
                     }
                 });
@@ -223,37 +217,92 @@ export default function SupplierRecapPage() {
         window.open(`https://wa.me/${ownerWA}?text=${text}`, '_blank');
     };
 
-    const handleSavePrice = async (e: React.FormEvent) => {
+    const handleEditClick = (item: any) => {
+        setEditItemModal(item);
+        setEditForm({ name: item.name, qty: item.qty, cost: item.cost });
+    };
+
+    const handleSaveEdit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!editingItem) return;
-        setSavingPrice(true);
+        if (!editItemModal) return;
+        setSavingEdit(true);
         try {
-            const { data: expData } = await supabase.from('expenses').select('description').eq('id', editingItem.id).single();
+            const { data: expData } = await supabase.from('expenses').select('description, amount').eq('id', editItemModal.id).single();
             if (expData?.description?.startsWith('STRUCT_JSON:')) {
                 const items = JSON.parse(expData.description.replace('STRUCT_JSON:', ''));
+                items[editItemModal.item_index].name = editForm.name;
+                items[editItemModal.item_index].qty = editForm.qty;
+                items[editItemModal.item_index].cost = editForm.cost;
                 
-                let newSell = editingItem.cost;
-                if (markupType === 'rp') {
-                    newSell += markupValue;
-                } else {
-                    newSell += (editingItem.cost * markupValue / 100);
-                }
-                
-                items[editingItem.item_index].sell = newSell;
+                // Recalculate total amount for this expense
+                const newTotal = items.reduce((sum: number, it: any) => sum + (it.qty * it.cost), 0);
                 
                 await supabase.from('expenses').update({
-                    description: `STRUCT_JSON:${JSON.stringify(items)}`
-                }).eq('id', editingItem.id);
-                
-                fetchData();
-                setEditingItem(null);
+                    description: `STRUCT_JSON:${JSON.stringify(items)}`,
+                    amount: newTotal
+                }).eq('id', editItemModal.id);
+            } else {
+                await supabase.from('expenses').update({
+                    description: editForm.name,
+                    amount: editForm.cost * editForm.qty
+                }).eq('id', editItemModal.id);
             }
+            fetchData();
+            setEditItemModal(null);
         } catch (error) {
             console.error(error);
-            alert("Gagal menyimpan harga jual.");
+            alert("Gagal menyimpan perubahan.");
         } finally {
-            setSavingPrice(false);
+            setSavingEdit(false);
         }
+    };
+
+    const handleDeleteItem = async (item: any) => {
+        if (!confirm(`Hapus data ${item.name}?`)) return;
+        try {
+            const { data: expData } = await supabase.from('expenses').select('description, amount').eq('id', item.id).single();
+            if (expData?.description?.startsWith('STRUCT_JSON:')) {
+                const items = JSON.parse(expData.description.replace('STRUCT_JSON:', ''));
+                items.splice(item.item_index, 1);
+                
+                if (items.length === 0) {
+                    await supabase.from('expenses').delete().eq('id', item.id);
+                } else {
+                    const newTotal = items.reduce((sum: number, it: any) => sum + (it.qty * it.cost), 0);
+                    await supabase.from('expenses').update({
+                        description: `STRUCT_JSON:${JSON.stringify(items)}`,
+                        amount: newTotal
+                    }).eq('id', item.id);
+                }
+            } else {
+                await supabase.from('expenses').delete().eq('id', item.id);
+            }
+            fetchData();
+        } catch (error) {
+            console.error(error);
+            alert("Gagal menghapus data.");
+        }
+    };
+
+    const handleExportExcel = () => {
+        const headers = ["Tanggal", "Cabang", "Nama Barang", "Qty", "Harga Modal", "Total Harga"];
+        const rows = filteredData.map(item => [
+            new Date(item.date).toLocaleDateString('id-ID'),
+            item.branch_name,
+            `"${item.name.replace(/"/g, '""')}"`, // escape quotes
+            item.qty,
+            item.cost,
+            item.total_cost
+        ]);
+        
+        const csv = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", `Riwayat_Pengambilan_Barang_${new Date().getTime()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const filteredData = data.filter(item => {
@@ -264,9 +313,8 @@ export default function SupplierRecapPage() {
 
     const totalStats = filteredData.reduce((acc, curr) => ({
         cost: acc.cost + curr.total_cost,
-        profit: acc.profit + curr.profit,
         items: acc.items + curr.qty
-    }), { cost: 0, profit: 0, items: 0 });
+    }), { cost: 0, items: 0 });
 
     return (
         <DashboardLayout>
@@ -293,9 +341,9 @@ export default function SupplierRecapPage() {
                                 <Package size={20} strokeWidth={3} />
                                 Input Pengambilan
                             </button>
-                            <button className="flex items-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-3xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-2xl shadow-slate-200">
+                            <button onClick={handleExportExcel} className="flex items-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-3xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-2xl shadow-slate-200">
                                 <Download size={18} />
-                                Export CSV
+                                Export Excel
                             </button>
                             <button 
                                 onClick={fetchData}
@@ -398,70 +446,56 @@ export default function SupplierRecapPage() {
                         </div>
                     )}
 
-                    {/* Modal Set Price */}
-                    {editingItem && (
+                    {/* Modal Edit Item */}
+                    {editItemModal && (
                         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setEditingItem(null)} />
+                            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setEditItemModal(null)} />
                             <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden z-[101]">
                                 <div className="p-6 bg-gradient-to-br from-blue-600 to-blue-700 text-white flex justify-between items-center">
                                     <div>
-                                        <h3 className="text-lg font-black tracking-tight">Set Harga Jual</h3>
-                                        <p className="text-blue-100 text-xs mt-1 font-medium">{editingItem.name}</p>
+                                        <h3 className="text-lg font-black tracking-tight">Edit Riwayat Barang</h3>
+                                        <p className="text-blue-100 text-xs mt-1 font-medium">Perbarui detail pengambilan.</p>
                                     </div>
-                                    <button onClick={() => setEditingItem(null)} className="p-2 hover:bg-white/20 rounded-xl transition-all">X</button>
+                                    <button onClick={() => setEditItemModal(null)} className="p-2 hover:bg-white/20 rounded-xl transition-all">X</button>
                                 </div>
-                                <form onSubmit={handleSavePrice} className="p-6 space-y-6">
-                                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center">
-                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Harga Modal</span>
-                                        <span className="text-sm font-black text-slate-900">Rp {editingItem.cost.toLocaleString('id-ID')}</span>
-                                    </div>
-                                    
-                                    <div className="space-y-3">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipe Kenaikan (Markup)</label>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <button 
-                                                type="button"
-                                                onClick={() => setMarkupType('percent')}
-                                                className={`py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${markupType === 'percent' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50'}`}
-                                            >
-                                                Persen (%)
-                                            </button>
-                                            <button 
-                                                type="button"
-                                                onClick={() => setMarkupType('rp')}
-                                                className={`py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${markupType === 'rp' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50'}`}
-                                            >
-                                                Rupiah (Rp)
-                                            </button>
-                                        </div>
-                                    </div>
-
+                                <form onSubmit={handleSaveEdit} className="p-6 space-y-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nilai Markup</label>
-                                        <div className="relative">
-                                            {markupType === 'rp' && <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Rp</span>}
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nama Barang</label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                            value={editForm.name}
+                                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Qty</label>
                                             <input 
                                                 type="number" 
-                                                className={`w-full bg-white border border-slate-200 rounded-2xl py-3 text-lg font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${markupType === 'rp' ? 'pl-10 pr-4' : 'px-4'}`}
-                                                value={markupValue || ''}
-                                                onChange={(e) => setMarkupValue(Number(e.target.value))}
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                                value={editForm.qty || ''}
+                                                onChange={(e) => setEditForm({ ...editForm, qty: Number(e.target.value) })}
                                                 required
                                             />
-                                            {markupType === 'percent' && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Harga Modal Satuan</label>
+                                            <input 
+                                                type="number" 
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                                value={editForm.cost || ''}
+                                                onChange={(e) => setEditForm({ ...editForm, cost: Number(e.target.value) })}
+                                                required
+                                            />
                                         </div>
                                     </div>
 
-                                    <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex justify-between items-center">
-                                        <span className="text-xs font-black text-emerald-600/70 uppercase tracking-widest">Estimasi Harga Jual</span>
-                                        <span className="text-base font-black text-emerald-600">
-                                            Rp {(editingItem.cost + (markupType === 'rp' ? Number(markupValue) : (editingItem.cost * Number(markupValue) / 100))).toLocaleString('id-ID')}
-                                        </span>
-                                    </div>
-
-                                    <div className="flex gap-3 pt-2">
-                                        <button type="button" onClick={() => setEditingItem(null)} className="flex-1 py-3 px-4 rounded-xl bg-white text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-50 border border-slate-200">Batal</button>
-                                        <button type="submit" disabled={savingPrice} className="flex-[2] py-3 px-4 rounded-xl bg-blue-600 text-white font-black text-xs uppercase tracking-widest hover:bg-blue-700 disabled:opacity-50">
-                                            {savingPrice ? 'Menyimpan...' : 'Simpan Harga'}
+                                    <div className="flex gap-3 pt-4 border-t border-slate-100">
+                                        <button type="button" onClick={() => setEditItemModal(null)} className="flex-1 py-3 px-4 rounded-xl bg-white text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-50 border border-slate-200">Batal</button>
+                                        <button type="submit" disabled={savingEdit} className="flex-[2] py-3 px-4 rounded-xl bg-blue-600 text-white font-black text-xs uppercase tracking-widest hover:bg-blue-700 disabled:opacity-50">
+                                            {savingEdit ? 'Menyimpan...' : 'Simpan Perubahan'}
                                         </button>
                                     </div>
                                 </form>
@@ -470,7 +504,7 @@ export default function SupplierRecapPage() {
                     )}
 
                     {/* Quick Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Card className="p-8 border-none shadow-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white relative overflow-hidden group">
                             <div className="absolute -right-4 -top-4 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-all" />
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Total Investasi Stok</p>
@@ -482,17 +516,6 @@ export default function SupplierRecapPage() {
                                     <DollarSign size={14} />
                                 </div>
                                 <span className="text-[10px] font-black uppercase tracking-widest">{totalStats.items} Items Terdata</span>
-                            </div>
-                        </Card>
-
-                        <Card className="p-8 border-none shadow-xl bg-white flex flex-col justify-between">
-                            <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Estimasi Keuntungan</p>
-                                <h3 className="text-3xl font-black text-slate-900 tracking-tighter">Rp {totalStats.profit.toLocaleString('id-ID')}</h3>
-                            </div>
-                            <div className="mt-4 flex items-center gap-2 text-blue-600">
-                                <TrendingUp size={16} strokeWidth={3} />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Potential Margin: {totalStats.cost > 0 ? (totalStats.profit / totalStats.cost * 100).toFixed(1) : 0}%</span>
                             </div>
                         </Card>
 
@@ -534,21 +557,20 @@ export default function SupplierRecapPage() {
                                         <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tanggal & Cabang</th>
                                         <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nama Barang (Qty)</th>
                                         <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Harga Modal</th>
-                                        <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Harga Jual</th>
-                                        <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Margin / Profit</th>
+                                        <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
                                     {loading ? (
                                         <tr>
-                                            <td colSpan={5} className="py-20 text-center">
+                                            <td colSpan={4} className="py-20 text-center">
                                                 <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
                                                 <p className="text-slate-400 font-bold tracking-tight italic">Menyusun laporan detail...</p>
                                             </td>
                                         </tr>
                                     ) : filteredData.length === 0 ? (
                                         <tr>
-                                            <td colSpan={5} className="py-20 text-center">
+                                            <td colSpan={4} className="py-20 text-center">
                                                 <AlertCircle size={48} className="text-slate-200 mx-auto mb-4" />
                                                 <p className="text-slate-400 font-bold">Data pengambilan supplier tidak ditemukan.</p>
                                             </td>
@@ -587,32 +609,11 @@ export default function SupplierRecapPage() {
                                                     <p className="text-[10px] font-medium text-slate-400 italic">Total: Rp {item.total_cost.toLocaleString('id-ID')}</p>
                                                 </div>
                                             </td>
-                                            <td className="px-8 py-6 text-right">
-                                                {item.sell > 0 ? (
-                                                    <div className="flex flex-col gap-0.5">
-                                                        <p className="text-sm font-black text-blue-600">Rp {item.sell.toLocaleString('id-ID')}</p>
-                                                        <p className="text-[10px] font-medium text-slate-400 italic">Revenue: Rp {(item.sell * item.qty).toLocaleString('id-ID')}</p>
-                                                        <button onClick={() => { setEditingItem(item); setMarkupType('percent'); setMarkupValue(0); }} className="text-[9px] font-black text-blue-500 hover:text-blue-700 uppercase tracking-widest mt-1 text-right">Edit</button>
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex flex-col items-end gap-2">
-                                                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">Belum Set</span>
-                                                        <button onClick={() => { setEditingItem(item); setMarkupType('percent'); setMarkupValue(0); }} className="px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">Set Harga</button>
-                                                    </div>
-                                                )}
-                                            </td>
                                             <td className="px-8 py-6 text-center">
-                                                {item.sell > 0 ? (
-                                                    <div className="flex flex-col items-center gap-1">
-                                                        <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">
-                                                            <ArrowUpRight size={12} strokeWidth={3} />
-                                                            <span className="text-[10px] font-black uppercase tracking-tight">{item.margin.toFixed(1)}%</span>
-                                                        </div>
-                                                        <p className="text-[10px] font-bold text-slate-400 italic">Profit: Rp {item.profit.toLocaleString('id-ID')}</p>
-                                                    </div>
-                                                ) : (
-                                                    <Badge variant="danger" className="text-[8px] px-2">PRICE NOT SET</Badge>
-                                                )}
+                                                <div className="flex items-center justify-center gap-3">
+                                                    <button onClick={() => handleEditClick(item)} className="px-4 py-2 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Edit</button>
+                                                    <button onClick={() => handleDeleteItem(item)} className="px-4 py-2 bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-700 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Hapus</button>
+                                                </div>
                                             </td>
                                         </motion.tr>
                                     ))}
@@ -628,9 +629,9 @@ export default function SupplierRecapPage() {
                                 <TrendingUp size={24} />
                             </div>
                             <div>
-                                <h4 className="text-lg font-black text-slate-900 uppercase tracking-tight">Analisa Pengadaan Barang</h4>
+                                <h4 className="text-lg font-black text-slate-900 uppercase tracking-tight">Riwayat Pengadaan Barang</h4>
                                 <p className="text-sm text-slate-600 font-medium leading-relaxed mt-1">
-                                    Laporan ini menggabungkan data inventori baru yang diinput melalui menu pengeluaran. Gunakan data ini untuk mengevaluasi vendor supplier dan menentukan penyesuaian harga jual berdasarkan kenaikan harga modal secara real-time.
+                                    Laporan ini merekap data inventori yang diinput melalui menu pengeluaran (pembelian stok). Anda dapat melihat rincian barang, jumlah qty, serta biaya modal untuk keperluan dokumentasi.
                                 </p>
                             </div>
                         </div>
