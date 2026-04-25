@@ -34,6 +34,12 @@ export default function SupplierRecapPage() {
     const [submitting, setSubmitting] = useState(false);
     const [ownerWA, setOwnerWA] = useState('6281234567890');
     
+    // Set Price State
+    const [editingItem, setEditingItem] = useState<any>(null);
+    const [markupType, setMarkupType] = useState<'rp' | 'percent'>('percent');
+    const [markupValue, setMarkupValue] = useState<number>(0);
+    const [savingPrice, setSavingPrice] = useState(false);
+
     const { profile, role } = useAuth();
 
     const [formData, setFormData] = useState({
@@ -52,9 +58,6 @@ export default function SupplierRecapPage() {
         const newItems = [...supplierItems];
         (newItems[index] as any)[field] = value;
         setSupplierItems(newItems);
-        
-        const total = newItems.reduce((acc, curr) => acc + (curr.qty * curr.cost), 0);
-        setFormData(prev => ({ ...prev, amount: total }));
     };
 
     const supabase = createClient();
@@ -90,16 +93,17 @@ export default function SupplierRecapPage() {
                     if (exp.description?.startsWith('STRUCT_JSON:')) {
                         try {
                             const items = JSON.parse(exp.description.replace('STRUCT_JSON:', ''));
-                            items.forEach((item: any) => {
+                            items.forEach((item: any, idx: number) => {
                                 flattened.push({
                                     ...item,
                                     id: exp.id,
+                                    item_index: idx,
                                     date: exp.expense_date,
                                     branch_id: exp.branch_id,
                                     branch_name: branchName,
                                     total_cost: item.qty * item.cost,
-                                    profit: (item.sell - item.cost) * item.qty,
-                                    margin: item.cost > 0 ? ((item.sell - item.cost) / item.cost) * 100 : 0
+                                    profit: item.sell > 0 ? (item.sell - item.cost) * item.qty : 0,
+                                    margin: item.sell > 0 && item.cost > 0 ? ((item.sell - item.cost) / item.cost) * 100 : 0
                                 });
                             });
                         } catch (e) {
@@ -108,6 +112,8 @@ export default function SupplierRecapPage() {
                                 qty: 1,
                                 cost: exp.amount,
                                 sell: 0,
+                                id: exp.id,
+                                item_index: 0,
                                 date: exp.expense_date,
                                 branch_id: exp.branch_id,
                                 branch_name: branchName,
@@ -122,6 +128,8 @@ export default function SupplierRecapPage() {
                             qty: 1,
                             cost: exp.amount,
                             sell: 0,
+                            id: exp.id,
+                            item_index: 0,
                             date: exp.expense_date,
                             branch_id: exp.branch_id,
                             branch_name: branchName,
@@ -214,6 +222,39 @@ export default function SupplierRecapPage() {
             `_Silakan lampirkan foto nota fisik sebagai bukti._`;
 
         window.open(`https://wa.me/${ownerWA}?text=${text}`, '_blank');
+    };
+
+    const handleSavePrice = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingItem) return;
+        setSavingPrice(true);
+        try {
+            const { data: expData } = await supabase.from('expenses').select('description').eq('id', editingItem.id).single();
+            if (expData?.description?.startsWith('STRUCT_JSON:')) {
+                const items = JSON.parse(expData.description.replace('STRUCT_JSON:', ''));
+                
+                let newSell = editingItem.cost;
+                if (markupType === 'rp') {
+                    newSell += markupValue;
+                } else {
+                    newSell += (editingItem.cost * markupValue / 100);
+                }
+                
+                items[editingItem.item_index].sell = newSell;
+                
+                await supabase.from('expenses').update({
+                    description: `STRUCT_JSON:${JSON.stringify(items)}`
+                }).eq('id', editingItem.id);
+                
+                fetchData();
+                setEditingItem(null);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Gagal menyimpan harga jual.");
+        } finally {
+            setSavingPrice(false);
+        }
     };
 
     const filteredData = data.filter(item => {
@@ -310,7 +351,14 @@ export default function SupplierRecapPage() {
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Total Tagihan (Rp)</label>
-                                            <input type="number" className="w-full bg-slate-100 border border-slate-200 rounded-2xl py-4 px-5 text-xl font-black text-slate-500" value={formData.amount} disabled />
+                                            <input 
+                                                type="number" 
+                                                className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-5 text-xl font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" 
+                                                value={formData.amount || ''} 
+                                                onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
+                                                placeholder="0"
+                                                required 
+                                            />
                                         </div>
                                         <div className="space-y-4">
                                             <div className="flex items-center justify-between">
@@ -327,13 +375,9 @@ export default function SupplierRecapPage() {
                                                             <div className="col-span-4">
                                                                 <input type="number" placeholder="Qty" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" value={item.qty || ''} onChange={(e) => updateSupplierItem(idx, 'qty', Number(e.target.value))} required />
                                                             </div>
-                                                            <div className="col-span-6">
-                                                                <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Harga Modal</label>
-                                                                <input type="number" placeholder="Modal" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" value={item.cost || ''} onChange={(e) => updateSupplierItem(idx, 'cost', Number(e.target.value))} required />
-                                                            </div>
-                                                            <div className="col-span-6">
-                                                                <label className="text-[9px] font-black text-emerald-600 uppercase ml-1">Harga Jual</label>
-                                                                <input type="number" placeholder="Jual" className="w-full bg-emerald-50/50 border border-emerald-100 rounded-xl px-3 py-2 text-xs font-bold" value={item.sell || ''} onChange={(e) => updateSupplierItem(idx, 'sell', Number(e.target.value))} required />
+                                                            <div className="col-span-12">
+                                                                <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Harga Modal Satuan</label>
+                                                                <input type="number" placeholder="Modal Satuan" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" value={item.cost || ''} onChange={(e) => updateSupplierItem(idx, 'cost', Number(e.target.value))} required />
                                                             </div>
                                                         </div>
                                                         {supplierItems.length > 1 && (
@@ -351,6 +395,77 @@ export default function SupplierRecapPage() {
                                         {submitting ? 'Menyimpan...' : 'Simpan & Kirim WA'}
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Modal Set Price */}
+                    {editingItem && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setEditingItem(null)} />
+                            <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden z-[101]">
+                                <div className="p-6 bg-gradient-to-br from-blue-600 to-blue-700 text-white flex justify-between items-center">
+                                    <div>
+                                        <h3 className="text-lg font-black tracking-tight">Set Harga Jual</h3>
+                                        <p className="text-blue-100 text-xs mt-1 font-medium">{editingItem.name}</p>
+                                    </div>
+                                    <button onClick={() => setEditingItem(null)} className="p-2 hover:bg-white/20 rounded-xl transition-all">X</button>
+                                </div>
+                                <form onSubmit={handleSavePrice} className="p-6 space-y-6">
+                                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center">
+                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Harga Modal</span>
+                                        <span className="text-sm font-black text-slate-900">Rp {editingItem.cost.toLocaleString('id-ID')}</span>
+                                    </div>
+                                    
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipe Kenaikan (Markup)</label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <button 
+                                                type="button"
+                                                onClick={() => setMarkupType('percent')}
+                                                className={`py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${markupType === 'percent' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50'}`}
+                                            >
+                                                Persen (%)
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                onClick={() => setMarkupType('rp')}
+                                                className={`py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${markupType === 'rp' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50'}`}
+                                            >
+                                                Rupiah (Rp)
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nilai Markup</label>
+                                        <div className="relative">
+                                            {markupType === 'rp' && <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Rp</span>}
+                                            <input 
+                                                type="number" 
+                                                className={`w-full bg-white border border-slate-200 rounded-2xl py-3 text-lg font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${markupType === 'rp' ? 'pl-10 pr-4' : 'px-4'}`}
+                                                value={markupValue || ''}
+                                                onChange={(e) => setMarkupValue(Number(e.target.value))}
+                                                required
+                                            />
+                                            {markupType === 'percent' && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>}
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex justify-between items-center">
+                                        <span className="text-xs font-black text-emerald-600/70 uppercase tracking-widest">Estimasi Harga Jual</span>
+                                        <span className="text-base font-black text-emerald-600">
+                                            Rp {(editingItem.cost + (markupType === 'rp' ? Number(markupValue) : (editingItem.cost * Number(markupValue) / 100))).toLocaleString('id-ID')}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex gap-3 pt-2">
+                                        <button type="button" onClick={() => setEditingItem(null)} className="flex-1 py-3 px-4 rounded-xl bg-white text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-50 border border-slate-200">Batal</button>
+                                        <button type="submit" disabled={savingPrice} className="flex-[2] py-3 px-4 rounded-xl bg-blue-600 text-white font-black text-xs uppercase tracking-widest hover:bg-blue-700 disabled:opacity-50">
+                                            {savingPrice ? 'Menyimpan...' : 'Simpan Harga'}
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     )}
@@ -478,9 +593,13 @@ export default function SupplierRecapPage() {
                                                     <div className="flex flex-col gap-0.5">
                                                         <p className="text-sm font-black text-blue-600">Rp {item.sell.toLocaleString('id-ID')}</p>
                                                         <p className="text-[10px] font-medium text-slate-400 italic">Revenue: Rp {(item.sell * item.qty).toLocaleString('id-ID')}</p>
+                                                        <button onClick={() => { setEditingItem(item); setMarkupType('percent'); setMarkupValue(0); }} className="text-[9px] font-black text-blue-500 hover:text-blue-700 uppercase tracking-widest mt-1 text-right">Edit</button>
                                                     </div>
                                                 ) : (
-                                                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">Belum Set</span>
+                                                    <div className="flex flex-col items-end gap-2">
+                                                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">Belum Set</span>
+                                                        <button onClick={() => { setEditingItem(item); setMarkupType('percent'); setMarkupValue(0); }} className="px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">Set Harga</button>
+                                                    </div>
                                                 )}
                                             </td>
                                             <td className="px-8 py-6 text-center">
