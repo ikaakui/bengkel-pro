@@ -219,7 +219,7 @@ export default function SpvSettingsPage() {
                                     <div className="flex items-center gap-3 pt-2">
                                         <Button
                                             onClick={handleSave}
-                                            disabled={saving || !hasChanges}
+                                            disabled={saving}
                                             variant="primary"
                                             className="h-11"
                                         >
