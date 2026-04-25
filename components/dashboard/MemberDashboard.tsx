@@ -237,7 +237,7 @@ export default function MemberDashboard() {
                             {[
                                 { label: 'Booking Servis', icon: CalendarPlus, href: '/booking-online', color: 'bg-blue-50 text-blue-600 hover:bg-blue-100' },
                                 { label: 'Tukar Reward', icon: Gift, href: '/rewards-member', color: 'bg-amber-50 text-amber-600 hover:bg-amber-100' },
-                                { label: 'Montir AI', icon: Bot, href: '/montir-ai', color: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' },
+                                { label: 'Tanya Montir', icon: Bot, href: '/montir-ai', color: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' },
                                 { label: 'Riwayat Servis', icon: Clock, href: '/riwayat-servis', color: 'bg-violet-50 text-violet-600 hover:bg-violet-100' },
                                 { label: 'Kritik & Saran', icon: MessageSquarePlus, href: '/complain', color: 'bg-rose-50 text-rose-600 hover:bg-rose-100' },
                             ].map((item) => (

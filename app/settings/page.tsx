@@ -30,12 +30,6 @@ export default function SettingsPage() {
     const [ownerWA, setOwnerWA] = useState("");
     const [originalOwnerWA, setOriginalOwnerWA] = useState("");
     
-    // AI Settings
-    const [aiDuration, setAiDuration] = useState("30");
-    const [originalAiDuration, setOriginalAiDuration] = useState("30");
-    const [aiQuota, setAiQuota] = useState("1");
-    const [originalAiQuota, setOriginalAiQuota] = useState("1");
-
     const [bookingFee, setBookingFee] = useState("50000");
     const [originalBookingFee, setOriginalBookingFee] = useState("50000");
 
@@ -57,14 +51,6 @@ export default function SettingsPage() {
             const commRate = data.find((d: any) => d.key === "commission_rate")?.value || "";
             setCommissionRate(commRate);
             setOriginalRate(commRate);
-
-            const duration = data.find((d: any) => d.key === "montir_ai_duration_days")?.value || "30";
-            setAiDuration(duration);
-            setOriginalAiDuration(duration);
-
-            const quota = data.find((d: any) => d.key === "montir_ai_quota")?.value || "1";
-            setAiQuota(quota);
-            setOriginalAiQuota(quota);
 
             const fee = data.find((d: any) => d.key === "booking_fee_amount")?.value || "50000";
             setBookingFee(fee);
@@ -102,14 +88,6 @@ export default function SettingsPage() {
             updates.push({ key: "commission_rate", value: commissionRate, updated_at: new Date().toISOString() });
         }
 
-        if (aiDuration !== originalAiDuration) {
-            updates.push({ key: "montir_ai_duration_days", value: aiDuration, updated_at: new Date().toISOString() });
-        }
-
-        if (aiQuota !== originalAiQuota) {
-            updates.push({ key: "montir_ai_quota", value: aiQuota, updated_at: new Date().toISOString() });
-        }
-
         if (bookingFee !== originalBookingFee) {
             updates.push({ key: "booking_fee_amount", value: bookingFee, updated_at: new Date().toISOString() });
         }
@@ -132,8 +110,6 @@ export default function SettingsPage() {
             } else {
                 setSuccess("Pengaturan berhasil disimpan!");
                 setOriginalRate(commissionRate);
-                setOriginalAiDuration(aiDuration);
-                setOriginalAiQuota(aiQuota);
                 setOriginalBookingFee(bookingFee);
                 setOriginalOwnerWA(ownerWA);
                 setOriginalBookingAccount(bookingAccount);
@@ -144,7 +120,7 @@ export default function SettingsPage() {
         setSaving(false);
     };
 
-    const hasChanges = commissionRate !== originalRate || aiDuration !== originalAiDuration || aiQuota !== originalAiQuota || bookingFee !== originalBookingFee || ownerWA !== originalOwnerWA || bookingAccount !== originalBookingAccount;
+    const hasChanges = commissionRate !== originalRate || bookingFee !== originalBookingFee || ownerWA !== originalOwnerWA || bookingAccount !== originalBookingAccount;
 
     return (
         <DashboardLayout>
@@ -248,100 +224,6 @@ export default function SettingsPage() {
                                             <button
                                                 onClick={() => {
                                                     setCommissionRate(originalRate);
-                                                    setAiDuration(originalAiDuration);
-                                                    setAiQuota(originalAiQuota);
-                                                }}
-                                                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
-                                            >
-                                                <RefreshCw size={14} />
-                                                Reset
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* AI Settings */}
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-blue-100 rounded-xl">
-                                    <Bot size={24} className="text-blue-600" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold">Pengaturan Montir AI</h3>
-                                    <p className="text-sm text-slate-500 mt-0.5">
-                                        Atur batas penggunaan fitur analisa Montir AI untuk setiap kendaraan (Plat & HP).
-                                    </p>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            {loading ? (
-                                <div className="flex items-center gap-2 text-slate-500">
-                                    <Loader2 size={16} className="animate-spin" />
-                                    Memuat...
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-3">
-                                        <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                            <Calendar size={16} className="text-blue-500" />
-                                            Siklus Waktu (Hari)
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                type="number"
-                                                value={aiDuration}
-                                                onChange={(e) => setAiDuration(e.target.value)}
-                                                min="1"
-                                                className="input-field pr-16"
-                                            />
-                                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">Hari</span>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-3">
-                                        <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                            <Hash size={16} className="text-emerald-500" />
-                                            Kuota Maksimal / Siklus
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                type="number"
-                                                value={aiQuota}
-                                                onChange={(e) => setAiQuota(e.target.value)}
-                                                min="1"
-                                                className="input-field pr-16"
-                                            />
-                                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">Sesi</span>
-                                        </div>
-                                    </div>
-                                    <div className="md:col-span-2 text-sm text-slate-500 p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                        <p>Info: Dengan pengaturan saat ini, setiap kendaraan hanya bisa dianalisa <strong>{aiQuota} kali</strong> dalam kurun waktu <strong>{aiDuration} hari</strong>.</p>
-                                    </div>
-                                    
-                                    <div className="md:col-span-2 flex items-center gap-3 pt-2">
-                                        <Button
-                                            onClick={handleSave}
-                                            disabled={saving || !hasChanges}
-                                            variant="primary"
-                                            className="h-11"
-                                        >
-                                            {saving ? (
-                                                <Loader2 size={18} className="animate-spin mr-2" />
-                                            ) : (
-                                                <Save size={18} className="mr-2" />
-                                            )}
-                                            {saving ? "Menyimpan..." : "Simpan Perubahan"}
-                                        </Button>
-                                        {hasChanges && (
-                                            <button
-                                                onClick={() => {
-                                                    setCommissionRate(originalRate);
-                                                    setAiDuration(originalAiDuration);
-                                                    setAiQuota(originalAiQuota);
                                                 }}
                                                 className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
                                             >
