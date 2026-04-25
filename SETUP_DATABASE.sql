@@ -126,9 +126,9 @@ CREATE POLICY "Settings viewable by authenticated" ON app_settings
   FOR SELECT USING (auth.role() = 'authenticated');
 
 DROP POLICY IF EXISTS "Owner can manage settings" ON app_settings;
-CREATE POLICY "Owner can manage settings" ON app_settings
+CREATE POLICY "Admins and Owner can manage settings" ON app_settings
   FOR ALL USING (
-    (auth.jwt()->'user_metadata'->>'role') = 'owner'
+    (auth.jwt()->'user_metadata'->>'role') IN ('owner', 'admin', 'spv', 'admin_bsd', 'admin_depok')
   );
 
 -- Default settings
