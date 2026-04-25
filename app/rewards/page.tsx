@@ -59,6 +59,15 @@ export default function RewardsPage() {
 
     const supabase = createClient();
 
+    const formatRupiah = (val: number | string) => {
+        if (!val && val !== 0) return "";
+        return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
+
+    const parseRupiah = (val: string) => {
+        return Number(val.replace(/\D/g, ""));
+    };
+
     const fetchRewards = async () => {
         setLoading(true);
         const { data } = await supabase
@@ -114,29 +123,39 @@ export default function RewardsPage() {
 
     const handleSaveReward = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isSubmitting) return;
         setIsSubmitting(true);
 
         try {
+            // Clean the object to remove any unwanted fields
+            const rewardData = {
+                name: editingReward?.name,
+                points_required: Number(editingReward?.points_required),
+                reward_type: editingReward?.reward_type,
+                discount_value: editingReward?.reward_type === 'discount' ? Number(editingReward?.discount_value) : 0,
+                description: editingReward?.description,
+                is_active: editingReward?.is_active
+            };
+
             if (editingReward?.id) {
                 const { error } = await supabase
                     .from("rewards")
-                    .update(editingReward)
+                    .update(rewardData)
                     .eq("id", editingReward.id);
                 if (error) throw error;
                 showToast('success', "Reward berhasil diperbarui.");
-                setShowModal(false);
-                fetchRewards();
             } else {
                 const { error } = await supabase
                     .from("rewards")
-                    .insert([editingReward]);
+                    .insert([rewardData]);
                 if (error) throw error;
                 showToast('success', "Reward baru berhasil ditambahkan.");
-                setShowModal(false);
-                fetchRewards();
             }
+            setShowModal(false);
+            fetchRewards();
         } catch (error: any) {
             console.error("Save reward error:", error);
+            alert("Gagal menyimpan reward: " + (error.message || "Unknown error"));
             showToast('error', error.message || "Gagal menyimpan reward.");
         } finally {
             setIsSubmitting(false);
@@ -198,9 +217,9 @@ export default function RewardsPage() {
                                         <div className="relative">
                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Rp</span>
                                             <input 
-                                                type="number"
-                                                value={pointsPerRupiah}
-                                                onChange={(e) => setPointsPerRupiah(Number(e.target.value))}
+                                                type="text"
+                                                value={formatRupiah(pointsPerRupiah)}
+                                                onChange={(e) => setPointsPerRupiah(parseRupiah(e.target.value))}
                                                 className="w-full pl-12 pr-4 py-4 bg-white border-2 border-amber-100 rounded-2xl text-xl font-black text-slate-800 focus:outline-none focus:border-amber-500 transition-all"
                                             />
                                         </div>
@@ -425,10 +444,10 @@ export default function RewardsPage() {
                                             <label className="text-sm font-bold text-slate-700">Poin Dibutuhkan</label>
                                             <div className="relative">
                                                 <input 
-                                                    type="number"
+                                                    type="text"
                                                     required
-                                                    value={editingReward?.points_required}
-                                                    onChange={(e) => setEditingReward(prev => ({ ...prev, points_required: Number(e.target.value) }))}
+                                                    value={formatRupiah(editingReward?.points_required || 0)}
+                                                    onChange={(e) => setEditingReward(prev => ({ ...prev, points_required: parseRupiah(e.target.value) }))}
                                                     className="w-full pl-5 pr-14 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:outline-none focus:border-amber-500 focus:bg-white transition-all font-black text-xl"
                                                 />
                                                 <span className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs uppercase tracking-widest">PTS</span>
@@ -457,10 +476,10 @@ export default function RewardsPage() {
                                             <div className="relative">
                                                 <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Rp</span>
                                                 <input 
-                                                    type="number"
+                                                    type="text"
                                                     required
-                                                    value={editingReward?.discount_value || 0}
-                                                    onChange={(e) => setEditingReward(prev => ({ ...prev, discount_value: Number(e.target.value) }))}
+                                                    value={formatRupiah(editingReward?.discount_value || 0)}
+                                                    onChange={(e) => setEditingReward(prev => ({ ...prev, discount_value: parseRupiah(e.target.value) }))}
                                                     className="w-full pl-14 pr-5 py-4 bg-emerald-50/50 border-2 border-emerald-100 rounded-2xl focus:outline-none focus:border-emerald-500 focus:bg-white transition-all font-black text-xl text-emerald-700"
                                                 />
                                             </div>
