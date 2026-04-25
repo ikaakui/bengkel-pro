@@ -164,8 +164,7 @@ export default function SupplierRecapPage() {
                 .from("expenses")
                 .insert({
                     ...formData,
-                    description: `STRUCT_JSON:${JSON.stringify(supplierItems)}`,
-                    created_by: profile?.id
+                    description: `STRUCT_JSON:${JSON.stringify(supplierItems)}`
                 })
                 .select()
                 .single();

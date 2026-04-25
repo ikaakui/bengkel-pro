@@ -111,8 +111,7 @@ export default function ExpensesPage() {
             const { data: inserted, error } = await supabase
                 .from("expenses")
                 .insert({
-                    ...formData,
-                    created_by: profile?.id
+                    ...formData
                 })
                 .select()
                 .single();
