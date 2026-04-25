@@ -368,7 +368,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                                             </div>
                                                         </div>
                                                         <Link 
-                                                            href="/rewards"
+                                                            href="/rewards-member"
                                                             className="text-[10px] font-black text-white bg-amber-500 px-3 py-2 rounded-lg shadow-lg shadow-amber-200 active:scale-95 transition-all"
                                                         >
                                                             TUKAR

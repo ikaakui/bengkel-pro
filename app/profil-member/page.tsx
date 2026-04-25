@@ -26,6 +26,7 @@ import { createClient } from "@/lib/supabase-client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 const TIERS = [
     { name: 'Bronze', color: 'from-amber-700 to-amber-900', icon: Award },
@@ -136,9 +137,11 @@ export default function ProfilMemberPage() {
                                     <p className="text-3xl font-black text-slate-900">{points.toLocaleString()}</p>
                                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Poin Loyalitas</p>
                                 </div>
-                                <Button variant="outline" className="w-full rounded-2xl border-amber-200 text-amber-600 hover:bg-amber-50" onClick={() => window.location.href = '/rewards-member'}>
-                                    TUKAR POIN
-                                </Button>
+                                <Link href="/rewards-member" className="w-full">
+                                    <Button variant="outline" className="w-full rounded-2xl border-amber-200 text-amber-600 hover:bg-amber-50">
+                                        TUKAR POIN
+                                    </Button>
+                                </Link>
                             </Card>
                         </div>
 
