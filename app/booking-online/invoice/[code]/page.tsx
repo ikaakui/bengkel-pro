@@ -139,8 +139,7 @@ export default function BookingInvoicePage() {
         );
     }
 
-    const waNumber = booking?.branches?.phone ? booking.branches.phone.replace(/\D/g, '') : "6281234567890";
-    const formattedWa = waNumber.startsWith('0') ? '62' + waNumber.substring(1) : waNumber;
+    const formattedWa = "628123456789";
     
     const waMessage = `Halo Admin, saya ingin mengirimkan bukti transfer DP.
     
