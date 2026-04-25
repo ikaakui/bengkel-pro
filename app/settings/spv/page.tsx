@@ -53,6 +53,8 @@ export default function SpvSettingsPage() {
         fetchSettings();
     }, []);
 
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
     const handleSave = async () => {
         if (!ownerWA.trim()) {
             setError("Nomor WhatsApp tidak boleh kosong.");
@@ -81,29 +83,50 @@ export default function SpvSettingsPage() {
             if (updateError) {
                 console.error("Upsert error:", updateError);
                 setError("Gagal menyimpan: " + updateError.message);
-                alert("Gagal menyimpan: " + updateError.message);
             } else {
                 setOwnerWA(cleaned);
                 setOriginalOwnerWA(cleaned);
                 setSuccess("Nomor WhatsApp berhasil disimpan!");
-                alert("Berhasil! Nomor WhatsApp tujuan laporan telah diperbarui.");
+                setShowSuccessModal(true);
                 setTimeout(() => setSuccess(""), 3000);
             }
         } catch (err: any) {
             console.error("System error:", err);
             setError("Kesalahan sistem: " + err.message);
-            alert("Terjadi kesalahan sistem. Silakan coba lagi.");
         } finally {
             setSaving(false);
         }
     };
 
-    const hasChanges = ownerWA !== originalOwnerWA;
-
     return (
         <DashboardLayout>
             <RoleGuard allowedRoles={["spv", "owner", "admin", "admin_bsd", "admin_depok"]}>
-                <div className="space-y-8 pb-10 max-w-2xl">
+                <div className="relative space-y-8 pb-10 max-w-2xl">
+                    {/* Success Modal */}
+                    {showSuccessModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                            <motion.div 
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center space-y-6"
+                            >
+                                <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
+                                    <CheckCircle2 size={40} className="text-emerald-600" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-bold text-slate-900">Tersimpan!</h3>
+                                    <p className="text-slate-500 mt-2">Nomor WhatsApp tujuan laporan berhasil diperbarui.</p>
+                                </div>
+                                <Button 
+                                    onClick={() => setShowSuccessModal(false)}
+                                    className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold transition-all"
+                                >
+                                    Siap, Lanjutkan
+                                </Button>
+                            </motion.div>
+                        </div>
+                    )}
+
                     <div>
                         <h2 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
                             <Settings size={28} className="text-indigo-500" />
@@ -221,14 +244,16 @@ export default function SpvSettingsPage() {
                                             onClick={handleSave}
                                             disabled={saving}
                                             variant="primary"
-                                            className="h-11"
+                                            className="h-11 px-8"
                                         >
                                             {saving ? (
                                                 <Loader2 size={18} className="animate-spin mr-2" />
+                                            ) : originalOwnerWA ? (
+                                                <Settings size={18} className="mr-2" />
                                             ) : (
                                                 <Save size={18} className="mr-2" />
                                             )}
-                                            {saving ? "Menyimpan..." : "Simpan Nomor WA"}
+                                            {saving ? "Menyimpan..." : originalOwnerWA ? "Ubah Nomor WA" : "Simpan Nomor WA"}
                                         </Button>
                                     </div>
                                 </div>
