@@ -46,20 +46,44 @@ export default function RewardsMemberPage() {
 
     useEffect(() => {
         const fetchRewards = async () => {
-            const { data } = await supabase
-                .from("rewards")
-                .select("*")
-                .eq("is_active", true)
-                .order("points_required", { ascending: true });
-            if (data) setRewards(data);
-            setLoading(false);
+            try {
+                setLoading(true);
+                // Fetch from both tables in parallel
+                const [rewardsRes, catalogRes] = await Promise.all([
+                    supabase
+                        .from("rewards")
+                        .select("*")
+                        .eq("is_active", true),
+                    supabase
+                        .from("catalog")
+                        .select("*")
+                        .gt("points_required", 0)
+                        .eq("is_active", true)
+                ]);
+
+                if (rewardsRes.error) console.error("Error fetching rewards:", rewardsRes.error);
+                if (catalogRes.error) console.error("Error fetching catalog rewards:", catalogRes.error);
+
+                const rewardsList = rewardsRes.data || [];
+                const catalogList = (catalogRes.data || []).map(item => ({
+                    ...item,
+                    reward_type: item.category === 'Service' ? 'free_service' : 'item'
+                }));
+
+                const combined = [...rewardsList, ...catalogList].sort((a, b) => a.points_required - b.points_required);
+                setRewards(combined);
+            } catch (err) {
+                console.error("Unexpected error fetching rewards:", err);
+            } finally {
+                setLoading(false);
+            }
         };
         fetchRewards();
-    }, []);
+    }, [supabase]);
 
-    const handleRedeem = async (reward: Reward) => {
+    const handleRedeem = async (reward: any) => {
         if (!profile || (profile.total_points || 0) < reward.points_required) {
-            alert("Poin Anda tidak mencukupi.");
+            alert("Poin Anda tidak mencukupi untuk menukar reward ini.");
             return;
         }
 
@@ -74,12 +98,19 @@ export default function RewardsMemberPage() {
 
             if (error) throw error;
 
+            // Log point transaction
+            await supabase.from("point_transactions").insert({
+                member_id: profile.id,
+                points: -reward.points_required,
+                type: 'redeem',
+                description: `Redeemed: ${reward.name}`
+            });
+
             await refreshProfile();
             setRedeemSuccess(reward.name);
             setTimeout(() => setRedeemSuccess(null), 5000);
-        } catch (err: unknown) {
-            const errorMessage = err instanceof Error ? err.message : "Terjadi kesalahan tidak dikenal";
-            alert("Gagal menukarkan reward: " + errorMessage);
+        } catch (err: any) {
+            alert(`Gagal menukar reward: ${err.message}`);
         } finally {
             setIsRedeeming(null);
         }

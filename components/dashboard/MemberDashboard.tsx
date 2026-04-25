@@ -70,7 +70,8 @@ export default function MemberDashboard() {
         try {
             const [
                 { data: transactions },
-                { data: rewardsData }
+                rewardsRes,
+                catalogRes
             ] = await Promise.all([
                 supabase
                     .from("transactions")
@@ -82,9 +83,12 @@ export default function MemberDashboard() {
                 supabase
                     .from("rewards")
                     .select("*")
+                    .eq("is_active", true),
+                supabase
+                    .from("catalog")
+                    .select("*")
+                    .gt("points_required", 0)
                     .eq("is_active", true)
-                    .order("points_required", { ascending: true })
-                    .limit(4)
             ]);
 
             if (transactions) {
@@ -104,9 +108,17 @@ export default function MemberDashboard() {
                 setRecentServices(transactions.slice(0, 5));
             }
 
-            if (rewardsData) {
-                setRewards(rewardsData);
-            }
+            const rewardsList = rewardsRes.data || [];
+            const catalogList = (catalogRes.data || []).map(item => ({
+                ...item,
+                reward_type: item.category === 'Service' ? 'free_service' : 'item'
+            }));
+
+            const combined = [...rewardsList, ...catalogList]
+                .sort((a, b) => a.points_required - b.points_required)
+                .slice(0, 4);
+            
+            setRewards(combined);
         } catch (err) {
             console.error("Error fetching member dashboard:", err);
         } finally {

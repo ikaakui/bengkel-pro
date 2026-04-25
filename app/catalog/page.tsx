@@ -34,6 +34,7 @@ interface CatalogItem {
     category: 'Service' | 'Spare Part';
     price: number;
     cost_price: number;
+    points_required: number;
     description: string;
     stock: number | null;
     is_active: boolean;
@@ -56,6 +57,7 @@ export default function CatalogPage() {
     const [newCategory, setNewCategory] = useState<'Service' | 'Spare Part'>('Service');
     const [newPrice, setNewPrice] = useState("");
     const [newCostPrice, setNewCostPrice] = useState("");
+    const [newPointsRequired, setNewPointsRequired] = useState("");
     const [newStock, setNewStock] = useState("");
     const [newDescription, setNewDescription] = useState("");
 
@@ -107,6 +109,7 @@ export default function CatalogPage() {
                 category: newCategory,
                 price: parseInt(newPrice),
                 cost_price: parseInt(newCostPrice) || 0,
+                points_required: parseInt(newPointsRequired) || 0,
                 stock: newCategory === 'Spare Part' ? parseInt(newStock) : null,
                 description: newDescription,
                 updated_by_name: updaterName
@@ -122,6 +125,7 @@ export default function CatalogPage() {
             setNewName("");
             setNewPrice("");
             setNewCostPrice("");
+            setNewPointsRequired("");
             setNewStock("");
             setNewDescription("");
             fetchCatalog();
@@ -142,6 +146,7 @@ export default function CatalogPage() {
                 category: editingItem.category,
                 price: editingItem.price,
                 cost_price: editingItem.cost_price || 0,
+                points_required: editingItem.points_required || 0,
                 stock: editingItem.category === 'Spare Part' ? editingItem.stock : null,
                 description: editingItem.description,
                 updated_at: new Date().toISOString(),
@@ -430,6 +435,20 @@ export default function CatalogPage() {
                                                         />
                                                     </div>
                                                     <p className="text-[10px] text-slate-400 italic">Harga beli dari supplier, untuk perhitungan laba kotor di laporan.</p>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Poin Reward (Dibutuhkan)</label>
+                                                    <div className="relative">
+                                                        <Gift className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-500" size={18} />
+                                                        <input
+                                                            type="number"
+                                                            className="w-full pl-12 pr-4 py-4 bg-amber-50 border border-amber-100 rounded-2xl focus:ring-4 focus:ring-amber-500/10 focus:outline-none focus:bg-white transition-all font-bold text-amber-600"
+                                                            placeholder="Contoh: 500"
+                                                            value={editingItem ? editingItem.points_required : newPointsRequired}
+                                                            onChange={(e) => editingItem ? setEditingItem({ ...editingItem, points_required: parseInt(e.target.value) || 0 }) : setNewPointsRequired(e.target.value)}
+                                                        />
+                                                    </div>
+                                                    <p className="text-[10px] text-amber-600/60 italic font-medium">Jika diisi > 0, item ini akan muncul di Katalog Reward member.</p>
                                                 </div>
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Kategori</label>
