@@ -22,6 +22,7 @@ import {
 export default function SpvSettingsPage() {
     const [ownerWA, setOwnerWA] = useState("");
     const [originalOwnerWA, setOriginalOwnerWA] = useState("");
+    const [isEditing, setIsEditing] = useState(false);
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -41,6 +42,9 @@ export default function SpvSettingsPage() {
             if (data?.value) {
                 setOwnerWA(data.value);
                 setOriginalOwnerWA(data.value);
+                setIsEditing(false);
+            } else {
+                setIsEditing(true);
             }
         } catch (err) {
             console.error("Error fetching settings:", err);
@@ -88,6 +92,7 @@ export default function SpvSettingsPage() {
                 setOriginalOwnerWA(cleaned);
                 setSuccess("Nomor WhatsApp berhasil disimpan!");
                 setShowSuccessModal(true);
+                setIsEditing(false);
                 setTimeout(() => setSuccess(""), 3000);
             }
         } catch (err: any) {
@@ -201,7 +206,8 @@ export default function SpvSettingsPage() {
                                                     value={ownerWA}
                                                     onChange={(e) => setOwnerWA(e.target.value.replace(/[^0-9]/g, ''))}
                                                     placeholder="628123456789"
-                                                    className="input-field pl-10 text-lg font-bold tracking-wider"
+                                                    disabled={!isEditing}
+                                                    className={`input-field pl-10 text-lg font-bold tracking-wider ${!isEditing ? 'bg-slate-50 text-slate-500 border-transparent cursor-not-allowed' : 'bg-white border-indigo-100 focus:border-indigo-500'}`}
                                                 />
                                             </div>
                                             {ownerWA && (
@@ -240,21 +246,30 @@ export default function SpvSettingsPage() {
                                     )}
 
                                     <div className="flex items-center gap-3 pt-2">
-                                        <Button
-                                            onClick={handleSave}
-                                            disabled={saving}
-                                            variant="primary"
-                                            className="h-11 px-8"
-                                        >
-                                            {saving ? (
-                                                <Loader2 size={18} className="animate-spin mr-2" />
-                                            ) : originalOwnerWA ? (
+                                        {isEditing ? (
+                                            <Button
+                                                onClick={handleSave}
+                                                disabled={saving}
+                                                variant="primary"
+                                                className="h-11 px-8 shadow-lg shadow-indigo-200"
+                                            >
+                                                {saving ? (
+                                                    <Loader2 size={18} className="animate-spin mr-2" />
+                                                ) : (
+                                                    <Save size={18} className="mr-2" />
+                                                )}
+                                                {saving ? "Menyimpan..." : "Simpan Nomor WA"}
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                onClick={() => setIsEditing(true)}
+                                                variant="outline"
+                                                className="h-11 px-8 border-indigo-200 text-indigo-600 hover:bg-indigo-50 font-bold"
+                                            >
                                                 <Settings size={18} className="mr-2" />
-                                            ) : (
-                                                <Save size={18} className="mr-2" />
-                                            )}
-                                            {saving ? "Menyimpan..." : originalOwnerWA ? "Ubah Nomor WA" : "Simpan Nomor WA"}
-                                        </Button>
+                                                Ubah Nomor WA
+                                            </Button>
+                                        )}
                                     </div>
                                 </div>
                             )}
