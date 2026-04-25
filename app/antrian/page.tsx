@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import RoleGuard from "@/components/auth/RoleGuard";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -61,11 +62,12 @@ export default function AntrianServicePage() {
     const [filter, setFilter] = useState<FilterStatus>("all");
     const [searchTerm, setSearchTerm] = useState("");
     const router = useRouter();
+    const { branchId } = useAuth();
     const supabase = createClient();
 
     const fetchQueue = async () => {
         setLoading(true);
-        const { data, error } = await supabase
+        let query = supabase
             .from("transactions")
             .select(`
                 *,
@@ -76,6 +78,12 @@ export default function AntrianServicePage() {
             .order("created_at", { ascending: false })
             .limit(100);
 
+        if (branchId) {
+            query = query.eq("branch_id", branchId);
+        }
+
+        const { data, error } = await query;
+
         if (data && !error) {
             setItems(data as unknown as QueueItem[]);
         }
@@ -83,8 +91,10 @@ export default function AntrianServicePage() {
     };
 
     useEffect(() => {
-        fetchQueue();
-    }, []);
+        if (branchId) {
+            fetchQueue();
+        }
+    }, [branchId]);
 
     const filteredItems = items.filter(item => {
         const matchesFilter = filter === "all" || item.status === filter;

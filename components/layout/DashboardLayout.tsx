@@ -59,16 +59,17 @@ const navigation = [
     // Owner Analytics
     { name: 'Analisis Member', href: '/analytics/member', icon: Users2, roles: ['owner'], group: 'Analisis' },
 
-    { name: 'Operasional Live', href: '/analytics/operations', icon: Activity, roles: ['admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Analisis' },
+    { name: 'Operasional Live', href: '/analytics/operations', icon: Activity, roles: ['owner', 'spv'], group: 'Analisis' },
     { name: 'Status Inventori', href: '/analytics/inventory', icon: Package, roles: ['owner', 'spv'], group: 'Analisis' },
-    { name: 'Keuangan Cabang', href: '/analytics/finance', icon: Banknote, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Analisis' },
+    { name: 'Keuangan Cabang', href: '/analytics/finance', icon: Banknote, roles: ['owner', 'spv'], group: 'Analisis' },
 
     { name: 'POS (Kasir)', href: '/pos', icon: ShoppingCart, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Utama' },
+    { name: 'Laporan Shift', href: '/shift-report', icon: ClipboardList, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Utama' },
     { name: 'Antrian Service', href: '/antrian', icon: ClipboardList, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd'], group: 'Utama' },
     { name: 'Booking Service', href: '/bookings', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Operasional' },
     { name: 'Kelola Reward', href: '/rewards', icon: Gift, roles: ['owner', 'spv'], group: 'Manajemen' },
     { name: 'Laporan Audit', href: '/reports', icon: ClipboardList, roles: ['owner', 'spv'], group: 'Keuangan' },
-    { name: 'Rekap Supplier', href: '/reports/supplier', icon: Package, roles: ['owner', 'spv', 'admin', 'admin_depok', 'admin_bsd'], group: 'Keuangan' },
+    { name: 'Rekap Supplier', href: '/reports/supplier', icon: Package, roles: ['owner', 'spv'], group: 'Keuangan' },
     { name: 'Maintenance Alat', href: '/maintenance', icon: Wrench, roles: ['owner', 'spv'], group: 'Manajemen' },
     { name: 'Katalog', href: '/catalog', icon: Package, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd'], group: 'Manajemen' },
     { name: 'Pengeluaran', href: '/expenses', icon: TrendingDown, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Keuangan' },

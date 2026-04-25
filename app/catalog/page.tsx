@@ -45,6 +45,7 @@ interface CatalogItem {
 
 export default function CatalogPage() {
     const { role, profile, branchName } = useAuth();
+    const isOwnerOrSpv = role === 'owner' || role === 'spv';
     const [items, setItems] = useState<CatalogItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
@@ -270,16 +271,20 @@ export default function CatalogPage() {
                             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Katalog Bengkel</h2>
                         </div>
                         <div className="flex flex-wrap gap-2 sm:gap-3">
-                            <Button variant="outline" onClick={() => setShowBulkUpdate(!showBulkUpdate)} className={`h-12 px-6 ${showBulkUpdate ? "bg-amber-50 border-amber-500 text-amber-600" : ""}`}>
-                                <Coins size={20} className="mr-2" />
-                                Update Harga Massal
-                            </Button>
+                            {isOwnerOrSpv && (
+                                <>
+                                    <Button variant="outline" onClick={() => setShowBulkUpdate(!showBulkUpdate)} className={`h-12 px-6 ${showBulkUpdate ? "bg-amber-50 border-amber-500 text-amber-600" : ""}`}>
+                                        <Coins size={20} className="mr-2" />
+                                        Update Harga Massal
+                                    </Button>
+                                    <Button onClick={() => { setShowForm(!showForm); setEditingItem(null); }} className="h-12 px-6">
+                                        {showForm ? <X size={20} className="mr-2" /> : <Plus size={20} className="mr-2" />}
+                                        {showForm ? "Tutup" : "Tambah Item"}
+                                    </Button>
+                                </>
+                            )}
                             <Button variant="outline" onClick={fetchCatalog} className="h-12 w-12 p-0">
                                 <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
-                            </Button>
-                            <Button onClick={() => { setShowForm(!showForm); setEditingItem(null); }} className="h-12 px-6">
-                                {showForm ? <X size={20} className="mr-2" /> : <Plus size={20} className="mr-2" />}
-                                {showForm ? "Tutup" : "Tambah Item"}
                             </Button>
                         </div>
                     </div>
@@ -583,22 +588,24 @@ export default function CatalogPage() {
                                             </div>
 
                                             {/* Action Buttons */}
-                                            <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => { setEditingItem(item); setShowForm(true); }}
-                                                    className="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
-                                                    title="Edit Item"
-                                                >
-                                                    <Edit2 size={18} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteItem(item.id, item.name)}
-                                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                                                    title="Hapus Item"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </div>
+                                            {isOwnerOrSpv && (
+                                                <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={() => { setEditingItem(item); setShowForm(true); }}
+                                                        className="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
+                                                        title="Edit Item"
+                                                    >
+                                                        <Edit2 size={18} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteItem(item.id, item.name)}
+                                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                                                        title="Hapus Item"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <h3 className="text-2xl font-black text-slate-900 group-hover:text-primary transition-colors line-clamp-1 tracking-tight">
@@ -659,7 +666,7 @@ export default function CatalogPage() {
                                                         <X size={16} />
                                                     </button>
                                                 </div>
-                                            ) : (
+                                            ) : isOwnerOrSpv ? (
                                                 <button
                                                     onClick={() => {
                                                         setEditingStockId(item.id);
@@ -670,6 +677,12 @@ export default function CatalogPage() {
                                                     <Boxes size={16} />
                                                     Ubah Stok Saat Ini: {item.stock}
                                                 </button>
+                                            ) : (
+                                                <div className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-slate-50 text-slate-500 font-black text-xs uppercase tracking-widest border border-slate-200">
+                                                    <Boxes size={16} />
+                                                    Stok Saat Ini: {item.stock}
+                                                </div>
+                                            )}
                                             )}
                                         </div>
                                     )}

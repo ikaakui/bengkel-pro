@@ -25,6 +25,7 @@ import {
     Activity,
     Check,
     Users2,
+    ClipboardList,
 } from "lucide-react";
 
 interface VehicleInProgress {
@@ -325,18 +326,18 @@ export default function AdminDashboard() {
                         </div>
                     </Link>
 
-                    <Link href="/staff" className="block">
+                    <Link href="/shift-report" className="block">
                         <div className="p-8 bg-white rounded-3xl shadow-xl flex items-center justify-between hover:bg-slate-50 transition-all border border-slate-50 active:scale-95 group">
                             <div className="flex items-center gap-5">
-                                <div className="p-4 bg-indigo-50 text-indigo-600 rounded-2xl group-hover:scale-110 transition-transform">
-                                    <Wrench size={24} />
+                                <div className="p-4 bg-amber-50 text-amber-600 rounded-2xl group-hover:scale-110 transition-transform">
+                                    <ClipboardList size={24} />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Karyawan</h3>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Manajemen Tim</p>
+                                    <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Tutup Kasir</h3>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Laporan Shift</p>
                                 </div>
                             </div>
-                            <ArrowRight size={20} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                            <ArrowRight size={20} className="text-slate-300 group-hover:text-amber-500 transition-colors" />
                         </div>
                     </Link>
                 </div>

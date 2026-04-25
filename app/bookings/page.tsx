@@ -62,11 +62,19 @@ export default function BookingsPage() {
 
     const fetchBookings = async () => {
         setIsLoadingData(true);
-        const { data, error } = await supabase
+        let query = supabase
             .from("bookings")
             .select("*, member:member_id(full_name, referral_code)")
             .order("created_at", { ascending: false })
             .limit(100);
+
+        if (role === 'member' && profile?.id) {
+            query = query.eq('member_id', profile.id);
+        } else if (branchId && role !== 'owner') {
+            query = query.eq('branch_id', branchId);
+        }
+
+        const { data, error } = await query;
 
         if (data) {
             setBookings(data);

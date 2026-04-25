@@ -235,12 +235,18 @@ function POSContent() {
 
             // Server-side search menggunakan ilike — jauh lebih efisien daripada fetch 500 lalu filter
             const searchPattern = `%${bookingSearchTerm}%`;
-            const { data } = await supabase
+            let query = supabase
                 .from("bookings")
                 .select("id, customer_name, license_plate, car_model, booking_code, booking_type, status, member_id")
                 .or(`license_plate.ilike.${searchPattern},customer_name.ilike.${searchPattern},car_model.ilike.${searchPattern},booking_code.ilike.${searchPattern}`)
                 .order("created_at", { ascending: false })
                 .limit(8);
+                
+            if (branchId) {
+                query = query.eq("branch_id", branchId);
+            }
+
+            const { data } = await query;
 
             if (data) {
                 setBookingResults(data);
