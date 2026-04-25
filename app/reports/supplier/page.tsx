@@ -284,6 +284,15 @@ export default function SupplierRecapPage() {
         }
     };
 
+    const formatRupiah = (val: number | string) => {
+        if (!val && val !== 0) return "";
+        return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
+
+    const parseRupiah = (val: string) => {
+        return Number(val.replace(/\./g, ""));
+    };
+
     const handleExportExcel = () => {
         const headers = ["Tanggal", "Cabang", "Nama Barang", "Qty", "Harga Modal", "Total Harga"];
         const rows = filteredData.map(item => [
@@ -399,10 +408,13 @@ export default function SupplierRecapPage() {
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Total Tagihan (Rp)</label>
                                             <input 
-                                                type="number" 
+                                                type="text" 
                                                 className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-5 text-xl font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" 
-                                                value={formData.amount || ''} 
-                                                onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
+                                                value={formatRupiah(formData.amount)} 
+                                                onChange={(e) => {
+                                                    const val = e.target.value.replace(/\D/g, "");
+                                                    setFormData({ ...formData, amount: val ? Number(val) : 0 });
+                                                }}
                                                 placeholder="0"
                                                 required 
                                             />
@@ -424,7 +436,17 @@ export default function SupplierRecapPage() {
                                                             </div>
                                                             <div className="col-span-12">
                                                                 <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Harga Modal Satuan</label>
-                                                                <input type="number" placeholder="Modal Satuan" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" value={item.cost || ''} onChange={(e) => updateSupplierItem(idx, 'cost', Number(e.target.value))} required />
+                                                                <input 
+                                                                    type="text" 
+                                                                    placeholder="Modal Satuan" 
+                                                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" 
+                                                                    value={formatRupiah(item.cost)} 
+                                                                    onChange={(e) => {
+                                                                        const val = e.target.value.replace(/\D/g, "");
+                                                                        updateSupplierItem(idx, 'cost', val ? Number(val) : 0);
+                                                                    }}
+                                                                    required 
+                                                                />
                                                             </div>
                                                         </div>
                                                         {supplierItems.length > 1 && (
@@ -483,10 +505,13 @@ export default function SupplierRecapPage() {
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Harga Modal Satuan</label>
                                             <input 
-                                                type="number" 
+                                                type="text" 
                                                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                                                value={editForm.cost || ''}
-                                                onChange={(e) => setEditForm({ ...editForm, cost: Number(e.target.value) })}
+                                                value={formatRupiah(editForm.cost)}
+                                                onChange={(e) => {
+                                                    const val = e.target.value.replace(/\D/g, "");
+                                                    setEditForm({ ...editForm, cost: val ? Number(val) : 0 });
+                                                }}
                                                 required
                                             />
                                         </div>
