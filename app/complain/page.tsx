@@ -120,18 +120,7 @@ export default function ComplainPage() {
                                 </div>
                             </Card>
 
-                            <div className="p-6 bg-rose-50 border border-rose-100 rounded-3xl space-y-3">
-                                <h4 className="font-bold text-rose-800 text-sm flex items-center gap-2">
-                                    <AlertCircle size={16} />
-                                    Darurat?
-                                </h4>
-                                <p className="text-xs text-rose-700 leading-relaxed">
-                                    Jika Anda mengalami kendala teknis mendesak di jalan, silakan hubungi layanan Derek/Road Assistance kami.
-                                </p>
-                                <Button variant="outline" className="w-full h-10 text-xs border-rose-200 text-rose-600 hover:bg-rose-100">
-                                    HUBUNGI HOTLINE
-                                </Button>
-                            </div>
+
                         </div>
 
                         {/* Form Column */}
