@@ -64,7 +64,13 @@ export default function SupplierRecapPage() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data: bData } = await supabase.from("branches").select("id, name").order("name");
+            // Parallel fetch for branches, settings, and expenses
+            const [branchesRes, settingsRes] = await Promise.all([
+                supabase.from("branches").select("id, name").order("name"),
+                supabase.from("app_settings").select("*").eq("key", "owner_wa_number").maybeSingle()
+            ]);
+
+            const bData = branchesRes.data;
             if (bData) {
                 const uniqueBranches = bData.filter((branch, index, self) =>
                     index === self.findIndex((t) => t.name === branch.name)
@@ -72,20 +78,23 @@ export default function SupplierRecapPage() {
                 setBranches(uniqueBranches);
             }
 
-            // Fetch owner WA safely (don't crash if setting doesn't exist)
-            try {
-                const { data: sData } = await supabase.from("app_settings").select("*").eq("key", "owner_wa_number").single();
-                if (sData?.value) setOwnerWA(sData.value);
-            } catch (_) { /* setting may not exist yet */ }
+            if (settingsRes.data?.value) setOwnerWA(settingsRes.data.value);
 
             let query = supabase.from("expenses").select("*").eq("category", "stok");
             
             // Branch Isolation: non-owner roles only see their branch data
-            if (role !== 'owner' && profile?.branch_id) {
+            if (role !== 'owner' && role !== 'spv' && profile?.branch_id) {
                 query = query.eq("branch_id", profile.branch_id);
             }
 
-            const { data: eData } = await query.order("expense_date", { ascending: false });
+            // Execute expenses query with timeout and limit
+            const fetchPromise = query.order("expense_date", { ascending: false }).limit(500);
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Request timeout")), 12000)
+            );
+
+            const expensesRes = await Promise.race([fetchPromise, timeoutPromise]) as any;
+            const eData = expensesRes.data;
 
             if (eData) {
                 const flattened: any[] = [];
@@ -120,7 +129,6 @@ export default function SupplierRecapPage() {
                             });
                         }
                     } else {
-                        // Jika description berupa angka, ubah jadi teks yang masuk akal
                         const desc = exp.description;
                         const isNum = desc && !isNaN(Number(desc));
                         flattened.push({
@@ -147,11 +155,11 @@ export default function SupplierRecapPage() {
 
     useEffect(() => {
         fetchData();
-        if (profile?.branch_id) {
+        if (profile?.branch_id && role !== 'owner' && role !== 'spv') {
             setFormData(prev => ({ ...prev, branch_id: profile.branch_id! }));
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [profile?.branch_id, role]);
 
     const handleAddExpense = async (e: React.FormEvent) => {
         e.preventDefault();
