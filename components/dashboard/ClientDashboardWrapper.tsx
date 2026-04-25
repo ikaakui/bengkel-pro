@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import dynamic from "next/dynamic";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useRouter } from "next/navigation";
 import { Wrench, Loader2, RefreshCw } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import type { UserProfile } from "@/components/providers/AuthProvider";
@@ -12,12 +13,17 @@ import type { UserProfile } from "@/components/providers/AuthProvider";
 const OwnerDashboard = dynamic(() => import("./OwnerDashboard"), {
     loading: () => <DashboardSkeleton />
 });
-const AdminDashboard = dynamic(() => import("./AdminDashboard"), {
-    loading: () => <DashboardSkeleton />
-});
 const MemberDashboard = dynamic(() => import("./MemberDashboard"), {
     loading: () => <DashboardSkeleton />
 });
+
+function AdminRedirect() {
+    const router = useRouter();
+    useEffect(() => {
+        router.replace("/pos");
+    }, [router]);
+    return <DashboardSkeleton />;
+}
 
 function DashboardSkeleton() {
     return (
@@ -153,7 +159,7 @@ export default function ClientDashboardWrapper({ initialUser, initialProfile }: 
             ) : activeRole === "owner" || activeRole === "spv" ? (
                 <OwnerDashboard />
             ) : activeRole === "admin" || activeRole === "admin_depok" || activeRole === "admin_bsd" ? (
-                <AdminDashboard />
+                <AdminRedirect />
             ) : (
                 <DashboardSkeleton />
             )}

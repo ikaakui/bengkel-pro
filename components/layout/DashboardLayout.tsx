@@ -44,39 +44,40 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import type { UserRole } from "@/components/providers/AuthProvider";
 
 const navigation = [
-    { name: 'Overview', href: '/', icon: LayoutDashboard, roles: ['owner', 'admin', 'member', 'spv', 'admin_depok', 'admin_bsd'], group: 'Utama' },
+    { name: 'Overview', href: '/', icon: LayoutDashboard, roles: ['owner', 'member', 'spv'], group: 'Utama' },
     // Member Exclusive
     { name: 'Booking Online', href: '/booking-online', icon: CalendarPlus, roles: ['member'], group: 'Layanan' },
     { name: 'Riwayat Servis', href: '/riwayat-servis', icon: Clock, roles: ['member'], group: 'Layanan' },
     { name: 'Konfirmasi Bayar Booking', href: '/pembayaran', icon: Receipt, roles: ['member'], group: 'Layanan' },
     { name: 'Poin & Reward', href: '/rewards-member', icon: Gift, roles: ['member'], group: 'Loyalty' },
-    { name: 'Validasi Voucher', href: '/admin/vouchers', icon: UserCheck, roles: ['owner', 'admin', 'spv', 'admin_depok', 'admin_bsd'], group: 'Loyalty' },
-
-
     { name: 'Profil Akun Member', href: '/profil-member', icon: UserCircle, roles: ['member'], group: 'Akun' },
     { name: 'Kritik & Saran', href: '/complain', icon: MessageSquarePlus, roles: ['member'], group: 'Akun' },
 
-    // Owner Analytics
+    // Owner & SPV
     { name: 'Analisis Member', href: '/analytics/member', icon: Users2, roles: ['owner'], group: 'Analisis' },
-
     { name: 'Operasional Live', href: '/analytics/operations', icon: Activity, roles: ['owner', 'spv'], group: 'Analisis' },
     { name: 'Status Inventori', href: '/analytics/inventory', icon: Package, roles: ['owner', 'spv'], group: 'Analisis' },
     { name: 'Keuangan Cabang', href: '/analytics/finance', icon: Banknote, roles: ['owner', 'spv'], group: 'Analisis' },
-
-    { name: 'POS (Kasir)', href: '/pos', icon: ShoppingCart, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Utama' },
-    { name: 'Laporan Shift', href: '/shift-report', icon: ClipboardList, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Utama' },
-    { name: 'Antrian Service', href: '/antrian', icon: ClipboardList, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd'], group: 'Utama' },
-    { name: 'Booking Service', href: '/bookings', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Operasional' },
-    { name: 'Kelola Reward', href: '/rewards', icon: Gift, roles: ['owner', 'spv'], group: 'Manajemen' },
     { name: 'Laporan Audit', href: '/reports', icon: ClipboardList, roles: ['owner', 'spv'], group: 'Keuangan' },
     { name: 'Rekap Supplier', href: '/reports/supplier', icon: Package, roles: ['owner', 'spv'], group: 'Keuangan' },
-    { name: 'Maintenance Alat', href: '/maintenance', icon: Wrench, roles: ['owner', 'spv'], group: 'Manajemen' },
-    { name: 'Katalog', href: '/catalog', icon: Package, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd'], group: 'Manajemen' },
     { name: 'Pengeluaran', href: '/expenses', icon: TrendingDown, roles: ['owner', 'spv'], group: 'Keuangan' },
-    { name: 'Data Member', href: '/users', icon: Users2, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd'], group: 'Manajemen' },
+    { name: 'Kelola Reward', href: '/rewards', icon: Gift, roles: ['owner', 'spv'], group: 'Manajemen' },
+    { name: 'Maintenance Alat', href: '/maintenance', icon: Wrench, roles: ['owner', 'spv'], group: 'Manajemen' },
     { name: 'Karyawan & Admin', href: '/staff', icon: Shield, roles: ['owner'], group: 'Manajemen' },
     { name: 'Organisasi', href: '/branches', icon: Building2, roles: ['owner'], group: 'Manajemen' },
     { name: 'Pengaturan', href: '/settings', icon: Settings, roles: ['owner'], group: 'Sistem' },
+
+    // Admin Cabang — Kasir Focused
+    { name: 'POS (Kasir)', href: '/pos', icon: ShoppingCart, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Kasir' },
+    { name: 'Antrian Service', href: '/antrian', icon: ClipboardList, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Kasir' },
+    { name: 'Booking Service', href: '/bookings', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Kasir' },
+    { name: 'Validasi Voucher', href: '/admin/vouchers', icon: UserCheck, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Kasir' },
+    { name: 'Data Member', href: '/users', icon: Users2, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Data' },
+    { name: 'Katalog', href: '/catalog', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Data' },
+    { name: 'Laporan Shift', href: '/shift-report', icon: ClipboardList, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Laporan' },
+    // Owner Katalog access
+    { name: 'Katalog', href: '/catalog', icon: Package, roles: ['owner', 'spv'], group: 'Manajemen' },
+    { name: 'Data Member', href: '/users', icon: Users2, roles: ['owner', 'spv'], group: 'Manajemen' },
 
 ];
 
