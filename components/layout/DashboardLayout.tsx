@@ -74,7 +74,7 @@ const navigation = [
     { name: 'Karyawan & Admin', href: '/staff', icon: Shield, roles: ['owner'], group: 'Manajemen' },
     { name: 'Organisasi', href: '/branches', icon: Building2, roles: ['owner'], group: 'Manajemen' },
     { name: 'Pengaturan', href: '/settings', icon: Settings, roles: ['owner'], group: 'Sistem' },
-    { name: 'Pengaturan WA', href: '/settings/spv', icon: MessageCircle, roles: ['spv'], group: 'Sistem' },
+
 ];
 
 const roleConfig: Record<UserRole, { label: string; icon: typeof Crown; color: string; bgColor: string }> = {

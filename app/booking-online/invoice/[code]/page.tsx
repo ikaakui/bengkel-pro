@@ -407,16 +407,7 @@ export default function BookingInvoicePage() {
                                     </Button>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 group hover:bg-white/10 transition-colors">
-                                        <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary shadow-lg shadow-primary/20">
-                                            <Building2 size={20} />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Transfer Ke (Optional)</p>
-                                            <p className="text-sm font-bold">BCA: 123-456-7890</p>
-                                            <p className="text-[10px] text-slate-400">a/n Inka Otoservice</p>
-                                        </div>
-                                    </div>
+
                                     <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 group hover:bg-white/10 transition-colors">
                                         <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-500/20">
                                             <CreditCard size={20} />
@@ -429,12 +420,7 @@ export default function BookingInvoicePage() {
                                     </div>
                                 </div>
                             </div>
-                            <div className="shrink-0 flex flex-col items-center gap-4">
-                                <div className="p-4 bg-white rounded-3xl shadow-2xl">
-                                    <QrCode size={120} className="text-slate-900" />
-                                </div>
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Scan for Details</p>
-                            </div>
+
                         </div>
                         
                         {/* Footer Disclaimer */}
