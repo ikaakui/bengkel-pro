@@ -185,7 +185,7 @@ export default function ExpensesPage() {
 
     return (
         <DashboardLayout>
-            <RoleGuard allowedRoles={['owner', 'admin', 'spv', 'admin_bsd', 'admin_depok']}>
+            <RoleGuard allowedRoles={['owner', 'spv']}>
                 <div className="space-y-8 pb-20">
                     {/* Header Section */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">

@@ -72,7 +72,7 @@ const navigation = [
     { name: 'Rekap Supplier', href: '/reports/supplier', icon: Package, roles: ['owner', 'spv'], group: 'Keuangan' },
     { name: 'Maintenance Alat', href: '/maintenance', icon: Wrench, roles: ['owner', 'spv'], group: 'Manajemen' },
     { name: 'Katalog', href: '/catalog', icon: Package, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd'], group: 'Manajemen' },
-    { name: 'Pengeluaran', href: '/expenses', icon: TrendingDown, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Keuangan' },
+    { name: 'Pengeluaran', href: '/expenses', icon: TrendingDown, roles: ['owner', 'spv'], group: 'Keuangan' },
     { name: 'Data Member', href: '/users', icon: Users2, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd'], group: 'Manajemen' },
     { name: 'Karyawan & Admin', href: '/staff', icon: Shield, roles: ['owner'], group: 'Manajemen' },
     { name: 'Organisasi', href: '/branches', icon: Building2, roles: ['owner'], group: 'Manajemen' },
