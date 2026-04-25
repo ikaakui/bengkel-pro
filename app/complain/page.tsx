@@ -35,7 +35,7 @@ export default function ComplainPage() {
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
-    const [ownerWA, setOwnerWA] = useState('6281234567890');
+    const [ownerWA, setOwnerWA] = useState('6285780565693');
 
     useEffect(() => {
         const fetchSettings = async () => {
