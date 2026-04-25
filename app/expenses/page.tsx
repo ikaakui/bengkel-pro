@@ -98,11 +98,27 @@ export default function ExpensesPage() {
 
     useEffect(() => {
         fetchData();
-        if (profile?.branch_id) {
+        if (profile?.branch_id && role !== 'owner' && role !== 'spv') {
             setFormData(prev => ({ ...prev, branch_id: profile.branch_id! }));
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [profile?.branch_id, role]);
+
+    const formatDescription = (desc: string) => {
+        if (!desc) return '-';
+        if (desc.startsWith('STRUCT_JSON:')) {
+            try {
+                const jsonStr = desc.replace('STRUCT_JSON:', '');
+                const items = JSON.parse(jsonStr);
+                if (Array.isArray(items)) {
+                    return items.map(item => `${item.name} (${item.qty}x)`).join(', ');
+                }
+            } catch (e) {
+                return desc;
+            }
+        }
+        return desc;
+    };
 
     const handleAddExpense = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -316,7 +332,7 @@ export default function ExpensesPage() {
                                             </div>
                                         </td>
                                         <td className="px-4 sm:px-8 py-4 sm:py-6">
-                                            <p className="text-sm font-medium text-slate-600 max-w-xs">{e.description || '-'}</p>
+                                            <p className="text-sm font-medium text-slate-600 max-w-xs">{formatDescription(e.description)}</p>
                                         </td>
                                         <td className="px-4 sm:px-8 py-4 sm:py-6 text-right">
                                             <span className="text-sm font-black text-rose-600">
@@ -427,8 +443,8 @@ export default function ExpensesPage() {
                                                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-11 pr-5 text-sm font-bold text-slate-700 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-200 focus:outline-none focus:bg-white transition-all appearance-none cursor-pointer"
                                                     value={formData.branch_id}
                                                     onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })}
-                                                    required={role === 'owner'}
-                                                    disabled={role !== 'owner'}
+                                                    required={role === 'owner' || role === 'spv'}
+                                                    disabled={role !== 'owner' && role !== 'spv'}
                                                 >
                                                     <option value="">-- Pilih Cabang --</option>
                                                     {branches.map(br => (

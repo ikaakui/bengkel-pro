@@ -401,8 +401,8 @@ export default function MaintenancePage() {
                                                             className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-11 pr-5 text-sm font-bold text-slate-700 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-200 focus:outline-none focus:bg-white transition-all appearance-none cursor-pointer"
                                                             value={formData.branch_id}
                                                             onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })}
-                                                            required={role === 'owner'}
-                                                            disabled={role !== 'owner'}
+                                                            required={role === 'owner' || role === 'spv'}
+                                                            disabled={role !== 'owner' && role !== 'spv'}
                                                         >
                                                             <option value="">-- Pilih Cabang --</option>
                                                             {branches.map(br => (

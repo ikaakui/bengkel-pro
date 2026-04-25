@@ -403,7 +403,7 @@ export default function SupplierRecapPage() {
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Cabang</label>
-                                            <select className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-5 text-sm font-bold text-slate-700" value={formData.branch_id} onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })} required={role === 'owner'} disabled={role !== 'owner'}>
+                                            <select className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-5 text-sm font-bold text-slate-700" value={formData.branch_id} onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })} required={role === 'owner' || role === 'spv'} disabled={role !== 'owner' && role !== 'spv'}>
                                                 <option value="">-- Pilih Cabang --</option>
                                                 {branches.map(br => <option key={br.id} value={br.id}>{br.name}</option>)}
                                             </select>
