@@ -83,7 +83,7 @@ export default function ComplainPage() {
 
         setLoading(true);
         try {
-            const { error } = await supabase.from("member_feedback").insert([{
+            const insertPromise = supabase.from("member_feedback").insert([{
                 member_id: profile?.id,
                 full_name: profile?.full_name,
                 rating,
@@ -91,6 +91,12 @@ export default function ComplainPage() {
                 message,
                 status: 'pending'
             }]);
+
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Request timeout (10s)")), 10000)
+            );
+
+            const { error } = await Promise.race([insertPromise, timeoutPromise]) as any;
 
             if (error) throw error;
             
