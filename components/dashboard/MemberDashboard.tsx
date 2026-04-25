@@ -419,10 +419,7 @@ export default function MemberDashboard() {
                                 <span className="w-5 h-5 bg-white rounded-full flex items-center justify-center text-[10px] font-bold border border-blue-200 shrink-0">2</span>
                                 Tukar poin dengan diskon atau produk gratis.
                             </li>
-                            <li className="flex gap-2">
-                                <span className="w-5 h-5 bg-white rounded-full flex items-center justify-center text-[10px] font-bold border border-blue-200 shrink-0">3</span>
-                                Gunakan Montir AI untuk konsultasi gratis 24/7.
-                            </li>
+
                         </ul>
                     </Card>
                 </div>
