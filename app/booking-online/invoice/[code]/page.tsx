@@ -57,6 +57,7 @@ export default function BookingInvoicePage() {
 
     const [booking, setBooking] = useState<Booking | null>(null);
     const [bookingFee, setBookingFee] = useState<number>(50000);
+    const [transferAccount, setTransferAccount] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -80,15 +81,18 @@ export default function BookingInvoicePage() {
             } else {
                 setBooking(data);
                 
-                // Fetch booking fee amount
-                const { data: feeData } = await supabase
+                // Fetch booking settings
+                const { data: settingsData } = await supabase
                     .from("app_settings")
-                    .select("value")
-                    .eq("key", "booking_fee_amount")
-                    .single();
+                    .select("key, value")
+                    .in("key", ["booking_fee_amount", "booking_transfer_account"]);
                     
-                if (feeData?.value) {
-                    setBookingFee(parseInt(feeData.value) || 50000);
+                if (settingsData) {
+                    const fee = settingsData.find(s => s.key === "booking_fee_amount")?.value;
+                    const account = settingsData.find(s => s.key === "booking_transfer_account")?.value;
+                    
+                    if (fee) setBookingFee(parseInt(fee) || 50000);
+                    if (account) setTransferAccount(account);
                 }
             }
         } catch (err: any) {
@@ -406,8 +410,17 @@ export default function BookingInvoicePage() {
                                     </Button>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-
-                                    <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 group hover:bg-white/10 transition-colors">
+                                    {transferAccount && (
+                                        <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 group hover:bg-white/10 transition-colors">
+                                            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary shadow-lg shadow-primary/20">
+                                                <Building2 size={20} />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Transfer Ke</p>
+                                                <p className="text-sm font-bold whitespace-pre-line">{transferAccount}</p>
+                                            </div>
+                                        </div>
+                                    )}                                    <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 group hover:bg-white/10 transition-colors">
                                         <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-500/20">
                                             <CreditCard size={20} />
                                         </div>

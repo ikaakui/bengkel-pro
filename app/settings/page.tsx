@@ -36,9 +36,11 @@ export default function SettingsPage() {
     const [aiQuota, setAiQuota] = useState("1");
     const [originalAiQuota, setOriginalAiQuota] = useState("1");
 
-    // Booking Settings
     const [bookingFee, setBookingFee] = useState("50000");
     const [originalBookingFee, setOriginalBookingFee] = useState("50000");
+
+    const [bookingAccount, setBookingAccount] = useState("");
+    const [originalBookingAccount, setOriginalBookingAccount] = useState("");
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -71,6 +73,10 @@ export default function SettingsPage() {
             const wa = data.find((d: any) => d.key === "owner_wa_number")?.value || "";
             setOwnerWA(wa);
             setOriginalOwnerWA(wa);
+
+            const account = data.find((d: any) => d.key === "booking_transfer_account")?.value || "";
+            setBookingAccount(account);
+            setOriginalBookingAccount(account);
         }
         setLoading(false);
     };
@@ -112,6 +118,10 @@ export default function SettingsPage() {
             updates.push({ key: "owner_wa_number", value: ownerWA, updated_at: new Date().toISOString() });
         }
 
+        if (bookingAccount !== originalBookingAccount) {
+            updates.push({ key: "booking_transfer_account", value: bookingAccount, updated_at: new Date().toISOString() });
+        }
+
         if (updates.length > 0) {
             const { error: updateError } = await supabase
                 .from("app_settings")
@@ -126,6 +136,7 @@ export default function SettingsPage() {
                 setOriginalAiQuota(aiQuota);
                 setOriginalBookingFee(bookingFee);
                 setOriginalOwnerWA(ownerWA);
+                setOriginalBookingAccount(bookingAccount);
                 setTimeout(() => setSuccess(""), 3000);
             }
         }
@@ -133,7 +144,7 @@ export default function SettingsPage() {
         setSaving(false);
     };
 
-    const hasChanges = commissionRate !== originalRate || aiDuration !== originalAiDuration || aiQuota !== originalAiQuota || bookingFee !== originalBookingFee || ownerWA !== originalOwnerWA;
+    const hasChanges = commissionRate !== originalRate || aiDuration !== originalAiDuration || aiQuota !== originalAiQuota || bookingFee !== originalBookingFee || ownerWA !== originalOwnerWA || bookingAccount !== originalBookingAccount;
 
     return (
         <DashboardLayout>
@@ -384,6 +395,59 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div className="flex items-center gap-3 pt-2">
+                                        <Button
+                                            onClick={handleSave}
+                                            disabled={saving || !hasChanges}
+                                            variant="primary"
+                                            className="h-11"
+                                        >
+                                            {saving ? (
+                                                <Loader2 size={18} className="animate-spin mr-2" />
+                                            ) : (
+                                                <Save size={18} className="mr-2" />
+                                            )}
+                                            {saving ? "Menyimpan..." : "Simpan Perubahan"}
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Booking Transfer Account Setting */}
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <div className="p-3 bg-blue-100 rounded-xl">
+                                    <Banknote size={24} className="text-blue-600" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold">Rekening Transfer Booking</h3>
+                                    <p className="text-sm text-slate-500 mt-0.5">
+                                        Informasi rekening yang akan ditampilkan di invoice konfirmasi booking member.
+                                    </p>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            {loading ? (
+                                <div className="flex items-center gap-2 text-slate-500">
+                                    <Loader2 size={16} className="animate-spin" />
+                                    Memuat...
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-700">Detail Rekening (Nama Bank, No Rek, a/n)</label>
+                                        <textarea
+                                            value={bookingAccount}
+                                            onChange={(e) => setBookingAccount(e.target.value)}
+                                            placeholder="Contoh: BCA 123456789 a/n PT Inka Otoservice"
+                                            rows={2}
+                                            className="input-field py-3 resize-none"
+                                        />
+                                    </div>
+                                    <div className="flex items-center gap-3">
                                         <Button
                                             onClick={handleSave}
                                             disabled={saving || !hasChanges}
