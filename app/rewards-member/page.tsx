@@ -54,6 +54,7 @@ export default function RewardsMemberPage() {
     const [activeTab, setActiveTab] = useState<"catalog" | "my-vouchers">("catalog");
     const [loading, setLoading] = useState(true);
     const [isRedeeming, setIsRedeeming] = useState<string | null>(null);
+    const [rewardToConfirm, setRewardToConfirm] = useState<Reward | null>(null);
     const [newVoucher, setNewVoucher] = useState<Voucher | null>(null);
 
     const fetchData = async () => {
@@ -95,15 +96,19 @@ export default function RewardsMemberPage() {
         return code;
     };
 
-    const handleRedeem = async (reward: Reward) => {
+    const handleRedeemClick = (reward: Reward) => {
         if (!profile || (profile.total_points || 0) < reward.points_required) {
             alert("Poin Anda tidak mencukupi.");
             return;
         }
+        setRewardToConfirm(reward);
+    };
 
-        if (!confirm(`Tukarkan ${reward.points_required} poin untuk "${reward.name}"? Voucher akan berlaku di cabang BSD/Depok.`)) return;
+    const executeRedeem = async () => {
+        if (!rewardToConfirm || !profile) return;
 
-        setIsRedeeming(reward.id);
+        setIsRedeeming(rewardToConfirm.id);
+        const reward = rewardToConfirm;
         try {
             const voucherCode = generateVoucherCode();
             
@@ -141,6 +146,7 @@ export default function RewardsMemberPage() {
             await refreshProfile();
             setNewVoucher(voucherData);
             fetchData();
+            setRewardToConfirm(null);
         } catch (err: any) {
             alert(`Gagal menukar reward: ${err.message}`);
         } finally {
@@ -232,7 +238,7 @@ export default function RewardsMemberPage() {
                                                         </div>
                                                     ) : (
                                                         <Button
-                                                            onClick={() => handleRedeem(reward)}
+                                                            onClick={() => handleRedeemClick(reward)}
                                                             disabled={isRedeeming === reward.id}
                                                             className="w-full h-14 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black text-sm uppercase shadow-xl"
                                                         >
@@ -318,6 +324,43 @@ export default function RewardsMemberPage() {
                                             <p className="text-[10px] font-medium text-slate-600">Berlaku di cabang <strong>BSD & Depok</strong>. Cukup tunjukkan layar ini ke petugas bengkel saat pendaftaran servis.</p>
                                         </div>
                                         <Button onClick={() => setNewVoucher(null)} className="w-full h-14 rounded-2xl bg-slate-900 text-white font-black">TUTUP</Button>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Confirmation Modal */}
+                    <AnimatePresence>
+                        {rewardToConfirm && (
+                            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setRewardToConfirm(null)} className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" />
+                                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden">
+                                    <div className="bg-amber-500 p-6 text-center text-white">
+                                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-md">
+                                            <Star size={32} />
+                                        </div>
+                                        <h3 className="text-xl font-black">Konfirmasi Penukaran</h3>
+                                    </div>
+                                    <div className="p-6 space-y-6 text-center">
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-600 mb-1">Anda akan menukarkan poin untuk:</p>
+                                            <p className="text-lg font-black text-slate-900">{rewardToConfirm.name}</p>
+                                        </div>
+                                        <div className="flex items-center justify-center gap-2 text-amber-600 bg-amber-50 py-3 rounded-xl border border-amber-100">
+                                            <Coins size={20} />
+                                            <span className="font-bold">{rewardToConfirm.points_required.toLocaleString()} Poin</span>
+                                        </div>
+                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-start gap-3 text-left">
+                                            <Info size={16} className="text-slate-400 shrink-0 mt-0.5" />
+                                            <p className="text-xs font-medium text-slate-500">Voucher ini dapat digunakan di cabang <strong>BSD & Depok</strong>.</p>
+                                        </div>
+                                        <div className="flex gap-3 pt-2">
+                                            <Button variant="outline" onClick={() => setRewardToConfirm(null)} className="flex-1 rounded-xl h-12 font-bold border-slate-200 text-slate-600">BATAL</Button>
+                                            <Button onClick={executeRedeem} disabled={isRedeeming === rewardToConfirm.id} className="flex-1 rounded-xl h-12 bg-amber-500 hover:bg-amber-600 text-white font-black shadow-lg shadow-amber-500/30">
+                                                {isRedeeming === rewardToConfirm.id ? <Loader2 size={18} className="animate-spin" /> : "AJUKAN PENUKARAN"}
+                                            </Button>
+                                        </div>
                                     </div>
                                 </motion.div>
                             </div>
