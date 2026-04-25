@@ -68,16 +68,19 @@ const navigation = [
     { name: 'Pengaturan', href: '/settings', icon: Settings, roles: ['owner'], group: 'Sistem' },
 
     // Admin Cabang — Kasir Focused
-    { name: 'POS (Kasir)', href: '/pos', icon: ShoppingCart, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Kasir' },
-    { name: 'Antrian Service', href: '/antrian', icon: ClipboardList, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Kasir' },
-    { name: 'Booking Service', href: '/bookings', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Kasir' },
-    { name: 'Validasi Voucher', href: '/admin/vouchers', icon: UserCheck, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Kasir' },
-    { name: 'Data Member', href: '/users', icon: Users2, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Data' },
-    { name: 'Katalog', href: '/catalog', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Data' },
+    { name: 'POS (Kasir)', href: '/pos', icon: ShoppingCart, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Layanan' },
+    { name: 'Daftar Service', href: '/walk-in', icon: Wrench, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Layanan' },
+    { name: 'Konfirmasi Booking', href: '/konfirmasi-booking', icon: UserCheck, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Layanan' },
+    { name: 'Antrian Service', href: '/antrian', icon: ClipboardList, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Layanan' },
+    { name: 'Data Member', href: '/users', icon: Users2, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Member' },
+    { name: 'Redeem Poin', href: '/redeem-poin', icon: Gift, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Member' },
+    { name: 'Validasi Voucher', href: '/admin/vouchers', icon: UserCheck, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Member' },
+    { name: 'Katalog', href: '/catalog', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Referensi' },
     { name: 'Laporan Shift', href: '/shift-report', icon: ClipboardList, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Laporan' },
-    // Owner Katalog access
+    // Owner & SPV access
     { name: 'Katalog', href: '/catalog', icon: Package, roles: ['owner', 'spv'], group: 'Manajemen' },
     { name: 'Data Member', href: '/users', icon: Users2, roles: ['owner', 'spv'], group: 'Manajemen' },
+    { name: 'Antrian Service', href: '/antrian', icon: ClipboardList, roles: ['owner', 'spv'], group: 'Operasional' },
 
 ];
 
