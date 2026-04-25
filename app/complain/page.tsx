@@ -60,14 +60,13 @@ export default function ComplainPage() {
         const stars = '⭐'.repeat(r);
         const label = labels[r] || '';
         
-        const text = `*MASUKAN & KOMPLAIN BARU* 📣%0A%0A` +
-            `*Nama Member:* ${profile?.full_name || 'Member'}%0A` +
-            `*Rating:* ${stars} (${label})%0A` +
-            `*Subjek:* ${s}%0A%0A` +
-            `*Detail Pesan:*%0A"${m}"%0A%0A` +
-            `_Dikirim otomatis via Aplikasi Bengkel Pro_`;
+        const messageText = `MASUKAN & KOMPLAIN BARU 📣\n\n` +
+            `Nama Member: ${profile?.full_name || 'Member'} Rating: ${stars} (${label}) Subjek: ${s}\n\n` +
+            `Detail Pesan: "${m}"\n\n` +
+            `Dikirim otomatis via Aplikasi Bengkel Pro`;
 
-        window.open(`https://wa.me/${ownerWA}?text=${text}`, '_blank');
+        const encodedText = encodeURIComponent(messageText);
+        window.open(`https://wa.me/${ownerWA}?text=${encodedText}`, '_blank');
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
