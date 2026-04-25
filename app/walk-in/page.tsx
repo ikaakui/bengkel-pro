@@ -16,7 +16,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function WalkInPage() {
-    const { profile, branchId, branchName } = useAuth();
+    const { profile, branchId, branchName, role } = useAuth();
     const router = useRouter();
     const supabase = createClient();
 
@@ -255,6 +255,7 @@ export default function WalkInPage() {
                                         )}
                                     </div>
 
+                                    <CardContent className="p-8 space-y-6">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                             {/* Branch Selection if missing */}
                                             {!branchId && branches.length > 0 && (
