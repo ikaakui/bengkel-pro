@@ -124,10 +124,15 @@ export default function RewardsPage() {
     const handleSaveReward = async (e: React.FormEvent) => {
         e.preventDefault();
         if (isSubmitting) return;
+        
         setIsSubmitting(true);
 
+        // Force reset after 15 seconds if stuck
+        const timeoutId = setTimeout(() => {
+            setIsSubmitting(false);
+        }, 15000);
+
         try {
-            // Clean the object to remove any unwanted fields
             const rewardData = {
                 name: editingReward?.name,
                 points_required: Number(editingReward?.points_required),
@@ -155,9 +160,10 @@ export default function RewardsPage() {
             fetchRewards();
         } catch (error: any) {
             console.error("Save reward error:", error);
-            alert("Gagal menyimpan reward: " + (error.message || "Unknown error"));
+            alert("Gagal menyimpan: " + (error.message || "Error tidak diketahui"));
             showToast('error', error.message || "Gagal menyimpan reward.");
         } finally {
+            clearTimeout(timeoutId);
             setIsSubmitting(false);
         }
     };
