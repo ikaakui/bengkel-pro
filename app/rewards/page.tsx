@@ -97,45 +97,50 @@ export default function RewardsPage() {
 
     const handleSaveSettings = async () => {
         setIsSavingSettings(true);
-        const { error } = await supabase
-            .from("app_settings")
-            .upsert({ key: "points_per_rupiah", value: pointsPerRupiah.toString() }, { onConflict: 'key' });
-        
-        if (error) {
-            showToast('error', "Gagal menyimpan pengaturan.");
-        } else {
+        try {
+            const { error } = await supabase
+                .from("app_settings")
+                .upsert({ key: "points_per_rupiah", value: pointsPerRupiah.toString() }, { onConflict: 'key' });
+            
+            if (error) throw error;
             showToast('success', "Pengaturan poin berhasil diperbarui.");
+        } catch (error: any) {
+            console.error("Save settings error:", error);
+            showToast('error', error.message || "Gagal menyimpan pengaturan.");
+        } finally {
+            setIsSavingSettings(false);
         }
-        setIsSavingSettings(false);
     };
 
     const handleSaveReward = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
 
-        if (editingReward?.id) {
-            const { error } = await supabase
-                .from("rewards")
-                .update(editingReward)
-                .eq("id", editingReward.id);
-            if (error) showToast('error', error.message);
-            else {
+        try {
+            if (editingReward?.id) {
+                const { error } = await supabase
+                    .from("rewards")
+                    .update(editingReward)
+                    .eq("id", editingReward.id);
+                if (error) throw error;
                 showToast('success', "Reward berhasil diperbarui.");
                 setShowModal(false);
                 fetchRewards();
-            }
-        } else {
-            const { error } = await supabase
-                .from("rewards")
-                .insert([editingReward]);
-            if (error) showToast('error', error.message);
-            else {
+            } else {
+                const { error } = await supabase
+                    .from("rewards")
+                    .insert([editingReward]);
+                if (error) throw error;
                 showToast('success', "Reward baru berhasil ditambahkan.");
                 setShowModal(false);
                 fetchRewards();
             }
+        } catch (error: any) {
+            console.error("Save reward error:", error);
+            showToast('error', error.message || "Gagal menyimpan reward.");
+        } finally {
+            setIsSubmitting(false);
         }
-        setIsSubmitting(false);
     };
 
     const handleDeleteReward = async (id: string) => {
