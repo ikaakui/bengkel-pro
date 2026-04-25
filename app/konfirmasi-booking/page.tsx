@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import {
     Hash, Search, Loader2, CheckCircle2, User, Car,
-    Calendar, Phone, Zap, AlertCircle, ArrowRight, XCircle
+    Calendar, Phone, Zap, AlertCircle, ArrowRight, XCircle, Building2
 } from "lucide-react";
 import { createClient } from "@/lib/supabase-client";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -26,6 +26,30 @@ export default function KonfirmasiBookingPage() {
     const [error, setError] = useState("");
     const [confirming, setConfirming] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [branches, setBranches] = useState<any[]>([]);
+    const [selectedBranchId, setSelectedBranchId] = useState<string>("");
+
+    const { role } = useAuth();
+
+    // Fetch branches if branchId is missing
+    useEffect(() => {
+        const fetchBranches = async () => {
+            const { data } = await supabase.from("branches").select("*");
+            if (data) {
+                setBranches(data);
+                if (branchId) {
+                    setSelectedBranchId(branchId);
+                } else if (role === 'admin_bsd') {
+                    const bsd = data.find(b => b.name.includes('BSD'));
+                    if (bsd) setSelectedBranchId(bsd.id);
+                } else if (role === 'admin_depok') {
+                    const depok = data.find(b => b.name.includes('Depok'));
+                    if (depok) setSelectedBranchId(depok.id);
+                }
+            }
+        };
+        fetchBranches();
+    }, [branchId, role, supabase]);
 
     const handleSearch = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -70,6 +94,13 @@ export default function KonfirmasiBookingPage() {
 
     const handleConfirm = async () => {
         if (!foundBooking) return;
+        
+        const finalBranchId = branchId || selectedBranchId;
+        if (!finalBranchId) {
+            alert("Harap pilih cabang terlebih dahulu.");
+            return;
+        }
+
         setConfirming(true);
 
         try {
@@ -77,7 +108,7 @@ export default function KonfirmasiBookingPage() {
                 .from("bookings")
                 .update({
                     status: 'processing',
-                    branch_id: branchId,
+                    branch_id: finalBranchId,
                     updated_at: new Date().toISOString()
                 })
                 .eq("id", foundBooking.id);
@@ -217,6 +248,26 @@ export default function KonfirmasiBookingPage() {
                                                 </div>
                                             )}
                                         </div>
+
+                                        {/* Branch Selection if missing from session */}
+                                        {!branchId && branches.length > 0 && (
+                                            <div className="space-y-2 bg-slate-50 p-6 rounded-2xl border-2 border-dashed border-slate-200">
+                                                <label className="text-[10px] font-black text-amber-600 uppercase tracking-widest flex items-center gap-1">
+                                                    <Building2 size={12} /> Konfirmasi Cabang Pengerjaan *
+                                                </label>
+                                                <select 
+                                                    className="w-full h-14 bg-white border-2 border-slate-100 rounded-xl px-4 font-bold text-slate-900 focus:border-indigo-400 outline-none transition-all"
+                                                    value={selectedBranchId}
+                                                    onChange={(e) => setSelectedBranchId(e.target.value)}
+                                                >
+                                                    <option value="">Pilih Cabang</option>
+                                                    {branches.map(b => (
+                                                        <option key={b.id} value={b.id}>{b.name}</option>
+                                                    ))}
+                                                </select>
+                                                <p className="text-[10px] text-slate-400 font-medium italic">* Sesi cabang Anda tidak terdeteksi otomatis, harap pilih manual.</p>
+                                            </div>
+                                        )}
 
                                         <Button
                                             onClick={handleConfirm}

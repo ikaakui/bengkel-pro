@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import {
     Search, Loader2, Gift, User, Star, CheckCircle2,
-    Coins, ArrowRight, XCircle, Phone, Sparkles
+    Coins, ArrowRight, XCircle, Phone, Sparkles, Building2
 } from "lucide-react";
 import { createClient } from "@/lib/supabase-client";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -43,6 +43,30 @@ export default function RedeemPoinPage() {
     const [isRedeeming, setIsRedeeming] = useState(false);
     const [redeemSuccess, setRedeemSuccess] = useState(false);
     const [generatedVoucher, setGeneratedVoucher] = useState("");
+    const [branches, setBranches] = useState<any[]>([]);
+    const [selectedBranchId, setSelectedBranchId] = useState<string>("");
+
+    const { role } = useAuth();
+
+    // Fetch branches if branchId is missing
+    useEffect(() => {
+        const fetchBranches = async () => {
+            const { data } = await supabase.from("branches").select("*");
+            if (data) {
+                setBranches(data);
+                if (branchId) {
+                    setSelectedBranchId(branchId);
+                } else if (role === 'admin_bsd') {
+                    const bsd = data.find(b => b.name.includes('BSD'));
+                    if (bsd) setSelectedBranchId(bsd.id);
+                } else if (role === 'admin_depok') {
+                    const depok = data.find(b => b.name.includes('Depok'));
+                    if (depok) setSelectedBranchId(depok.id);
+                }
+            }
+        };
+        fetchBranches();
+    }, [branchId, role, supabase]);
 
     // Search members
     useEffect(() => {
@@ -117,6 +141,12 @@ export default function RedeemPoinPage() {
 
         if (!confirm(`Konfirmasi tukar ${selectedReward.points_required} poin untuk "${selectedReward.name}"?`)) return;
 
+        const finalBranchId = branchId || selectedBranchId;
+        if (!finalBranchId) {
+            alert("Harap pilih cabang terlebih dahulu.");
+            return;
+        }
+
         setIsRedeeming(true);
         try {
             const voucherCode = generateVoucherCode();
@@ -129,7 +159,8 @@ export default function RedeemPoinPage() {
                     reward_id: selectedReward.id,
                     reward_name: selectedReward.name,
                     voucher_code: voucherCode,
-                    status: 'active'
+                    status: 'active',
+                    branch_id: finalBranchId
                 });
             if (vErr) throw vErr;
 
@@ -142,11 +173,12 @@ export default function RedeemPoinPage() {
             if (pErr) throw pErr;
 
             // 3. Log point transaction
+            const finalBranchName = branchName || branches.find(b => b.id === finalBranchId)?.name || "Cabang";
             await supabase.from("point_transactions").insert({
                 member_id: selectedMember.id,
                 points: -selectedReward.points_required,
                 type: 'redeem',
-                description: `Admin Redeem: ${selectedReward.name} (${voucherCode}) di ${branchName}`
+                description: `Admin Redeem: ${selectedReward.name} (${voucherCode}) di ${finalBranchName}`
             });
 
             setSelectedMember({ ...selectedMember, total_points: newPoints });
@@ -326,6 +358,27 @@ export default function RedeemPoinPage() {
                                                 <p className="text-[10px] font-black text-amber-400 uppercase">Poin</p>
                                             </div>
                                         </div>
+                                        
+                                        {/* Branch Selection if missing from session */}
+                                        {!branchId && branches.length > 0 && (
+                                            <div className="space-y-2 bg-amber-50/50 p-6 rounded-2xl border-2 border-dashed border-amber-100 mb-4">
+                                                <label className="text-[10px] font-black text-amber-600 uppercase tracking-widest flex items-center gap-1">
+                                                    <Building2 size={12} /> Cabang Penukaran *
+                                                </label>
+                                                <select 
+                                                    className="w-full h-14 bg-white border-2 border-amber-100 rounded-xl px-4 font-bold text-slate-900 focus:border-amber-400 outline-none transition-all"
+                                                    value={selectedBranchId}
+                                                    onChange={(e) => setSelectedBranchId(e.target.value)}
+                                                >
+                                                    <option value="">Pilih Cabang</option>
+                                                    {branches.map(b => (
+                                                        <option key={b.id} value={b.id}>{b.name}</option>
+                                                    ))}
+                                                </select>
+                                                <p className="text-[10px] text-amber-500 font-medium italic">* Pilih cabang tempat member melakukan penukaran fisik.</p>
+                                            </div>
+                                        )}
+
                                         <div className="text-xs text-amber-700 bg-amber-100 p-3 rounded-xl mb-4 font-medium">
                                             Sisa poin member setelah penukaran: <strong>{memberPoints - selectedReward.points_required} poin</strong>
                                         </div>

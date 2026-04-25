@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import {
     User, Phone, Car, AppWindow, Loader2, CheckCircle2,
-    CalendarClock, ArrowRight, Wrench, Search, Users2, Hash
+    CalendarClock, ArrowRight, Wrench, Search, Users2, Hash, Building2
 } from "lucide-react";
 import { createClient } from "@/lib/supabase-client";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -27,12 +27,35 @@ export default function WalkInPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [success, setSuccess] = useState(false);
     const [createdBookingId, setCreatedBookingId] = useState<string | null>(null);
+    const [branches, setBranches] = useState<any[]>([]);
+    const [selectedBranchId, setSelectedBranchId] = useState<string>("");
 
     // Member search
     const [memberSearch, setMemberSearch] = useState("");
     const [memberResults, setMemberResults] = useState<any[]>([]);
     const [isSearchingMember, setIsSearchingMember] = useState(false);
     const [selectedMember, setSelectedMember] = useState<any>(null);
+
+    // Fetch branches if branchId is missing
+    useEffect(() => {
+        const fetchBranches = async () => {
+            const { data } = await supabase.from("branches").select("*");
+            if (data) {
+                setBranches(data);
+                // Auto-select if branchId exists in auth
+                if (branchId) {
+                    setSelectedBranchId(branchId);
+                } else if (role === 'admin_bsd') {
+                    const bsd = data.find(b => b.name.includes('BSD'));
+                    if (bsd) setSelectedBranchId(bsd.id);
+                } else if (role === 'admin_depok') {
+                    const depok = data.find(b => b.name.includes('Depok'));
+                    if (depok) setSelectedBranchId(depok.id);
+                }
+            }
+        };
+        fetchBranches();
+    }, [branchId, role, supabase]);
 
     // Search for existing member
     useEffect(() => {
@@ -54,7 +77,7 @@ export default function WalkInPage() {
         };
         const timer = setTimeout(searchMember, 400);
         return () => clearTimeout(timer);
-    }, [memberSearch]);
+    }, [memberSearch, supabase]);
 
     const handleSelectMember = (member: any) => {
         setSelectedMember(member);
@@ -69,8 +92,10 @@ export default function WalkInPage() {
             alert("Harap lengkapi semua data!");
             return;
         }
-        if (!branchId) {
-            alert("Sesi cabang tidak valid. Silakan login ulang.");
+
+        const finalBranchId = branchId || selectedBranchId;
+        if (!finalBranchId) {
+            alert("Harap pilih cabang terlebih dahulu.");
             return;
         }
 
@@ -86,7 +111,7 @@ export default function WalkInPage() {
                     license_plate: licensePlate.toUpperCase(),
                     service_date: new Date().toISOString().split('T')[0],
                     service_time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-                    branch_id: branchId,
+                    branch_id: finalBranchId,
                     member_id: selectedMember?.id || null,
                     booking_type: 'direct',
                     status: 'processing',
@@ -230,8 +255,26 @@ export default function WalkInPage() {
                                         )}
                                     </div>
 
-                                    <CardContent className="p-8 space-y-6">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                            {/* Branch Selection if missing */}
+                                            {!branchId && branches.length > 0 && (
+                                                <div className="col-span-full space-y-2">
+                                                    <label className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1">
+                                                        <Building2 size={10} /> Cabang *
+                                                    </label>
+                                                    <select 
+                                                        className="w-full h-14 bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 font-bold text-slate-900 focus:border-blue-400 outline-none transition-all"
+                                                        value={selectedBranchId}
+                                                        onChange={(e) => setSelectedBranchId(e.target.value)}
+                                                    >
+                                                        <option value="">Pilih Cabang</option>
+                                                        {branches.map(b => (
+                                                            <option key={b.id} value={b.id}>{b.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+
                                             <div className="space-y-2">
                                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nama Pelanggan *</label>
                                                 <div className="relative">
