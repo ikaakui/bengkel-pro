@@ -32,9 +32,41 @@ export default function ComplainPage() {
 
     const [rating, setRating] = useState<number>(0);
     const [subject, setSubject] = useState("");
-    const [message, setMessage] = useState("");
-    const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [ownerWA, setOwnerWA] = useState('6281234567890');
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            const { data } = await supabase
+                .from("app_settings")
+                .select("*")
+                .eq("key", "owner_wa_number")
+                .maybeSingle();
+            if (data?.value) setOwnerWA(data.value);
+        };
+        fetchSettings();
+    }, [supabase]);
+
+    const sendWhatsApp = (r: number, s: string, m: string) => {
+        const labels: Record<number, string> = {
+            1: 'Kecewa',
+            2: 'Biasa',
+            3: 'Puas',
+            4: 'Luar Biasa',
+            5: 'Sangat Rekomended'
+        };
+        const stars = '⭐'.repeat(r);
+        const label = labels[r] || '';
+        
+        const text = `*MASUKAN & KOMPLAIN BARU* 📣%0A%0A` +
+            `*Nama Member:* ${profile?.full_name || 'Member'}%0A` +
+            `*Rating:* ${stars} (${label})%0A` +
+            `*Subjek:* ${s}%0A%0A` +
+            `*Detail Pesan:*%0A"${m}"%0A%0A` +
+            `_Dikirim otomatis via Aplikasi Bengkel Pro_`;
+
+        window.open(`https://wa.me/${ownerWA}?text=${text}`, '_blank');
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -59,6 +91,10 @@ export default function ComplainPage() {
             }]);
 
             if (error) throw error;
+            
+            // Send WhatsApp
+            sendWhatsApp(rating, subject, message);
+            
             setSubmitted(true);
         } catch (err: any) {
             alert("Gagal mengirim masukan: " + err.message);
