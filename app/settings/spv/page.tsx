@@ -72,21 +72,27 @@ export default function SpvSettingsPage() {
         try {
             const { error: updateError } = await supabase
                 .from("app_settings")
-                .upsert(
-                    { key: "owner_wa_number", value: cleaned, updated_at: new Date().toISOString() },
-                    { onConflict: "key" }
-                );
+                .upsert({ 
+                    key: "owner_wa_number", 
+                    value: cleaned, 
+                    updated_at: new Date().toISOString() 
+                });
 
             if (updateError) {
-                setError("Gagal menyimpan. " + updateError.message);
+                console.error("Upsert error:", updateError);
+                setError("Gagal menyimpan: " + updateError.message);
+                alert("Gagal menyimpan: " + updateError.message);
             } else {
                 setOwnerWA(cleaned);
                 setOriginalOwnerWA(cleaned);
                 setSuccess("Nomor WhatsApp berhasil disimpan!");
+                alert("Berhasil! Nomor WhatsApp tujuan laporan telah diperbarui.");
                 setTimeout(() => setSuccess(""), 3000);
             }
         } catch (err: any) {
+            console.error("System error:", err);
             setError("Kesalahan sistem: " + err.message);
+            alert("Terjadi kesalahan sistem. Silakan coba lagi.");
         } finally {
             setSaving(false);
         }
