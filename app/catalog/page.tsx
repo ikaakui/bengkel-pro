@@ -257,7 +257,7 @@ export default function CatalogPage() {
 
     return (
         <DashboardLayout>
-            <RoleGuard allowedRoles={["owner", "admin"]}>
+            <RoleGuard allowedRoles={["owner", "admin", "admin_bsd", "admin_depok"]}>
                 <div className="space-y-8 pb-10">
                     {/* Header Section */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">

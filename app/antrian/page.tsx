@@ -139,7 +139,7 @@ export default function AntrianServicePage() {
 
     return (
         <DashboardLayout>
-            <RoleGuard allowedRoles={["owner", "admin"]}>
+            <RoleGuard allowedRoles={["owner", "admin", "admin_bsd", "admin_depok"]}>
                 <div className="space-y-6">
                     {/* Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

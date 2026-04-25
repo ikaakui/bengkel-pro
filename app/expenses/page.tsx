@@ -428,7 +428,7 @@ export default function ExpensesPage() {
                                                     value={formData.branch_id}
                                                     onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })}
                                                     required={role === 'owner'}
-                                                    disabled={role === 'admin'}
+                                                    disabled={role !== 'owner'}
                                                 >
                                                     <option value="">-- Pilih Cabang --</option>
                                                     {branches.map(br => (

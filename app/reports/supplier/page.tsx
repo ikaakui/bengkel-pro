@@ -78,11 +78,14 @@ export default function SupplierRecapPage() {
                 if (sData?.value) setOwnerWA(sData.value);
             } catch (_) { /* setting may not exist yet */ }
 
-            const { data: eData } = await supabase
-                .from("expenses")
-                .select("*")
-                .eq("category", "stok")
-                .order("expense_date", { ascending: false });
+            let query = supabase.from("expenses").select("*").eq("category", "stok");
+            
+            // Branch Isolation: non-owner roles only see their branch data
+            if (role !== 'owner' && profile?.branch_id) {
+                query = query.eq("branch_id", profile.branch_id);
+            }
+
+            const { data: eData } = await query.order("expense_date", { ascending: false });
 
             if (eData) {
                 const flattened: any[] = [];
@@ -327,7 +330,7 @@ export default function SupplierRecapPage() {
 
     return (
         <DashboardLayout>
-            <RoleGuard allowedRoles={["owner", "spv"]}>
+            <RoleGuard allowedRoles={["owner", "spv", "admin", "admin_depok", "admin_bsd"]}>
                 <div className="space-y-8 pb-20">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -400,7 +403,7 @@ export default function SupplierRecapPage() {
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Cabang</label>
-                                            <select className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-5 text-sm font-bold text-slate-700" value={formData.branch_id} onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })} required={role === 'owner'} disabled={role === 'admin'}>
+                                            <select className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-5 text-sm font-bold text-slate-700" value={formData.branch_id} onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })} required={role === 'owner'} disabled={role !== 'owner'}>
                                                 <option value="">-- Pilih Cabang --</option>
                                                 {branches.map(br => <option key={br.id} value={br.id}>{br.name}</option>)}
                                             </select>

@@ -345,7 +345,7 @@ export default function ReportsPage() {
 
     return (
         <DashboardLayout>
-            <RoleGuard allowedRoles={["owner", "admin", "spv"]}>
+            <RoleGuard allowedRoles={["owner", "admin", "spv", "admin_bsd", "admin_depok"]}>
                 <div className="space-y-8 pb-10 print:space-y-4">
                     {/* Header */}
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">

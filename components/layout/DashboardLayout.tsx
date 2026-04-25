@@ -66,7 +66,7 @@ const navigation = [
     { name: 'Booking Service', href: '/bookings', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Operasional' },
     { name: 'Kelola Reward', href: '/rewards', icon: Gift, roles: ['owner', 'spv'], group: 'Manajemen' },
     { name: 'Laporan Audit', href: '/reports', icon: ClipboardList, roles: ['owner', 'spv'], group: 'Keuangan' },
-    { name: 'Rekap Supplier', href: '/reports/supplier', icon: Package, roles: ['owner', 'spv'], group: 'Keuangan' },
+    { name: 'Rekap Supplier', href: '/reports/supplier', icon: Package, roles: ['owner', 'spv', 'admin', 'admin_depok', 'admin_bsd'], group: 'Keuangan' },
     { name: 'Maintenance Alat', href: '/maintenance', icon: Wrench, roles: ['owner', 'spv'], group: 'Manajemen' },
     { name: 'Katalog', href: '/catalog', icon: Package, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd'], group: 'Manajemen' },
     { name: 'Pengeluaran', href: '/expenses', icon: TrendingDown, roles: ['owner', 'admin', 'admin_depok', 'admin_bsd', 'spv'], group: 'Keuangan' },

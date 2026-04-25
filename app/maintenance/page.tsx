@@ -163,7 +163,7 @@ export default function MaintenancePage() {
 
     return (
         <DashboardLayout>
-            <RoleGuard allowedRoles={['owner', 'spv', 'admin']}>
+            <RoleGuard allowedRoles={['owner', 'spv', 'admin', 'admin_bsd', 'admin_depok']}>
                 <div className="space-y-10 pb-20">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
                         <div>
@@ -402,7 +402,7 @@ export default function MaintenancePage() {
                                                             value={formData.branch_id}
                                                             onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })}
                                                             required={role === 'owner'}
-                                                            disabled={role === 'admin'}
+                                                            disabled={role !== 'owner'}
                                                         >
                                                             <option value="">-- Pilih Cabang --</option>
                                                             {branches.map(br => (

@@ -625,7 +625,7 @@ function POSContent() {
 
     return (
         <DashboardLayout>
-            <RoleGuard allowedRoles={["owner", "admin"]}>
+            <RoleGuard allowedRoles={["owner", "admin", "admin_bsd", "admin_depok"]}>
                 <div className="flex flex-col gap-4 lg:gap-6">
                     {/* Draft/Edit Mode Banner */}
                     {currentDraftId && (
