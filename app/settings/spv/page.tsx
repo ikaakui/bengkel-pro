@@ -30,18 +30,23 @@ export default function SpvSettingsPage() {
     const supabase = createClient();
 
     const fetchSettings = async () => {
-        setLoading(true);
-        const { data } = await supabase
-            .from("app_settings")
-            .select("*")
-            .eq("key", "owner_wa_number")
-            .single();
+        try {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from("app_settings")
+                .select("*")
+                .eq("key", "owner_wa_number")
+                .maybeSingle(); // Use maybeSingle to avoid error on 0 rows
 
-        if (data?.value) {
-            setOwnerWA(data.value);
-            setOriginalOwnerWA(data.value);
+            if (data?.value) {
+                setOwnerWA(data.value);
+                setOriginalOwnerWA(data.value);
+            }
+        } catch (err) {
+            console.error("Error fetching settings:", err);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     useEffect(() => {
@@ -64,30 +69,34 @@ export default function SpvSettingsPage() {
         setError("");
         setSuccess("");
 
-        const { error: updateError } = await supabase
-            .from("app_settings")
-            .upsert(
-                { key: "owner_wa_number", value: cleaned, updated_at: new Date().toISOString() },
-                { onConflict: "key" }
-            );
+        try {
+            const { error: updateError } = await supabase
+                .from("app_settings")
+                .upsert(
+                    { key: "owner_wa_number", value: cleaned, updated_at: new Date().toISOString() },
+                    { onConflict: "key" }
+                );
 
-        if (updateError) {
-            setError("Gagal menyimpan. " + updateError.message);
-        } else {
-            setOwnerWA(cleaned);
-            setOriginalOwnerWA(cleaned);
-            setSuccess("Nomor WhatsApp berhasil disimpan!");
-            setTimeout(() => setSuccess(""), 3000);
+            if (updateError) {
+                setError("Gagal menyimpan. " + updateError.message);
+            } else {
+                setOwnerWA(cleaned);
+                setOriginalOwnerWA(cleaned);
+                setSuccess("Nomor WhatsApp berhasil disimpan!");
+                setTimeout(() => setSuccess(""), 3000);
+            }
+        } catch (err: any) {
+            setError("Kesalahan sistem: " + err.message);
+        } finally {
+            setSaving(false);
         }
-
-        setSaving(false);
     };
 
     const hasChanges = ownerWA !== originalOwnerWA;
 
     return (
         <DashboardLayout>
-            <RoleGuard allowedRoles={["spv", "owner", "admin"]}>
+            <RoleGuard allowedRoles={["spv", "owner", "admin", "admin_bsd", "admin_depok"]}>
                 <div className="space-y-8 pb-10 max-w-2xl">
                     <div>
                         <h2 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
