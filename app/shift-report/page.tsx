@@ -162,24 +162,14 @@ export default function ShiftReportPage() {
                                 <DollarSign size={200} className="absolute -right-10 -bottom-10 text-white/10 transform rotate-12" />
                             </Card>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <Card className="p-6 border-none shadow-xl bg-white flex items-center gap-4 hover:shadow-2xl transition-all rounded-3xl">
                                     <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl">
                                         <Wallet size={28} />
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Uang Tunai (Cash)</p>
-                                        <p className="text-xl font-black text-slate-900 tracking-tight">Rp {stats.cash.toLocaleString('id-ID')}</p>
-                                    </div>
-                                </Card>
-
-                                <Card className="p-6 border-none shadow-xl bg-white flex items-center gap-4 hover:shadow-2xl transition-all rounded-3xl">
-                                    <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl">
-                                        <CreditCard size={28} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Transfer Bank</p>
-                                        <p className="text-xl font-black text-slate-900 tracking-tight">Rp {stats.transfer.toLocaleString('id-ID')}</p>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Uang Masuk</p>
+                                        <p className="text-xl font-black text-slate-900 tracking-tight">Rp {stats.totalRevenue.toLocaleString('id-ID')}</p>
                                     </div>
                                 </Card>
 
