@@ -62,7 +62,7 @@ export default function AntrianServicePage() {
     const [filter, setFilter] = useState<FilterStatus>("all");
     const [searchTerm, setSearchTerm] = useState("");
     const router = useRouter();
-    const { branchId } = useAuth();
+    const { branchId, role } = useAuth();
     const supabase = createClient();
 
     const fetchQueue = async () => {
@@ -79,8 +79,23 @@ export default function AntrianServicePage() {
                 .order("created_at", { ascending: false })
                 .limit(100);
 
-            if (branchId) {
-                query = query.eq("branch_id", branchId);
+            let activeBranchId = branchId;
+            
+            // Fallback: Jika branchId null tapi role spesifik cabang, coba cari ID cabang dari database
+            if (!activeBranchId && role) {
+                if (role === 'admin_bsd' || role === 'admin_depok') {
+                    const searchName = role === 'admin_bsd' ? 'BSD' : 'Depok';
+                    const { data: bData } = await supabase.from("branches").select("id").ilike("name", `%${searchName}%`).single();
+                    if (bData) activeBranchId = bData.id;
+                }
+            }
+
+            if (activeBranchId) {
+                query = query.eq("branch_id", activeBranchId);
+            } else if (role !== 'owner' && role !== 'admin' && role !== 'spv') {
+                // Jika bukan owner/superadmin dan tetap tidak ada branchId, 
+                // batasi ke data kosong agar tidak melihat semua data (leaking)
+                query = query.eq("branch_id", "00000000-0000-0000-0000-000000000000");
             }
 
             // Tambahkan timeout 15 detik agar tidak stuck loading selamanya

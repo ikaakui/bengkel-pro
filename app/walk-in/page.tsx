@@ -88,6 +88,8 @@ export default function WalkInPage() {
     };
 
     const handleSubmit = async () => {
+        if (isSaving) return;
+
         if (!customerName || !customerPhone || !carModel || !licensePlate) {
             alert("Harap lengkapi semua data!");
             return;
@@ -101,6 +103,22 @@ export default function WalkInPage() {
 
         setIsSaving(true);
         try {
+            // Cek apakah sudah ada antrian dengan plat nomor ini yang masih aktif hari ini
+            const today = new Date().toISOString().split('T')[0];
+            const { data: existing } = await supabase
+                .from("bookings")
+                .select("id")
+                .eq("license_plate", licensePlate.toUpperCase())
+                .eq("service_date", today)
+                .in("status", ["pending", "processing"])
+                .maybeSingle();
+
+            if (existing) {
+                alert("Kendaraan dengan plat nomor ini sudah ada dalam antrian!");
+                setIsSaving(false);
+                return;
+            }
+
             // Create booking entry for walk-in
             const { data: booking, error: bookingError } = await supabase
                 .from("bookings")
