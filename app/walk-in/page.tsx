@@ -30,6 +30,10 @@ export default function WalkInPage() {
     const [branches, setBranches] = useState<any[]>([]);
     const [selectedBranchId, setSelectedBranchId] = useState<string>("");
 
+    // Duplicate check
+    const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+    const [isConfirmedDuplicate, setIsConfirmedDuplicate] = useState(false);
+
     // Member search
     const [memberSearch, setMemberSearch] = useState("");
     const [memberResults, setMemberResults] = useState<any[]>([]);
@@ -104,19 +108,21 @@ export default function WalkInPage() {
         setIsSaving(true);
         try {
             // Cek apakah sudah ada antrian dengan plat nomor ini yang masih aktif hari ini
-            const today = new Date().toISOString().split('T')[0];
-            const { data: existing } = await supabase
-                .from("bookings")
-                .select("id")
-                .eq("license_plate", licensePlate.toUpperCase())
-                .eq("service_date", today)
-                .in("status", ["pending", "processing"])
-                .maybeSingle();
+            if (!isConfirmedDuplicate) {
+                const today = new Date().toISOString().split('T')[0];
+                const { data: existing } = await supabase
+                    .from("bookings")
+                    .select("id, customer_name, car_model")
+                    .eq("license_plate", licensePlate.toUpperCase())
+                    .eq("service_date", today)
+                    .in("status", ["pending", "processing"])
+                    .maybeSingle();
 
-            if (existing) {
-                alert("Kendaraan dengan plat nomor ini sudah ada dalam antrian!");
-                setIsSaving(false);
-                return;
+                if (existing) {
+                    setShowDuplicateModal(true);
+                    setIsSaving(false);
+                    return;
+                }
             }
 
             // Create booking entry for walk-in
@@ -145,8 +151,21 @@ export default function WalkInPage() {
             alert("Gagal mendaftarkan: " + (err?.message || "Unknown error"));
         } finally {
             setIsSaving(false);
+            setIsConfirmedDuplicate(false);
         }
     };
+
+    const handleConfirmDuplicate = () => {
+        setShowDuplicateModal(false);
+        setIsConfirmedDuplicate(true);
+    };
+
+    // Trigger submit after confirmation
+    useEffect(() => {
+        if (isConfirmedDuplicate) {
+            handleSubmit();
+        }
+    }, [isConfirmedDuplicate]);
 
     const handleReset = () => {
         setCustomerName("");
@@ -360,6 +379,45 @@ export default function WalkInPage() {
                         )}
                     </AnimatePresence>
                 </div>
+
+                {/* Duplicate Confirmation Modal */}
+                <AnimatePresence>
+                    {showDuplicateModal && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                                className="bg-white rounded-[2.5rem] shadow-2xl max-w-md w-full overflow-hidden border border-slate-100"
+                            >
+                                <div className="p-8 text-center">
+                                    <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6 text-amber-500">
+                                        <Hash size={40} />
+                                    </div>
+                                    <h3 className="text-2xl font-black text-slate-900 leading-tight">Plat Nomor Terdeteksi Ganda</h3>
+                                    <p className="text-slate-500 mt-4 font-medium px-4">
+                                        Kendaraan dengan plat <span className="text-slate-900 font-black">"{licensePlate.toUpperCase()}"</span> sudah ada dalam antrian aktif hari ini.
+                                    </p>
+                                    <div className="mt-8 space-y-3">
+                                        <Button 
+                                            onClick={handleConfirmDuplicate}
+                                            className="w-full h-14 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-amber-200"
+                                        >
+                                            Tetap Daftarkan
+                                        </Button>
+                                        <Button 
+                                            variant="outline"
+                                            onClick={() => setShowDuplicateModal(false)}
+                                            className="w-full h-14 rounded-2xl border-2 border-slate-100 text-slate-500 font-black uppercase tracking-widest text-xs"
+                                        >
+                                            Batalkan
+                                        </Button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
             </RoleGuard>
         </DashboardLayout>
     );
