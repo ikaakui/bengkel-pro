@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import RoleGuard from "@/components/auth/RoleGuard";
 import { Card } from "@/components/ui/Card";
@@ -22,7 +22,6 @@ export default function ShiftReportPage() {
     });
 
     const supabase = createClient();
-    const abortControllerRef = useRef<AbortController | null>(null);
 
     const handleExportExcel = async () => {
         if (!branchId) return;
@@ -95,52 +94,44 @@ export default function ShiftReportPage() {
 
     useEffect(() => {
         const fetchShiftData = async () => {
-            if (!branchId || !profile) return;
-
-            if (abortControllerRef.current) abortControllerRef.current.abort();
-            const controller = new AbortController();
-            abortControllerRef.current = controller;
-
+            if (!branchId || !profile) {
+                // If it's an owner/spv, they might not have a branchId in profile
+                // but the page still needs to stop loading.
+                setLoading(false);
+                return;
+            }
+            
             setLoading(true);
-
-            // Get transactions for today, in this branch
-            const today = new Date().toISOString().split('T')[0];
-
             try {
+                // Get transactions for today, in this branch
+                const today = new Date().toISOString().split('T')[0];
+
                 const { data, error } = await supabase
                     .from("transactions")
                     .select("total_amount, payment_method, status")
                     .eq("branch_id", branchId)
                     .gte("created_at", today)
-                    .eq("status", "Paid")
-                    .abortSignal(controller.signal);
+                    .eq("status", "Paid");
 
-                if (error) throw error;
+                if (data) {
+                    const cash = data.filter(t => t.payment_method === 'Cash').reduce((a, b) => a + Number(b.total_amount), 0);
+                    const transfer = data.filter(t => t.payment_method === 'Transfer').reduce((a, b) => a + Number(b.total_amount), 0);
+                    const qris = data.filter(t => t.payment_method === 'QRIS').reduce((a, b) => a + Number(b.total_amount), 0);
 
-            if (data) {
-                const cash = data.filter(t => t.payment_method === 'Cash').reduce((a, b) => a + Number(b.total_amount), 0);
-                const transfer = data.filter(t => t.payment_method === 'Transfer').reduce((a, b) => a + Number(b.total_amount), 0);
-                const qris = data.filter(t => t.payment_method === 'QRIS').reduce((a, b) => a + Number(b.total_amount), 0);
-
-                setStats({
-                    totalTransactions: data.length,
-                    totalRevenue: data.reduce((a, b) => a + Number(b.total_amount), 0),
-                    cash, transfer, qris
-                });
-            }
-            } catch (err: any) {
-                if (err.name === 'AbortError') return;
-                console.error("Shift Data Fetch Error:", err);
+                    setStats({
+                        totalTransactions: data.length,
+                        totalRevenue: data.reduce((a, b) => a + Number(b.total_amount), 0),
+                        cash, transfer, qris
+                    });
+                }
+            } catch (err) {
+                console.error("Fetch shift data error:", err);
             } finally {
-                if (abortControllerRef.current === controller) setLoading(false);
+                setLoading(false);
             }
         };
 
         fetchShiftData();
-
-        return () => {
-            if (abortControllerRef.current) abortControllerRef.current.abort();
-        };
     }, [branchId, profile, supabase]);
 
     return (

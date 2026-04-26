@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import RoleGuard from "@/components/auth/RoleGuard";
@@ -30,7 +30,6 @@ export default function KonfirmasiBookingPage() {
     const [selectedBranchId, setSelectedBranchId] = useState<string>("");
     const [pendingBookings, setPendingBookings] = useState<any[]>([]);
     const [fetchingPending, setFetchingPending] = useState(false);
-    const abortControllerRef = useRef<AbortController | null>(null);
 
     // Filtered bookings based on search input
     const filteredBookings = pendingBookings.filter(b => {
@@ -55,10 +54,6 @@ export default function KonfirmasiBookingPage() {
         const finalBranchId = branchId || selectedBranchId;
         if (!finalBranchId) return;
 
-        if (abortControllerRef.current) abortControllerRef.current.abort();
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
-
         setFetchingPending(true);
         try {
             const fetchPromise = supabase
@@ -68,8 +63,7 @@ export default function KonfirmasiBookingPage() {
                 .eq("status", "pending")
                 .eq("booking_type", "online")
                 .order("service_date", { ascending: true })
-                .order("service_time", { ascending: true })
-                .abortSignal(controller.signal);
+                .order("service_time", { ascending: true });
             
             const timeoutPromise = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error("Booking fetch timeout (15s)")), 15000)
@@ -80,10 +74,9 @@ export default function KonfirmasiBookingPage() {
             if (fetchErr) throw fetchErr;
             if (data) setPendingBookings(data);
         } catch (err: any) {
-            if (err.name === 'AbortError') return;
             console.error("Error fetching pending bookings:", err?.message || err);
         } finally {
-            if (abortControllerRef.current === controller) setFetchingPending(false);
+            setFetchingPending(false);
         }
     };
 
@@ -128,7 +121,6 @@ export default function KonfirmasiBookingPage() {
 
         return () => {
             supabase.removeChannel(channel);
-            if (abortControllerRef.current) abortControllerRef.current.abort();
         };
     }, [selectedBranchId, branchId, supabase]);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import RoleGuard from "@/components/auth/RoleGuard";
@@ -66,11 +66,17 @@ export default function AntrianServicePage() {
     const supabase = createClient();
 
     const [resolvedBranchId, setResolvedBranchId] = useState<string | null>(null);
-    const abortControllerRef = useRef<AbortController | null>(null);
 
     // Pre-resolve branch ID once, instead of looking it up inside every fetchQueue call
     useEffect(() => {
         const resolveBranch = async () => {
+            if (!role) {
+                // If role is missing, we can't resolve branch, but we shouldn't
+                // necessarily keep loading if RoleGuard is already done.
+                // However, usually RoleGuard handles the wait.
+                return;
+            }
+
             if (branchId) {
                 setResolvedBranchId(branchId);
                 return;
@@ -80,25 +86,24 @@ export default function AntrianServicePage() {
                 const searchName = role === 'admin_bsd' ? 'BSD' : 'Depok';
                 try {
                     const { data: bData } = await supabase.from("branches").select("id").ilike("name", `%${searchName}%`).single();
-                    if (bData) setResolvedBranchId(bData.id);
+                    if (bData) {
+                        setResolvedBranchId(bData.id);
+                    } else {
+                        setResolvedBranchId(''); // Fallback to show all if branch not found
+                    }
                 } catch (err) {
                     console.error("Branch resolve error:", err);
+                    setResolvedBranchId('');
                 }
             } else {
                 // Owner/admin/spv — no branch filter needed, set to empty string to signal "show all"
                 setResolvedBranchId('');
             }
         };
-        if (role) resolveBranch();
+        resolveBranch();
     }, [branchId, role]);
 
     const fetchQueue = async () => {
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-        }
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
-
         setLoading(true);
         try {
             let query = supabase
@@ -110,8 +115,7 @@ export default function AntrianServicePage() {
                 `)
                 .in("status", ["Draft", "In Progress", "Paid"])
                 .order("created_at", { ascending: false })
-                .limit(100)
-                .abortSignal(controller.signal);
+                .limit(100);
 
             if (resolvedBranchId) {
                 query = query.eq("branch_id", resolvedBranchId);
@@ -133,12 +137,9 @@ export default function AntrianServicePage() {
                 setItems(data as unknown as QueueItem[]);
             }
         } catch (err: any) {
-            if (err.name === 'AbortError') return;
             console.error("Fetch Queue Error:", err);
         } finally {
-            if (abortControllerRef.current === controller) {
-                setLoading(false);
-            }
+            setLoading(false);
         }
     };
 
@@ -146,11 +147,6 @@ export default function AntrianServicePage() {
         if (resolvedBranchId !== null) {
             fetchQueue();
         }
-        return () => {
-            if (abortControllerRef.current) {
-                abortControllerRef.current.abort();
-            }
-        };
     }, [resolvedBranchId]);
 
     const filteredItems = items.filter(item => {

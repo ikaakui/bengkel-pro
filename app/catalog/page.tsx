@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import RoleGuard from "@/components/auth/RoleGuard";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
@@ -124,13 +124,8 @@ export default function CatalogPage() {
     };
 
     const supabase = createClient();
-    const abortControllerRef = useRef<AbortController | null>(null);
 
     const fetchCatalog = async () => {
-        if (abortControllerRef.current) abortControllerRef.current.abort();
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
-
         setLoading(true);
         try {
             let query = supabase
@@ -143,7 +138,7 @@ export default function CatalogPage() {
             // 2. Owner/SPV: Show everything
             if (profile?.branch_id) {
                 query = query.or(`branch_id.eq.${profile.branch_id},branch_id.is.null`);
-            } else if (role !== 'owner' && role !== 'spv') {
+            } else if (role && !['owner', 'spv'].includes(role)) {
                 // Safety: if it's a branch admin but branch_id is somehow missing from profile, 
                 // don't show anything to prevent leakage, until profile is fully ready.
                 if (!profile) {
@@ -152,7 +147,7 @@ export default function CatalogPage() {
                 }
             }
 
-            const fetchPromise = query.order("created_at", { ascending: false }).abortSignal(controller.signal);
+            const fetchPromise = query.order("created_at", { ascending: false });
             const timeoutPromise = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error("Catalog fetch timeout (15s)")), 15000)
             );
@@ -164,21 +159,19 @@ export default function CatalogPage() {
                 setItems(data);
             }
         } catch (err: any) {
-            if (err.name === 'AbortError') return;
             console.error("Catalog fetch error:", err?.message || err);
         } finally {
-            if (abortControllerRef.current === controller) setLoading(false);
+            setLoading(false);
         }
     };
 
     useEffect(() => {
-        // Fetch catalog when profile or role is available (no loading guard — that caused a deadlock)
         if (role) {
             fetchCatalog();
+        } else {
+            // If RoleGuard finishes and role is still null (unauthorized), stop loading
+            setLoading(false);
         }
-        return () => {
-            if (abortControllerRef.current) abortControllerRef.current.abort();
-        };
     }, [profile, role]);
 
     const handleAddItem = async (e: React.FormEvent) => {

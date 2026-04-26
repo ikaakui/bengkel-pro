@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, useRef } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import RoleGuard from "@/components/auth/RoleGuard";
@@ -116,7 +116,6 @@ function POSContent() {
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSavingDraft, setIsSavingDraft] = useState(false);
-    const abortControllerRef = useRef<AbortController | null>(null);
     // Use branchId from AuthProvider instead of redundant manual fetch
     const branchId = authBranchId;
 
@@ -125,17 +124,12 @@ function POSContent() {
     }, [draftId, bookingId]);
 
     const fetchItems = async () => {
-        if (abortControllerRef.current) abortControllerRef.current.abort();
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
-
         setLoading(true);
         try {
             let query = supabase
                 .from("catalog")
                 .select("*")
-                .eq("is_active", true)
-                .abortSignal(controller.signal);
+                .eq("is_active", true);
 
             // Use role from AuthProvider — no extra DB calls needed
             if (branchId) {
@@ -159,10 +153,9 @@ function POSContent() {
             if (catalogRes?.data) setItems(catalogRes.data);
             if (rewardsRes?.data) setRewards(rewardsRes.data);
         } catch (err: any) {
-            if (err.name === 'AbortError') return;
             console.error("POS fetchItems error:", err?.message || err);
         } finally {
-            if (abortControllerRef.current === controller) setLoading(false);
+            setLoading(false);
         }
     };
 
@@ -292,10 +285,9 @@ function POSContent() {
         // Only fetch when role is known (auth is ready)
         if (role) {
             fetchItems();
+        } else {
+            setLoading(false);
         }
-        return () => {
-            if (abortControllerRef.current) abortControllerRef.current.abort();
-        };
     }, [branchId, role]);
 
     useEffect(() => {

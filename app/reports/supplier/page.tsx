@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useAuth } from "@/components/providers/AuthProvider";
 import RoleGuard from "@/components/auth/RoleGuard";
@@ -64,13 +64,8 @@ export default function SupplierRecapPage() {
     };
 
     const supabase = createClient();
-    const abortControllerRef = useRef<AbortController | null>(null);
 
     const fetchData = async () => {
-        if (abortControllerRef.current) abortControllerRef.current.abort();
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
-
         setLoading(true);
         try {
             // Parallel fetch for branches, settings, and expenses
@@ -97,7 +92,7 @@ export default function SupplierRecapPage() {
             }
 
             // Execute expenses query with timeout and limit
-            const fetchPromise = query.order("expense_date", { ascending: false }).limit(500).abortSignal(controller.signal);
+            const fetchPromise = query.order("expense_date", { ascending: false }).limit(500);
             const timeoutPromise = new Promise((_, reject) => 
                 setTimeout(() => reject(new Error("Request timeout")), 12000)
             );
@@ -159,10 +154,9 @@ export default function SupplierRecapPage() {
                 setData(flattened);
             }
         } catch (error: any) {
-            if (error.name === 'AbortError') return;
             console.error("Supplier recap fetch error:", error?.message || error);
         } finally {
-            if (abortControllerRef.current === controller) setLoading(false);
+            setLoading(false);
         }
     };
 
@@ -178,12 +172,13 @@ export default function SupplierRecapPage() {
     };
 
     useEffect(() => {
-        fetchData();
-        fetchCatalogData(profile?.branch_id || undefined);
+        if (role) {
+            fetchData();
+            fetchCatalogData(profile?.branch_id || undefined);
+        } else {
+            setLoading(false);
+        }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-        return () => {
-            if (abortControllerRef.current) abortControllerRef.current.abort();
-        };
     }, [role]);
 
     useEffect(() => {
