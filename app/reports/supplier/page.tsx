@@ -17,7 +17,8 @@ import {
     DollarSign,
     AlertCircle,
     ChevronDown,
-    Download
+    Download,
+    CheckCircle2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -36,9 +37,9 @@ export default function SupplierRecapPage() {
     
     // Edit State
     const [editItemModal, setEditItemModal] = useState<any>(null);
-    const [editForm, setEditForm] = useState({ name: '', qty: 1, cost: 0 });
+    const [editForm, setEditForm] = useState({ name: '', qty: 1, cost: 0, catalog_id: '' });
     const [savingEdit, setSavingEdit] = useState(false);
-    const [catalogSuggestions, setCatalogSuggestions] = useState<string[]>([]);
+    const [catalogItems, setCatalogItems] = useState<any[]>([]);
 
     const { profile, role } = useAuth();
 
@@ -50,9 +51,9 @@ export default function SupplierRecapPage() {
         branch_id: ''
     });
 
-    const [supplierItems, setSupplierItems] = useState([{ name: '', qty: 1, cost: 0, sell: 0 }]);
+    const [supplierItems, setSupplierItems] = useState([{ catalog_id: '', name: '', qty: 1, cost: 0, sell: 0 }]);
 
-    const addSupplierItem = () => setSupplierItems([...supplierItems, { name: '', qty: 1, cost: 0, sell: 0 }]);
+    const addSupplierItem = () => setSupplierItems([...supplierItems, { catalog_id: '', name: '', qty: 1, cost: 0, sell: 0 }]);
     const removeSupplierItem = (index: number) => setSupplierItems(supplierItems.filter((_, i) => i !== index));
     const updateSupplierItem = (index: number, field: string, value: any) => {
         const newItems = [...supplierItems];
@@ -154,19 +155,28 @@ export default function SupplierRecapPage() {
         }
     };
 
-    const fetchCatalogNames = async () => {
-        const { data } = await supabase.from('catalog').select('name').eq('is_active', true);
+    const fetchCatalogData = async (branchId?: string) => {
+        let query = supabase.from('catalog').select('id, name, cost_price, price, stock').eq('is_active', true);
+        if (branchId) {
+            query = query.eq('branch_id', branchId);
+        }
+        const { data } = await query;
         if (data) {
-            const uniqueNames = Array.from(new Set(data.map((i: any) => i.name)));
-            setCatalogSuggestions(uniqueNames as string[]);
+            setCatalogItems(data);
         }
     };
 
     useEffect(() => {
         fetchData();
-        fetchCatalogNames();
+        fetchCatalogData(profile?.branch_id || undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [role]);
+
+    useEffect(() => {
+        if (formData.branch_id) {
+            fetchCatalogData(formData.branch_id);
+        }
+    }, [formData.branch_id]);
 
     useEffect(() => {
         if (role !== 'owner' && role !== 'spv') {
@@ -203,43 +213,18 @@ export default function SupplierRecapPage() {
             const updaterName = role === 'owner' ? 'Owner' : `Admin ${branches.find(b => b.id === formData.branch_id)?.name || ''}`.trim();
             
             for (const item of supplierItems) {
-                if (!item.name) continue;
+                if (!item.catalog_id) continue;
 
-                // Search for item with same name AND branch_id
-                const { data: existing } = await supabase
+                // Directly update using catalog_id (Opsi A: No more auto-insert)
+                await supabase
                     .from('catalog')
-                    .select('*')
-                    .ilike('name', item.name)
-                    .eq('branch_id', formData.branch_id)
-                    .maybeSingle();
-
-                if (existing) {
-                    // Update existing item
-                    await supabase
-                        .from('catalog')
-                        .update({
-                            stock: (existing.stock || 0) + (item.qty || 0),
-                            cost_price: item.cost,
-                            updated_at: new Date().toISOString(),
-                            updated_by_name: updaterName
-                        })
-                        .eq('id', existing.id);
-                } else {
-                    // Create new item for this branch
-                    await supabase
-                        .from('catalog')
-                        .insert([{
-                            name: item.name,
-                            category: 'Spare Part',
-                            cost_price: item.cost,
-                            price: Math.round((item.cost * 1.3) / 1000) * 1000, // Default 30% margin
-                            stock: item.qty,
-                            branch_id: formData.branch_id,
-                            is_active: true,
-                            updated_by_name: updaterName,
-                            description: 'Otomatis dari input supplier.'
-                        }]);
-                }
+                    .update({
+                        stock: (catalogItems.find(c => c.id === item.catalog_id)?.stock || 0) + (item.qty || 0),
+                        cost_price: item.cost,
+                        updated_at: new Date().toISOString(),
+                        updated_by_name: updaterName
+                    })
+                    .eq('id', item.catalog_id);
             }
             // --- END SYNC ---
 
@@ -297,7 +282,7 @@ export default function SupplierRecapPage() {
 
     const handleEditClick = (item: any) => {
         setEditItemModal(item);
-        setEditForm({ name: item.name, qty: item.qty, cost: item.cost });
+        setEditForm({ name: item.name, qty: item.qty, cost: item.cost, catalog_id: item.catalog_id || '' });
     };
 
     const handleSaveEdit = async (e: React.FormEvent) => {
@@ -311,6 +296,7 @@ export default function SupplierRecapPage() {
                 items[editItemModal.item_index].name = editForm.name;
                 items[editItemModal.item_index].qty = editForm.qty;
                 items[editItemModal.item_index].cost = editForm.cost;
+                items[editItemModal.item_index].catalog_id = editForm.catalog_id;
                 
                 // Recalculate total amount for this expense
                 const newTotal = items.reduce((sum: number, it: any) => sum + (it.qty * it.cost), 0);
@@ -515,20 +501,53 @@ export default function SupplierRecapPage() {
                                                 {supplierItems.map((item, idx) => (
                                                     <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3 relative group/item">
                                                         <div className="grid grid-cols-12 gap-3">
-                                                            <div className="col-span-8">
+                                                            <div className="col-span-8 relative">
                                                                 <input 
-                                                                    placeholder="Nama Barang" 
-                                                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" 
+                                                                    placeholder="Cari & Pilih Barang..." 
+                                                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500/20" 
                                                                     value={item.name} 
-                                                                    onChange={(e) => updateSupplierItem(idx, 'name', e.target.value)} 
-                                                                    list="catalog-names"
+                                                                    onChange={(e) => {
+                                                                        const val = e.target.value;
+                                                                        updateSupplierItem(idx, 'name', val);
+                                                                        // Reset catalog_id if name changes (force re-selection)
+                                                                        updateSupplierItem(idx, 'catalog_id', '');
+                                                                    }}
                                                                     required 
                                                                 />
-                                                                <datalist id="catalog-names">
-                                                                    {catalogSuggestions.map(name => (
-                                                                        <option key={name} value={name} />
-                                                                    ))}
-                                                                </datalist>
+                                                                {/* Search Results Dropdown */}
+                                                                {item.name && !item.catalog_id && (
+                                                                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-[110] max-h-[200px] overflow-y-auto custom-scrollbar">
+                                                                        {catalogItems
+                                                                            .filter(c => c.name.toLowerCase().includes(item.name.toLowerCase()))
+                                                                            .map(c => (
+                                                                                <button
+                                                                                    key={c.id}
+                                                                                    type="button"
+                                                                                    className="w-full text-left px-4 py-2 text-xs font-bold hover:bg-emerald-50 transition-colors border-b border-slate-50 last:border-none"
+                                                                                    onClick={() => {
+                                                                                        updateSupplierItem(idx, 'catalog_id', c.id);
+                                                                                        updateSupplierItem(idx, 'name', c.name);
+                                                                                        updateSupplierItem(idx, 'cost', c.cost_price || 0);
+                                                                                    }}
+                                                                                >
+                                                                                    <div className="flex justify-between items-center">
+                                                                                        <span>{c.name}</span>
+                                                                                        <span className="text-[9px] text-slate-400">Rp {c.cost_price?.toLocaleString('id-ID')}</span>
+                                                                                    </div>
+                                                                                </button>
+                                                                            ))}
+                                                                        {catalogItems.filter(c => c.name.toLowerCase().includes(item.name.toLowerCase())).length === 0 && (
+                                                                            <div className="px-4 py-3 text-xs text-rose-500 italic font-medium">
+                                                                                Barang tidak ditemukan di Katalog Cabang ini.
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                                {item.catalog_id && (
+                                                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 text-emerald-500">
+                                                                        <CheckCircle2 size={14} />
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                             <div className="col-span-4">
                                                                 <input type="number" placeholder="Qty" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" value={item.qty || ''} onChange={(e) => updateSupplierItem(idx, 'qty', Number(e.target.value))} required />
@@ -559,8 +578,13 @@ export default function SupplierRecapPage() {
                                 </div>
                                 <div className="p-6 bg-slate-50/80 border-t border-slate-100 shrink-0 flex gap-4">
                                     <button type="button" onClick={() => setShowAddForm(false)} className="flex-1 py-4 px-6 rounded-2xl bg-white text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-100 border border-slate-200">Batal</button>
-                                    <button type="submit" form="expense-form" disabled={submitting} className="flex-[2] py-4 px-6 rounded-2xl bg-emerald-600 text-white font-black text-xs uppercase tracking-widest hover:bg-emerald-700 disabled:opacity-50">
-                                        {submitting ? 'Menyimpan...' : 'Simpan & Kirim WA'}
+                                    <button 
+                                        type="submit" 
+                                        form="expense-form" 
+                                        disabled={submitting || supplierItems.some(i => !i.catalog_id)} 
+                                        className="flex-[2] py-4 px-6 rounded-2xl bg-emerald-600 text-white font-black text-xs uppercase tracking-widest hover:bg-emerald-700 disabled:opacity-50"
+                                    >
+                                        {submitting ? 'Menyimpan...' : (supplierItems.some(i => !i.catalog_id) ? 'Pilih Barang di List' : 'Simpan & Kirim WA')}
                                     </button>
                                 </div>
                             </div>
@@ -580,15 +604,40 @@ export default function SupplierRecapPage() {
                                     <button onClick={() => setEditItemModal(null)} className="p-2 hover:bg-white/20 rounded-xl transition-all">X</button>
                                 </div>
                                 <form onSubmit={handleSaveEdit} className="p-6 space-y-4">
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 relative">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nama Barang</label>
                                         <input 
                                             type="text" 
                                             className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                             value={editForm.name}
-                                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                            onChange={(e) => {
+                                                setEditForm({ ...editForm, name: e.target.value, catalog_id: '' });
+                                            }}
                                             required
                                         />
+                                        {editForm.name && !editForm.catalog_id && (
+                                            <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-[110] max-h-[150px] overflow-y-auto custom-scrollbar">
+                                                {catalogItems
+                                                    .filter(c => c.name.toLowerCase().includes(editForm.name.toLowerCase()))
+                                                    .map(c => (
+                                                        <button
+                                                            key={c.id}
+                                                            type="button"
+                                                            className="w-full text-left px-4 py-2 text-xs font-bold hover:bg-blue-50 transition-colors border-b border-slate-50"
+                                                            onClick={() => {
+                                                                setEditForm({ ...editForm, name: c.name, catalog_id: c.id, cost: c.cost_price || 0 });
+                                                            }}
+                                                        >
+                                                            {c.name}
+                                                        </button>
+                                                    ))}
+                                            </div>
+                                        )}
+                                        {editForm.catalog_id && (
+                                            <div className="absolute right-4 top-[38px] text-emerald-500">
+                                                <CheckCircle2 size={16} />
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
@@ -618,8 +667,8 @@ export default function SupplierRecapPage() {
 
                                     <div className="flex gap-3 pt-4 border-t border-slate-100">
                                         <button type="button" onClick={() => setEditItemModal(null)} className="flex-1 py-3 px-4 rounded-xl bg-white text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-50 border border-slate-200">Batal</button>
-                                        <button type="submit" disabled={savingEdit} className="flex-[2] py-3 px-4 rounded-xl bg-blue-600 text-white font-black text-xs uppercase tracking-widest hover:bg-blue-700 disabled:opacity-50">
-                                            {savingEdit ? 'Menyimpan...' : 'Simpan Perubahan'}
+                                        <button type="submit" disabled={savingEdit || !editForm.catalog_id} className="flex-[2] py-3 px-4 rounded-xl bg-blue-600 text-white font-black text-xs uppercase tracking-widest hover:bg-blue-700 disabled:opacity-50">
+                                            {savingEdit ? 'Menyimpan...' : (!editForm.catalog_id ? 'Pilih di List' : 'Simpan Perubahan')}
                                         </button>
                                     </div>
                                 </form>
