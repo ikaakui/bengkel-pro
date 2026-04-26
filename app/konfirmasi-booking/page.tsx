@@ -94,6 +94,8 @@ export default function KonfirmasiBookingPage() {
                 
                 if (rpcError) {
                     console.error("RPC Error:", rpcError);
+                    setError(`Error Database: ${rpcError.message} (Code: ${rpcError.code}). Pastikan SQL sudah dijalankan di Supabase.`);
+                    return;
                 }
                 
                 if (globalData && globalData.length > 0) {
@@ -230,6 +232,17 @@ export default function KonfirmasiBookingPage() {
                                 className="h-16 px-10 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm uppercase tracking-widest"
                             >
                                 {loading ? <Loader2 className="animate-spin" /> : <><Search size={18} className="mr-2" /> Cari</>}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={async () => {
+                                    const { data } = await supabase.from('bookings').select('booking_code, branch_id').order('created_at', { ascending: false }).limit(5);
+                                    alert("5 Booking Terakhir di DB Anda (Sesuai RLS Admin):\n" + JSON.stringify(data, null, 2));
+                                }}
+                                className="h-16 px-4 rounded-2xl border-2 font-bold"
+                            >
+                                Debug DB
                             </Button>
                         </form>
                     </Card>
