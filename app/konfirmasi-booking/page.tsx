@@ -137,22 +137,6 @@ export default function KonfirmasiBookingPage() {
             }
 
             if (!data) {
-                // Third attempt: Global search via RPC (bypasses RLS)
-                const { data: globalData, error: rpcError } = await supabase
-                    .rpc('search_booking_global', { target_code: cleanInput });
-                
-                if (rpcError) {
-                    console.error("RPC Error:", rpcError);
-                    setError(`Error Database: ${rpcError.message} (Code: ${rpcError.code}). Pastikan SQL sudah dijalankan di Supabase.`);
-                    return;
-                }
-                
-                if (globalData && globalData.length > 0) {
-                    data = globalData[0];
-                }
-            }
-
-            if (!data) {
                 let msg = "Kode booking tidak ditemukan. Pastikan kode sudah benar.";
                 if (role !== 'owner') {
                     msg += ` (Pencarian terbatas untuk cabang ${branchName || 'Anda'})`;
