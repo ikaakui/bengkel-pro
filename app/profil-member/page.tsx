@@ -20,7 +20,10 @@ import {
     Award,
     Gem,
     Crown,
-    CreditCard
+    CreditCard,
+    Mail,
+    Car,
+    Hash
 } from "lucide-react";
 import { createClient } from "@/lib/supabase-client";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -36,12 +39,16 @@ const TIERS = [
 ];
 
 export default function ProfilMemberPage() {
-    const { profile, refreshProfile } = useAuth();
+    const { user, profile, refreshProfile } = useAuth();
     const supabase = createClient();
 
     const [isEditing, setIsEditing] = useState(false);
     const [fullName, setFullName] = useState(profile?.full_name || "");
     const [phone, setPhone] = useState(profile?.phone || "");
+    const [email, setEmail] = useState(user?.email || "");
+    const [brandModel, setBrandModel] = useState("");
+    const [licensePlate, setLicensePlate] = useState("");
+    const [vehicleId, setVehicleId] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -49,7 +56,29 @@ export default function ProfilMemberPage() {
             setFullName(profile.full_name || "");
             setPhone(profile.phone || "");
         }
-    }, [profile]);
+        if (user) {
+            setEmail(user.email || "");
+        }
+    }, [profile, user]);
+
+    useEffect(() => {
+        const fetchVehicle = async () => {
+            if (!profile?.id) return;
+            const { data } = await supabase
+                .from("member_vehicles")
+                .select("*")
+                .eq("member_id", profile.id)
+                .order("is_primary", { ascending: false })
+                .limit(1)
+                .single();
+            if (data) {
+                setBrandModel(data.brand_model || "");
+                setLicensePlate(data.license_plate || "");
+                setVehicleId(data.id);
+            }
+        };
+        fetchVehicle();
+    }, [profile?.id, supabase]);
 
     const handleUpdateProfile = async () => {
         if (!profile?.id) return;
@@ -61,6 +90,26 @@ export default function ProfilMemberPage() {
                 .eq("id", profile.id);
 
             if (error) throw error;
+            
+            if (vehicleId) {
+                await supabase
+                    .from("member_vehicles")
+                    .update({ brand_model: brandModel, license_plate: licensePlate.toUpperCase() })
+                    .eq("id", vehicleId);
+            } else if (brandModel || licensePlate) {
+                const { data } = await supabase
+                    .from("member_vehicles")
+                    .insert([{
+                        member_id: profile.id,
+                        brand_model: brandModel,
+                        license_plate: licensePlate.toUpperCase(),
+                        is_primary: true
+                    }])
+                    .select()
+                    .single();
+                if (data) setVehicleId(data.id);
+            }
+
             await refreshProfile();
             setIsEditing(false);
         } catch (err: any) {
@@ -68,6 +117,38 @@ export default function ProfilMemberPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const maskText = (text: string, type: 'email' | 'phone' | 'text') => {
+        if (!text) return "-";
+        if (type === 'email') {
+            const [name, domain] = text.split('@');
+            if (!domain) return text;
+            if (name.length <= 2) return `${name}****@${domain}`;
+            return `${name.charAt(0)}****${name.charAt(name.length - 1)}@${domain}`;
+        }
+        if (type === 'phone') {
+            if (text.length <= 4) return text;
+            return `${text.slice(0, 4)}-****-${text.slice(-3)}`;
+        }
+        if (type === 'text') {
+            if (text.length <= 2) return text;
+            const words = text.split(' ');
+            if (words.length > 1) {
+                return words.map(w => w.length > 2 ? `${w.charAt(0)}***` : w).join(' ');
+            }
+            return `${text.charAt(0)}****${text.charAt(text.length - 1)}`;
+        }
+        return text;
+    };
+
+    const maskPlate = (text: string) => {
+        if (!text) return "-";
+        const parts = text.split(' ');
+        if (parts.length >= 2) {
+             return `${parts[0]} **** ${parts[parts.length-1] || ''}`;
+        }
+        return `${text.charAt(0)} **** ${text.charAt(text.length - 1)}`;
     };
 
 
@@ -146,11 +227,35 @@ export default function ProfilMemberPage() {
                                         )}
                                     </div>
                                     <div className="space-y-4">
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Email</label>
+                                        {isEditing ? (
+                                            <input type="email" disabled title="Email tidak dapat diubah di sini" className="w-full px-5 py-4 bg-slate-100 border-2 border-slate-200 rounded-2xl focus:outline-none transition-all font-bold text-slate-500 cursor-not-allowed" value={email} />
+                                        ) : (
+                                            <p className="text-lg font-bold text-slate-900 px-2 flex items-center gap-3"><Mail size={18} className="text-slate-400" />{maskText(email, 'email')}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-4">
                                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest">WhatsApp</label>
                                         {isEditing ? (
                                             <input type="text" className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:outline-none focus:border-primary transition-all font-bold" value={phone} onChange={(e) => setPhone(e.target.value)} />
                                         ) : (
-                                            <p className="text-lg font-bold text-slate-900 px-2 flex items-center gap-3"><Phone size={18} className="text-slate-400" />{profile?.phone || "-"}</p>
+                                            <p className="text-lg font-bold text-slate-900 px-2 flex items-center gap-3"><Phone size={18} className="text-slate-400" />{maskText(profile?.phone || "", 'phone')}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-4">
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Merek & Tipe Kendaraan</label>
+                                        {isEditing ? (
+                                            <input type="text" className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:outline-none focus:border-primary transition-all font-bold" value={brandModel} onChange={(e) => setBrandModel(e.target.value)} placeholder="Contoh: Toyota Avanza" />
+                                        ) : (
+                                            <p className="text-lg font-bold text-slate-900 px-2 flex items-center gap-3"><Car size={18} className="text-slate-400" />{maskText(brandModel, 'text')}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-4">
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Plat Nomor</label>
+                                        {isEditing ? (
+                                            <input type="text" className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:outline-none focus:border-primary transition-all font-bold uppercase" value={licensePlate} onChange={(e) => setLicensePlate(e.target.value)} placeholder="B 1234 ABC" />
+                                        ) : (
+                                            <p className="text-lg font-bold text-slate-900 px-2 flex items-center gap-3"><Hash size={18} className="text-slate-400 uppercase" />{maskPlate(licensePlate)}</p>
                                         )}
                                     </div>
                                 </div>
