@@ -32,6 +32,7 @@ export default function ShiftReportPage() {
                 .from("transactions")
                 .select(`
                     customer_name,
+                    total_amount,
                     created_at,
                     booking:booking_id (
                         customer_phone,
@@ -40,6 +41,7 @@ export default function ShiftReportPage() {
                         created_at
                     ),
                     transaction_items (
+                        price_at_sale,
                         catalog:catalog_id (name)
                     )
                 `)
@@ -65,9 +67,9 @@ export default function ShiftReportPage() {
                     }),
                     'Cabang Aktif': branchName,
                     'Service yang dilakukan': (item.transaction_items as any[] || [])
-                        .map(ti => ti.catalog?.name)
-                        .filter(Boolean)
-                        .join(', ') || '-'
+                        .map(ti => `${ti.catalog?.name || 'Item'} (Rp ${Number(ti.price_at_sale || 0).toLocaleString('id-ID')})`)
+                        .join(', ') || '-',
+                    'Total Transaksi': `Rp ${Number(item.total_amount || 0).toLocaleString('id-ID')}`
                 }));
 
                 const worksheet = XLSX.utils.json_to_sheet(exportData);
