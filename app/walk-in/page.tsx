@@ -120,10 +120,6 @@ export default function WalkInPage() {
         }
 
         const finalBranchId = branchId || selectedBranchId;
-        if (!finalBranchId) {
-            showFeedback('warning', 'Cabang Belum Dipilih', 'Harap pilih cabang pengerjaan terlebih dahulu.');
-            return;
-        }
 
         setIsSaving(true);
         try {
