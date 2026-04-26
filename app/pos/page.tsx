@@ -413,7 +413,7 @@ function POSContent() {
                 setInitialCustomerName(customerName);
 
                 // Show success
-                showFeedback('success', 'Draft berhasil diperbarui! ✅', 'Perubahan Anda telah tersimpan dengan aman.');
+                showFeedback('success', 'Draft berhasil diperbarui! ✅', '');
             } else {
                 // CREATE new draft
                 const { data: transaction, error: tError } = await supabase
@@ -454,7 +454,7 @@ function POSContent() {
                 if (bookingId) params.set("booking_id", bookingId);
                 window.history.replaceState({}, "", `/pos?${params.toString()}`);
 
-                showFeedback('success', 'Draft baru berhasil disimpan! ✅', 'Data tersimpan, Anda bisa melanjutkannya nanti.');
+                showFeedback('success', 'Draft baru berhasil disimpan! ✅', '');
             }
         } catch (error: any) {
             console.error("Save Draft Error:", error);
@@ -726,35 +726,20 @@ function POSContent() {
                                 )}>
                                     {saveFeedback.title}
                                 </p>
-                                <p className={cn(
-                                    "text-xs truncate",
-                                    saveFeedback.type === 'success' && "text-emerald-600",
-                                    saveFeedback.type === 'warning' && "text-amber-600",
-                                    saveFeedback.type === 'info' && "text-blue-600",
-                                    saveFeedback.type === 'error' && "text-rose-600"
-                                )}>
-                                    {saveFeedback.message}
-                                </p>
+                                {saveFeedback.message && (
+                                    <p className={cn(
+                                        "text-xs truncate",
+                                        saveFeedback.type === 'success' && "text-emerald-600",
+                                        saveFeedback.type === 'warning' && "text-amber-600",
+                                        saveFeedback.type === 'info' && "text-blue-600",
+                                        saveFeedback.type === 'error' && "text-rose-600"
+                                    )}>
+                                        {saveFeedback.message}
+                                    </p>
+                                )}
                             </div>
                             <div className="flex gap-2 shrink-0">
-                                {saveFeedback.type === 'success' && (
-                                    <>
-                                        <button
-                                            onClick={handleBackToDashboard}
-                                            className="flex items-center gap-1.5 text-xs font-bold bg-white text-slate-700 px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
-                                        >
-                                            <ArrowLeft size={14} />
-                                            <span className="hidden sm:inline">Dashboard</span>
-                                        </button>
-                                        <button
-                                            onClick={handleBackToAntrian}
-                                            className="flex items-center gap-1.5 text-xs font-bold bg-emerald-600 text-white px-3 py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
-                                        >
-                                            <FileText size={14} />
-                                            <span className="hidden sm:inline">Antrian</span>
-                                        </button>
-                                    </>
-                                )}
+
                                 <button
                                     onClick={() => setSaveFeedback(prev => ({ ...prev, show: false }))}
                                     className="p-1.5 text-slate-400 hover:text-slate-600 transition-colors"
