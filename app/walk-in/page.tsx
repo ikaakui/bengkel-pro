@@ -15,6 +15,7 @@ import {
 import { createClient } from "@/lib/supabase-client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 export default function WalkInPage() {
     const { profile, branchId, branchName, role } = useAuth();
@@ -450,195 +451,58 @@ export default function WalkInPage() {
                                 </Card>
                             </motion.div>
                         )}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                            >
-                                <Card className="border-none shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] rounded-[2.5rem] overflow-hidden bg-white">
-                                    {/* Premium Member search */}
-                                    <div className="relative overflow-hidden">
-                                        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950" />
-                                        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-400 via-transparent to-transparent" />
-                                        
-                                        <div className="relative p-8 sm:p-10">
-                                            <div className="flex items-center justify-between mb-6">
-                                                <div>
-                                                    <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-1">Loyalty Integration</p>
-                                                    <h3 className="text-xl font-black text-white tracking-tight">Cari Member Terdaftar</h3>
-                                                </div>
-                                                <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md">
-                                                    <Users2 className="text-blue-400" size={24} />
-                                                </div>
-                                            </div>
-
-                                            <div className="relative">
-                                                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
-                                                <input
-                                                    type="text"
-                                                    placeholder="Ketik nama atau No. WhatsApp member..."
-                                                    className="w-full pl-14 pr-12 py-5 bg-white/10 border border-white/10 rounded-[1.25rem] text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:bg-white/15 transition-all font-medium text-lg"
-                                                    value={memberSearch}
-                                                    onChange={(e) => setMemberSearch(e.target.value)}
-                                                />
-                                                {isSearchingMember && (
-                                                    <div className="absolute right-5 top-1/2 -translate-y-1/2">
-                                                        <Loader2 size={20} className="animate-spin text-blue-400" />
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {memberResults.length > 0 && (
-                                                <motion.div 
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    className="absolute left-8 right-8 mt-3 bg-white rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.2)] z-50 border border-slate-100"
-                                                >
-                                                    {memberResults.map(m => (
-                                                        <button
-                                                            key={m.id}
-                                                            onClick={() => handleSelectMember(m)}
-                                                            className="w-full flex items-center justify-between p-5 hover:bg-blue-50 transition-all text-left border-b border-slate-50 last:border-none group"
-                                                        >
-                                                            <div className="flex items-center gap-4">
-                                                                <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
-                                                                    <User size={20} />
-                                                                </div>
-                                                                <div>
-                                                                    <p className="font-black text-slate-900 group-hover:text-blue-700">{m.full_name}</p>
-                                                                    <p className="text-xs text-slate-500 font-bold tracking-tight">{m.phone_number}</p>
-                                                                </div>
-                                                            </div>
-                                                            <Badge variant="neutral" className="bg-slate-100 text-slate-600 font-black">{m.total_points || 0} PTS</Badge>
-                                                        </button>
-                                                    ))}
-                                                </motion.div>
-                                            )}
-
-                                            <AnimatePresence>
-                                                {selectedMember && (
-                                                    <motion.div 
-                                                        initial={{ opacity: 0, height: 0 }}
-                                                        animate={{ opacity: 1, height: 'auto' }}
-                                                        exit={{ opacity: 0, height: 0 }}
-                                                        className="mt-6 flex items-center gap-4 bg-emerald-500/10 border border-emerald-500/20 p-5 rounded-[1.25rem] backdrop-blur-sm"
-                                                    >
-                                                        <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
-                                                            <CheckCircle2 size={24} />
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Member Terpilih</p>
-                                                            <p className="text-white font-black text-lg">{selectedMember.full_name}</p>
-                                                        </div>
-                                                        <button 
-                                                            onClick={() => setSelectedMember(null)} 
-                                                            className="p-2 text-emerald-300 hover:text-white transition-colors"
-                                                        >
-                                                            <X size={20} />
-                                                        </button>
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-                                        </div>
-                                    </div>
-
-                                    <CardContent className="p-8 sm:p-10 space-y-8 bg-white">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            {/* Branch Selection if missing */}
-                                            {!branchId && branches.length > 0 && (
-                                                <div className="col-span-full space-y-3 p-6 bg-amber-50/50 rounded-3xl border-2 border-dashed border-amber-100">
-                                                    <label className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] flex items-center gap-2">
-                                                        <Building2 size={12} /> Konfirmasi Cabang
-                                                    </label>
-                                                    <select 
-                                                        className="w-full h-14 bg-white border-2 border-amber-100 rounded-2xl px-5 font-black text-slate-900 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 outline-none transition-all shadow-sm"
-                                                        value={selectedBranchId}
-                                                        onChange={(e) => setSelectedBranchId(e.target.value)}
-                                                    >
-                                                        <option value="">Pilih Cabang Pengerjaan</option>
-                                                        {branches.map(b => (
-                                                            <option key={b.id} value={b.id}>{b.name}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            )}
-
-                                            <div className="space-y-3">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Nama Pelanggan *</label>
-                                                <div className="relative group">
-                                                    <User className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
-                                                    <input type="text" placeholder="Nama lengkap"
-                                                        className="w-full h-16 pl-14 pr-6 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-400/10 outline-none transition-all font-bold text-slate-900"
-                                                        value={customerName}
-                                                        onChange={(e) => setCustomerName(e.target.value)} />
-                                                </div>
-                                            </div>
-                                            <div className="space-y-3">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">No. WhatsApp *</label>
-                                                <div className="relative group">
-                                                    <PhoneCall className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-emerald-500 transition-colors" size={20} />
-                                                    <input type="text" placeholder="08xx..."
-                                                        className="w-full h-16 pl-14 pr-6 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/10 outline-none transition-all font-bold text-slate-900"
-                                                        value={customerPhone}
-                                                        onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, ''))} />
-                                                </div>
-                                            </div>
-                                            <div className="space-y-3">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Merek / Tipe Mobil *</label>
-                                                <div className="relative group">
-                                                    <Car className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
-                                                    <input type="text" placeholder="Avanza, Civic, dll"
-                                                        className="w-full h-16 pl-14 pr-6 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-400/10 outline-none transition-all font-bold text-slate-900"
-                                                        value={carModel}
-                                                        onChange={(e) => setCarModel(e.target.value)} />
-                                                </div>
-                                            </div>
-                                            <div className="space-y-3">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Nomor Polisi *</label>
-                                                <div className="relative group">
-                                                    <Hash className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
-                                                    <input type="text" placeholder="B 1234 CD"
-                                                        className="w-full h-16 pl-14 pr-6 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-400/10 outline-none transition-all font-black text-slate-900 uppercase tracking-widest"
-                                                        value={licensePlate}
-                                                        onChange={(e) => setLicensePlate(e.target.value)} />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center justify-between p-6 bg-slate-50 rounded-3xl border border-slate-100">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 shadow-sm">
-                                                    <CalendarClock size={20} />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Waktu Pendaftaran</p>
-                                                    <p className="text-sm font-bold text-slate-700">
-                                                        {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Cabang Aktif</p>
-                                                <p className="text-sm font-black text-blue-600 uppercase italic">{branchName}</p>
-                                            </div>
-                                        </div>
-
-                                        <Button
-                                            onClick={handleSubmit}
-                                            disabled={isSaving}
-                                            className="w-full h-20 rounded-[1.5rem] bg-slate-900 hover:bg-slate-800 text-white font-black text-base uppercase tracking-[0.2em] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.3)] hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] transition-all active:scale-95 group overflow-hidden relative"
-                                        >
-                                            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                            {isSaving ? (
-                                                <><Loader2 size={24} className="animate-spin mr-3" /> Memproses...</>
-                                            ) : (
-                                                <><CheckCircle2 size={24} className="mr-3" /> Daftarkan Walk-in</>
-                                            )}
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            </motion.div>
-                        )}
                     </AnimatePresence>
                 </div>
+
+                {/* Modern Feedback Banner */}
+                {saveFeedback.show && (
+                    <div className={cn(
+                        "fixed top-6 left-1/2 -translate-x-1/2 z-[200] w-fit max-w-[90%] sm:min-w-[400px] shadow-2xl rounded-2xl p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-8 border-2 transition-all duration-300",
+                        saveFeedback.type === 'success' && "bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200 shadow-emerald-500/10",
+                        saveFeedback.type === 'warning' && "bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 shadow-amber-500/10",
+                        saveFeedback.type === 'info' && "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 shadow-blue-500/10",
+                        saveFeedback.type === 'error' && "bg-gradient-to-r from-rose-50 to-red-50 border-rose-200 shadow-rose-500/10"
+                    )}>
+                        <div className={cn(
+                            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                            saveFeedback.type === 'success' && "bg-emerald-100 text-emerald-600",
+                            saveFeedback.type === 'warning' && "bg-amber-100 text-amber-600",
+                            saveFeedback.type === 'info' && "bg-blue-100 text-blue-600",
+                            saveFeedback.type === 'error' && "bg-rose-100 text-rose-600"
+                        )}>
+                            {saveFeedback.type === 'success' && <CheckCircle2 size={20} />}
+                            {saveFeedback.type === 'warning' && <AlertTriangle size={20} />}
+                            {saveFeedback.type === 'info' && <Search size={20} />}
+                            {saveFeedback.type === 'error' && <AlertCircle size={20} />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className={cn(
+                                "text-sm font-black truncate",
+                                saveFeedback.type === 'success' && "text-emerald-700",
+                                saveFeedback.type === 'warning' && "text-amber-700",
+                                saveFeedback.type === 'info' && "text-blue-700",
+                                saveFeedback.type === 'error' && "text-rose-700"
+                            )}>
+                                {saveFeedback.title}
+                            </p>
+                            <p className={cn(
+                                "text-xs truncate",
+                                saveFeedback.type === 'success' && "text-emerald-600",
+                                saveFeedback.type === 'warning' && "text-amber-600",
+                                saveFeedback.type === 'info' && "text-blue-600",
+                                saveFeedback.type === 'error' && "text-rose-600"
+                            )}>
+                                {saveFeedback.message}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setSaveFeedback(prev => ({ ...prev, show: false }))}
+                            className="p-1.5 text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+                        >
+                            <X size={16} />
+                        </button>
+                    </div>
+                )}
 
                 {/* Duplicate Confirmation Modal */}
                 <AnimatePresence>
