@@ -100,15 +100,26 @@ export default function CatalogPage() {
     const supabase = createClient();
 
     const fetchCatalog = async () => {
+        // Only fetch if profile is loaded or user is definitely logged in (RoleGuard handles this)
+        // but we add an extra check for profile.branch_id if they are a branch admin
         setLoading(true);
         let query = supabase
             .from("catalog")
             .select("*")
             .eq("is_active", true);
 
-        // Filter by branch: Show items belonging to this branch OR global items (null)
+        // Filter by branch: 
+        // 1. Branch Admins: Only show their branch + global (null)
+        // 2. Owner/SPV: Show everything
         if (profile?.branch_id) {
             query = query.or(`branch_id.eq.${profile.branch_id},branch_id.is.null`);
+        } else if (role !== 'owner' && role !== 'spv') {
+            // Safety: if it's a branch admin but branch_id is somehow missing from profile, 
+            // don't show anything to prevent leakage, until profile is fully ready.
+            if (!profile) {
+                setLoading(false);
+                return;
+            }
         }
 
         const { data, error } = await query.order("created_at", { ascending: false });
@@ -120,8 +131,10 @@ export default function CatalogPage() {
     };
 
     useEffect(() => {
-        fetchCatalog();
-    }, []);
+        if (!loading) {
+            fetchCatalog();
+        }
+    }, [profile, role]);
 
     const handleAddItem = async (e: React.FormEvent) => {
         e.preventDefault();

@@ -144,8 +144,20 @@ function POSContent() {
             .select("*")
             .eq("is_active", true);
 
+        // If branchId is set, filter by branch + global (null)
+        // If not set and not owner (handled by branchId being null for owners usually),
+        // we might want to wait.
         if (branchId) {
             query = query.or(`branch_id.eq.${branchId},branch_id.is.null`);
+        } else {
+            // Check if user is owner/spv before showing everything
+            const { data: { user } } = await supabase.auth.getUser();
+            const { data: profile } = await supabase.from('profiles').select('role').eq('id', user?.id).single();
+            if (profile && !['owner', 'spv'].includes(profile.role)) {
+                // If they are a branch admin but branchId is not yet loaded, wait
+                setLoading(false);
+                return;
+            }
         }
 
         const { data } = await query.order("name", { ascending: true });
@@ -285,8 +297,10 @@ function POSContent() {
     }, [bookingSearchTerm]);
 
     useEffect(() => {
-        fetchItems();
-    }, []);
+        if (branchId !== undefined) {
+            fetchItems();
+        }
+    }, [branchId]);
 
     useEffect(() => {
         if (bookingId) {
