@@ -656,7 +656,20 @@ export default function SupplierRecapPage() {
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                     />
                                 </div>
-                                </div>
+                                {(role !== 'admin_bsd' && role !== 'admin_depok') && (
+                                    <div className="relative">
+                                        <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
+                                        <select 
+                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                            value={filterBranch}
+                                            onChange={(e) => setFilterBranch(e.target.value)}
+                                        >
+                                            <option value="all">Semua Cabang</option>
+                                            {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                                        </select>
+                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={16} />
+                                    </div>
+                                )}
                             </div>
                         </Card>
                     </div>
