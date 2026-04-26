@@ -92,10 +92,12 @@ export default function KonfirmasiBookingPage() {
                 const { data: globalData, error: rpcError } = await supabase
                     .rpc('search_booking_global', { target_code: cleanInput });
                 
+                if (rpcError) {
+                    console.error("RPC Error:", rpcError);
+                }
+                
                 if (globalData && globalData.length > 0) {
                     data = globalData[0];
-                    // Since RPC doesn't join by default, we might need to fetch member manually or just accept basic data
-                    // For confirmation, basic data is usually enough as it will be linked to a transaction later
                 }
             }
 

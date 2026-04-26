@@ -183,8 +183,10 @@ export default function BookingsPage() {
 
         if (!data) {
             // Global search fallback
-            const { data: globalData } = await supabase
+            const { data: globalData, error: rpcError } = await supabase
                 .rpc('search_booking_global', { target_code: cleanInput });
+            
+            if (rpcError) console.error("RPC Error (Bookings):", rpcError);
             
             if (globalData && globalData.length > 0) {
                 data = globalData[0];
