@@ -112,6 +112,9 @@ export default function KonfirmasiBookingPage() {
         try {
             const cleanInput = codeInput.trim().toUpperCase();
             
+            // Diagnostic log for debugging
+            console.log("Searching for:", cleanInput, "as branch:", branchId || selectedBranchId);
+
             // First attempt: exact match
             let { data, error: fetchError } = await supabase
                 .from("bookings")
@@ -119,20 +122,20 @@ export default function KonfirmasiBookingPage() {
                 .eq("booking_code", cleanInput)
                 .maybeSingle();
 
-            // Second attempt: if exact fails, try stripping hyphens if the input looks like a code
-            if (!data && cleanInput.includes('BK')) {
-                const searchCode = cleanInput.replace(/-/g, '');
-                // Try searching for codes that match without hyphens (heuristic)
-                const { data: fuzzyData } = await supabase
-                    .from("bookings")
-                    .select("*, member:member_id(full_name, referral_code, phone_number, total_points)")
-                    .ilike("booking_code", `%${searchCode.replace('BK', '')}%`)
-                    .limit(5);
-                
-                if (fuzzyData && fuzzyData.length > 0) {
-                    // Try to find a exact alphanumeric match
-                    const match = fuzzyData.find(b => (b.booking_code || '').replace(/-/g, '') === searchCode);
-                    if (match) data = match;
+            // Second attempt: search by alphanumeric part only (extremely robust)
+            if (!data) {
+                const numericPart = cleanInput.replace(/[^0-9]/g, '');
+                if (numericPart.length >= 4) {
+                    const { data: broaderData } = await supabase
+                        .from("bookings")
+                        .select("*, member:member_id(full_name, referral_code, phone_number, total_points)")
+                        .ilike("booking_code", `%${numericPart}%`)
+                        .limit(5);
+                    
+                    if (broaderData && broaderData.length > 0) {
+                        // Find the one that matches the input best
+                        data = broaderData[0]; 
+                    }
                 }
             }
 
