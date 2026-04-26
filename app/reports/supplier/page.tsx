@@ -155,11 +155,24 @@ export default function SupplierRecapPage() {
 
     useEffect(() => {
         fetchData();
-        if (profile?.branch_id && role !== 'owner' && role !== 'spv') {
-            setFormData(prev => ({ ...prev, branch_id: profile.branch_id! }));
-        }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [profile?.branch_id, role]);
+    }, [role]);
+
+    useEffect(() => {
+        if (role !== 'owner' && role !== 'spv') {
+            if (profile?.branch_id) {
+                setFormData(prev => ({ ...prev, branch_id: profile.branch_id! }));
+            } else if (branches.length > 0) {
+                const keyword = role === 'admin_bsd' ? 'bsd' : (role === 'admin_depok' ? 'depok' : null);
+                if (keyword) {
+                    const matched = branches.find(b => b.name.toLowerCase().includes(keyword));
+                    if (matched) {
+                        setFormData(prev => ({ ...prev, branch_id: matched.id }));
+                    }
+                }
+            }
+        }
+    }, [profile?.branch_id, role, branches]);
 
     const handleAddExpense = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -406,16 +419,18 @@ export default function SupplierRecapPage() {
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tanggal</label>
-                                                <input type="date" className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-5 text-sm font-bold text-slate-700" value={formData.expense_date} onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })} required />
+                                                <input type="date" className="w-full bg-slate-100 border border-slate-200 rounded-2xl py-4 px-5 text-sm font-bold text-slate-500 cursor-not-allowed" value={formData.expense_date} disabled required />
                                             </div>
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Cabang</label>
-                                            <select className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-5 text-sm font-bold text-slate-700" value={formData.branch_id} onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })} required={role === 'owner' || role === 'spv'} disabled={role !== 'owner' && role !== 'spv'}>
-                                                <option value="">-- Pilih Cabang --</option>
-                                                {branches.map(br => <option key={br.id} value={br.id}>{br.name}</option>)}
-                                            </select>
-                                        </div>
+                                        {(role === 'owner' || role === 'spv') && (
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Cabang</label>
+                                                <select className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-5 text-sm font-bold text-slate-700" value={formData.branch_id} onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })} required>
+                                                    <option value="">-- Pilih Cabang --</option>
+                                                    {branches.map(br => <option key={br.id} value={br.id}>{br.name}</option>)}
+                                                </select>
+                                            </div>
+                                        )}
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Total Tagihan (Rp)</label>
                                             <input 
