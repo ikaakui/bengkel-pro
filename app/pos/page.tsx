@@ -114,6 +114,28 @@ function POSContent() {
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSavingDraft, setIsSavingDraft] = useState(false);
+    const [branchId, setBranchId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('branch_id')
+                    .eq('id', user.id)
+                    .single();
+                if (profile) {
+                    setBranchId(profile.branch_id);
+                }
+            }
+        };
+        fetchUserProfile();
+    }, []);
+
+    useEffect(() => {
+        loadDraft();
+    }, [draftId, bookingId]);
 
     const fetchItems = async () => {
         setLoading(true);
