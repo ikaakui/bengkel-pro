@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import {
     User, Phone, Car, AppWindow, Loader2, CheckCircle2,
-    CalendarClock, ArrowRight, Wrench, Search, Users2, Hash, Building2
+    CalendarClock, ArrowRight, Wrench, Search, Users2, Hash, Building2,
+    X, AlertTriangle, AlertCircle, PhoneCall
 } from "lucide-react";
 import { createClient } from "@/lib/supabase-client";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -34,11 +35,25 @@ export default function WalkInPage() {
     const [showDuplicateModal, setShowDuplicateModal] = useState(false);
     const [isConfirmedDuplicate, setIsConfirmedDuplicate] = useState(false);
 
+    const [selectedMember, setSelectedMember] = useState<any>(null);
+
     // Member search
     const [memberSearch, setMemberSearch] = useState("");
     const [memberResults, setMemberResults] = useState<any[]>([]);
     const [isSearchingMember, setIsSearchingMember] = useState(false);
-    const [selectedMember, setSelectedMember] = useState<any>(null);
+
+    // Modern Feedback State
+    const [saveFeedback, setSaveFeedback] = useState<{
+        show: boolean;
+        type: 'success' | 'warning' | 'info' | 'error';
+        title: string;
+        message: string;
+    }>({ show: false, type: 'success', title: '', message: '' });
+
+    const showFeedback = (type: 'success' | 'warning' | 'info' | 'error', title: string, message: string) => {
+        setSaveFeedback({ show: true, type, title, message });
+        setTimeout(() => setSaveFeedback(prev => ({ ...prev, show: false })), 4000);
+    };
 
     // Fetch branches if branchId is missing
     useEffect(() => {
@@ -95,13 +110,13 @@ export default function WalkInPage() {
         if (isSaving) return;
 
         if (!customerName || !customerPhone || !carModel || !licensePlate) {
-            alert("Harap lengkapi semua data!");
+            showFeedback('warning', 'Data Belum Lengkap', 'Harap isi semua kolom wajib yang bertanda bintang (*).');
             return;
         }
 
         const finalBranchId = branchId || selectedBranchId;
         if (!finalBranchId) {
-            alert("Harap pilih cabang terlebih dahulu.");
+            showFeedback('warning', 'Cabang Belum Dipilih', 'Harap pilih cabang pengerjaan terlebih dahulu.');
             return;
         }
 
@@ -148,7 +163,7 @@ export default function WalkInPage() {
             setCreatedBookingId(booking.id);
             setSuccess(true);
         } catch (err: any) {
-            alert("Gagal mendaftarkan: " + (err?.message || "Unknown error"));
+            showFeedback('error', 'Gagal mendaftarkan!', err?.message || "Terjadi kesalahan sistem.");
         } finally {
             setIsSaving(false);
             setIsConfirmedDuplicate(false);
@@ -251,61 +266,107 @@ export default function WalkInPage() {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
                             >
-                                <Card className="border-none shadow-2xl rounded-[2rem] overflow-hidden">
-                                    {/* Member search */}
-                                    <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Cari Member (Opsional)</p>
-                                        <div className="relative">
-                                            <Users2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                                            <input
-                                                type="text"
-                                                placeholder="Ketik nama atau no HP member..."
-                                                className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/10 rounded-2xl text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-400 font-medium"
-                                                value={memberSearch}
-                                                onChange={(e) => setMemberSearch(e.target.value)}
-                                            />
-                                            {isSearchingMember && <Loader2 size={16} className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-slate-400" />}
-                                        </div>
-                                        {memberResults.length > 0 && (
-                                            <div className="mt-2 bg-white rounded-xl overflow-hidden shadow-lg">
-                                                {memberResults.map(m => (
-                                                    <button
-                                                        key={m.id}
-                                                        onClick={() => handleSelectMember(m)}
-                                                        className="w-full flex items-center justify-between p-4 hover:bg-blue-50 transition-colors text-left border-b border-slate-50 last:border-none"
+                                <Card className="border-none shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] rounded-[2.5rem] overflow-hidden bg-white">
+                                    {/* Premium Member search */}
+                                    <div className="relative overflow-hidden">
+                                        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950" />
+                                        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-400 via-transparent to-transparent" />
+                                        
+                                        <div className="relative p-8 sm:p-10">
+                                            <div className="flex items-center justify-between mb-6">
+                                                <div>
+                                                    <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-1">Loyalty Integration</p>
+                                                    <h3 className="text-xl font-black text-white tracking-tight">Cari Member Terdaftar</h3>
+                                                </div>
+                                                <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md">
+                                                    <Users2 className="text-blue-400" size={24} />
+                                                </div>
+                                            </div>
+
+                                            <div className="relative">
+                                                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Ketik nama atau No. WhatsApp member..."
+                                                    className="w-full pl-14 pr-12 py-5 bg-white/10 border border-white/10 rounded-[1.25rem] text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:bg-white/15 transition-all font-medium text-lg"
+                                                    value={memberSearch}
+                                                    onChange={(e) => setMemberSearch(e.target.value)}
+                                                />
+                                                {isSearchingMember && (
+                                                    <div className="absolute right-5 top-1/2 -translate-y-1/2">
+                                                        <Loader2 size={20} className="animate-spin text-blue-400" />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {memberResults.length > 0 && (
+                                                <motion.div 
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    className="absolute left-8 right-8 mt-3 bg-white rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.2)] z-50 border border-slate-100"
+                                                >
+                                                    {memberResults.map(m => (
+                                                        <button
+                                                            key={m.id}
+                                                            onClick={() => handleSelectMember(m)}
+                                                            className="w-full flex items-center justify-between p-5 hover:bg-blue-50 transition-all text-left border-b border-slate-50 last:border-none group"
+                                                        >
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                                                                    <User size={20} />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-black text-slate-900 group-hover:text-blue-700">{m.full_name}</p>
+                                                                    <p className="text-xs text-slate-500 font-bold tracking-tight">{m.phone_number}</p>
+                                                                </div>
+                                                            </div>
+                                                            <Badge variant="neutral" className="bg-slate-100 text-slate-600 font-black">{m.total_points || 0} PTS</Badge>
+                                                        </button>
+                                                    ))}
+                                                </motion.div>
+                                            )}
+
+                                            <AnimatePresence>
+                                                {selectedMember && (
+                                                    <motion.div 
+                                                        initial={{ opacity: 0, height: 0 }}
+                                                        animate={{ opacity: 1, height: 'auto' }}
+                                                        exit={{ opacity: 0, height: 0 }}
+                                                        className="mt-6 flex items-center gap-4 bg-emerald-500/10 border border-emerald-500/20 p-5 rounded-[1.25rem] backdrop-blur-sm"
                                                     >
-                                                        <div>
-                                                            <p className="font-bold text-slate-900">{m.full_name}</p>
-                                                            <p className="text-xs text-slate-500">{m.phone_number}</p>
+                                                        <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                                                            <CheckCircle2 size={24} />
                                                         </div>
-                                                        <Badge variant="info" className="text-[10px]">{m.total_points || 0} Poin</Badge>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                        {selectedMember && (
-                                            <div className="mt-3 flex items-center gap-2 bg-blue-500/20 text-blue-200 px-4 py-2 rounded-xl">
-                                                <CheckCircle2 size={16} />
-                                                <span className="text-sm font-bold">Member: {selectedMember.full_name} ({selectedMember.total_points || 0} poin)</span>
-                                                <button onClick={() => setSelectedMember(null)} className="ml-auto text-blue-300 hover:text-white text-xs font-bold">Hapus</button>
-                                            </div>
-                                        )}
+                                                        <div className="flex-1">
+                                                            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Member Terpilih</p>
+                                                            <p className="text-white font-black text-lg">{selectedMember.full_name}</p>
+                                                        </div>
+                                                        <button 
+                                                            onClick={() => setSelectedMember(null)} 
+                                                            className="p-2 text-emerald-300 hover:text-white transition-colors"
+                                                        >
+                                                            <X size={20} />
+                                                        </button>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
                                     </div>
 
-                                    <CardContent className="p-8 space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <CardContent className="p-8 sm:p-10 space-y-8 bg-white">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             {/* Branch Selection if missing */}
                                             {!branchId && branches.length > 0 && (
-                                                <div className="col-span-full space-y-2">
-                                                    <label className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1">
-                                                        <Building2 size={10} /> Cabang *
+                                                <div className="col-span-full space-y-3 p-6 bg-amber-50/50 rounded-3xl border-2 border-dashed border-amber-100">
+                                                    <label className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                                                        <Building2 size={12} /> Konfirmasi Cabang
                                                     </label>
                                                     <select 
-                                                        className="w-full h-14 bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 font-bold text-slate-900 focus:border-blue-400 outline-none transition-all"
+                                                        className="w-full h-14 bg-white border-2 border-amber-100 rounded-2xl px-5 font-black text-slate-900 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 outline-none transition-all shadow-sm"
                                                         value={selectedBranchId}
                                                         onChange={(e) => setSelectedBranchId(e.target.value)}
                                                     >
-                                                        <option value="">Pilih Cabang</option>
+                                                        <option value="">Pilih Cabang Pengerjaan</option>
                                                         {branches.map(b => (
                                                             <option key={b.id} value={b.id}>{b.name}</option>
                                                         ))}
@@ -313,64 +374,263 @@ export default function WalkInPage() {
                                                 </div>
                                             )}
 
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nama Pelanggan *</label>
-                                                <div className="relative">
-                                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                            <div className="space-y-3">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Nama Pelanggan *</label>
+                                                <div className="relative group">
+                                                    <User className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
                                                     <input type="text" placeholder="Nama lengkap"
-                                                        className="input-field pl-11"
+                                                        className="w-full h-16 pl-14 pr-6 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-400/10 outline-none transition-all font-bold text-slate-900"
                                                         value={customerName}
                                                         onChange={(e) => setCustomerName(e.target.value)} />
                                                 </div>
                                             </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No. WhatsApp *</label>
-                                                <div className="relative">
-                                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                            <div className="space-y-3">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">No. WhatsApp *</label>
+                                                <div className="relative group">
+                                                    <PhoneCall className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-emerald-500 transition-colors" size={20} />
                                                     <input type="text" placeholder="08xx..."
-                                                        className="input-field pl-11"
+                                                        className="w-full h-16 pl-14 pr-6 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/10 outline-none transition-all font-bold text-slate-900"
                                                         value={customerPhone}
                                                         onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, ''))} />
                                                 </div>
                                             </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Merek / Tipe Mobil *</label>
-                                                <div className="relative">
-                                                    <Car className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                            <div className="space-y-3">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Merek / Tipe Mobil *</label>
+                                                <div className="relative group">
+                                                    <Car className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
                                                     <input type="text" placeholder="Avanza, Civic, dll"
-                                                        className="input-field pl-11"
+                                                        className="w-full h-16 pl-14 pr-6 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-400/10 outline-none transition-all font-bold text-slate-900"
                                                         value={carModel}
                                                         onChange={(e) => setCarModel(e.target.value)} />
                                                 </div>
                                             </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nomor Polisi *</label>
-                                                <div className="relative">
-                                                    <AppWindow className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                            <div className="space-y-3">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Nomor Polisi *</label>
+                                                <div className="relative group">
+                                                    <Hash className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
                                                     <input type="text" placeholder="B 1234 CD"
-                                                        className="input-field pl-11 uppercase"
+                                                        className="w-full h-16 pl-14 pr-6 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-400/10 outline-none transition-all font-black text-slate-900 uppercase tracking-widest"
                                                         value={licensePlate}
                                                         onChange={(e) => setLicensePlate(e.target.value)} />
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2 text-slate-400 bg-slate-50 rounded-xl p-4">
-                                            <CalendarClock size={16} />
-                                            <span className="text-xs font-bold">
-                                                {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} — {branchName}
-                                            </span>
+                                        <div className="flex items-center justify-between p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 shadow-sm">
+                                                    <CalendarClock size={20} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Waktu Pendaftaran</p>
+                                                    <p className="text-sm font-bold text-slate-700">
+                                                        {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Cabang Aktif</p>
+                                                <p className="text-sm font-black text-blue-600 uppercase italic">{branchName}</p>
+                                            </div>
                                         </div>
 
                                         <Button
                                             onClick={handleSubmit}
                                             disabled={isSaving}
-                                            className="w-full h-16 rounded-2xl bg-primary text-white font-black text-sm uppercase tracking-widest shadow-xl"
+                                            className="w-full h-20 rounded-[1.5rem] bg-slate-900 hover:bg-slate-800 text-white font-black text-base uppercase tracking-[0.2em] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.3)] hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] transition-all active:scale-95 group overflow-hidden relative"
                                         >
+                                            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                             {isSaving ? (
-                                                <><Loader2 size={20} className="animate-spin mr-2" /> Mendaftarkan...</>
+                                                <><Loader2 size={24} className="animate-spin mr-3" /> Memproses...</>
                                             ) : (
-                                                <><CheckCircle2 size={20} className="mr-2" /> Daftarkan & Masuk Antrian</>
+                                                <><CheckCircle2 size={24} className="mr-3" /> Daftarkan Walk-in</>
+                                            )}
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        )}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                            >
+                                <Card className="border-none shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] rounded-[2.5rem] overflow-hidden bg-white">
+                                    {/* Premium Member search */}
+                                    <div className="relative overflow-hidden">
+                                        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950" />
+                                        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-400 via-transparent to-transparent" />
+                                        
+                                        <div className="relative p-8 sm:p-10">
+                                            <div className="flex items-center justify-between mb-6">
+                                                <div>
+                                                    <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-1">Loyalty Integration</p>
+                                                    <h3 className="text-xl font-black text-white tracking-tight">Cari Member Terdaftar</h3>
+                                                </div>
+                                                <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md">
+                                                    <Users2 className="text-blue-400" size={24} />
+                                                </div>
+                                            </div>
+
+                                            <div className="relative">
+                                                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Ketik nama atau No. WhatsApp member..."
+                                                    className="w-full pl-14 pr-12 py-5 bg-white/10 border border-white/10 rounded-[1.25rem] text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:bg-white/15 transition-all font-medium text-lg"
+                                                    value={memberSearch}
+                                                    onChange={(e) => setMemberSearch(e.target.value)}
+                                                />
+                                                {isSearchingMember && (
+                                                    <div className="absolute right-5 top-1/2 -translate-y-1/2">
+                                                        <Loader2 size={20} className="animate-spin text-blue-400" />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {memberResults.length > 0 && (
+                                                <motion.div 
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    className="absolute left-8 right-8 mt-3 bg-white rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.2)] z-50 border border-slate-100"
+                                                >
+                                                    {memberResults.map(m => (
+                                                        <button
+                                                            key={m.id}
+                                                            onClick={() => handleSelectMember(m)}
+                                                            className="w-full flex items-center justify-between p-5 hover:bg-blue-50 transition-all text-left border-b border-slate-50 last:border-none group"
+                                                        >
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                                                                    <User size={20} />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-black text-slate-900 group-hover:text-blue-700">{m.full_name}</p>
+                                                                    <p className="text-xs text-slate-500 font-bold tracking-tight">{m.phone_number}</p>
+                                                                </div>
+                                                            </div>
+                                                            <Badge variant="neutral" className="bg-slate-100 text-slate-600 font-black">{m.total_points || 0} PTS</Badge>
+                                                        </button>
+                                                    ))}
+                                                </motion.div>
+                                            )}
+
+                                            <AnimatePresence>
+                                                {selectedMember && (
+                                                    <motion.div 
+                                                        initial={{ opacity: 0, height: 0 }}
+                                                        animate={{ opacity: 1, height: 'auto' }}
+                                                        exit={{ opacity: 0, height: 0 }}
+                                                        className="mt-6 flex items-center gap-4 bg-emerald-500/10 border border-emerald-500/20 p-5 rounded-[1.25rem] backdrop-blur-sm"
+                                                    >
+                                                        <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                                                            <CheckCircle2 size={24} />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Member Terpilih</p>
+                                                            <p className="text-white font-black text-lg">{selectedMember.full_name}</p>
+                                                        </div>
+                                                        <button 
+                                                            onClick={() => setSelectedMember(null)} 
+                                                            className="p-2 text-emerald-300 hover:text-white transition-colors"
+                                                        >
+                                                            <X size={20} />
+                                                        </button>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
+                                    </div>
+
+                                    <CardContent className="p-8 sm:p-10 space-y-8 bg-white">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            {/* Branch Selection if missing */}
+                                            {!branchId && branches.length > 0 && (
+                                                <div className="col-span-full space-y-3 p-6 bg-amber-50/50 rounded-3xl border-2 border-dashed border-amber-100">
+                                                    <label className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                                                        <Building2 size={12} /> Konfirmasi Cabang
+                                                    </label>
+                                                    <select 
+                                                        className="w-full h-14 bg-white border-2 border-amber-100 rounded-2xl px-5 font-black text-slate-900 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 outline-none transition-all shadow-sm"
+                                                        value={selectedBranchId}
+                                                        onChange={(e) => setSelectedBranchId(e.target.value)}
+                                                    >
+                                                        <option value="">Pilih Cabang Pengerjaan</option>
+                                                        {branches.map(b => (
+                                                            <option key={b.id} value={b.id}>{b.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+
+                                            <div className="space-y-3">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Nama Pelanggan *</label>
+                                                <div className="relative group">
+                                                    <User className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
+                                                    <input type="text" placeholder="Nama lengkap"
+                                                        className="w-full h-16 pl-14 pr-6 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-400/10 outline-none transition-all font-bold text-slate-900"
+                                                        value={customerName}
+                                                        onChange={(e) => setCustomerName(e.target.value)} />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-3">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">No. WhatsApp *</label>
+                                                <div className="relative group">
+                                                    <PhoneCall className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-emerald-500 transition-colors" size={20} />
+                                                    <input type="text" placeholder="08xx..."
+                                                        className="w-full h-16 pl-14 pr-6 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/10 outline-none transition-all font-bold text-slate-900"
+                                                        value={customerPhone}
+                                                        onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, ''))} />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-3">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Merek / Tipe Mobil *</label>
+                                                <div className="relative group">
+                                                    <Car className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
+                                                    <input type="text" placeholder="Avanza, Civic, dll"
+                                                        className="w-full h-16 pl-14 pr-6 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-400/10 outline-none transition-all font-bold text-slate-900"
+                                                        value={carModel}
+                                                        onChange={(e) => setCarModel(e.target.value)} />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-3">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Nomor Polisi *</label>
+                                                <div className="relative group">
+                                                    <Hash className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
+                                                    <input type="text" placeholder="B 1234 CD"
+                                                        className="w-full h-16 pl-14 pr-6 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-400/10 outline-none transition-all font-black text-slate-900 uppercase tracking-widest"
+                                                        value={licensePlate}
+                                                        onChange={(e) => setLicensePlate(e.target.value)} />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-between p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 shadow-sm">
+                                                    <CalendarClock size={20} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Waktu Pendaftaran</p>
+                                                    <p className="text-sm font-bold text-slate-700">
+                                                        {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Cabang Aktif</p>
+                                                <p className="text-sm font-black text-blue-600 uppercase italic">{branchName}</p>
+                                            </div>
+                                        </div>
+
+                                        <Button
+                                            onClick={handleSubmit}
+                                            disabled={isSaving}
+                                            className="w-full h-20 rounded-[1.5rem] bg-slate-900 hover:bg-slate-800 text-white font-black text-base uppercase tracking-[0.2em] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.3)] hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] transition-all active:scale-95 group overflow-hidden relative"
+                                        >
+                                            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            {isSaving ? (
+                                                <><Loader2 size={24} className="animate-spin mr-3" /> Memproses...</>
+                                            ) : (
+                                                <><CheckCircle2 size={24} className="mr-3" /> Daftarkan Walk-in</>
                                             )}
                                         </Button>
                                     </CardContent>
