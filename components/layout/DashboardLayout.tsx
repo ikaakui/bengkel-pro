@@ -76,6 +76,7 @@ const navigation = [
     { name: 'Redeem Poin', href: '/redeem-poin', icon: Gift, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Member' },
     { name: 'Validasi Voucher', href: '/admin/vouchers', icon: UserCheck, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Member' },
     { name: 'Katalog', href: '/catalog', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Manajemen' },
+    { name: 'Rekap Supplier', href: '/reports/supplier', icon: Package, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Laporan' },
     { name: 'Laporan Shift', href: '/shift-report', icon: ClipboardList, roles: ['admin', 'admin_depok', 'admin_bsd'], group: 'Laporan' },
     // Owner & SPV access
     { name: 'Katalog', href: '/catalog', icon: Package, roles: ['owner', 'spv'], group: 'Manajemen' },
