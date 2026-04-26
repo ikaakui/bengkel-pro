@@ -16,7 +16,10 @@ import {
     Building2,
     Filter,
     CheckCircle2,
-    RefreshCw
+    RefreshCw,
+    X,
+    Edit2,
+    AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -63,6 +66,19 @@ export default function ExpensesPage() {
         expense_date: new Date().toISOString().split('T')[0],
         branch_id: ''
     });
+
+    // Modern Feedback State
+    const [saveFeedback, setSaveFeedback] = useState<{
+        show: boolean;
+        type: 'success' | 'warning' | 'info' | 'error';
+        title: string;
+        message: string;
+    }>({ show: false, type: 'success', title: '', message: '' });
+
+    const showFeedback = (type: 'success' | 'warning' | 'info' | 'error', title: string, message: string) => {
+        setSaveFeedback({ show: true, type, title, message });
+        setTimeout(() => setSaveFeedback(prev => ({ ...prev, show: false })), 4000);
+    };
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -144,20 +160,23 @@ export default function ExpensesPage() {
                     branch_id: formData.branch_id || null
                 });
 
-            if (error) throw error;
+            if (error) {
+                showFeedback('error', 'Gagal mencatat pengeluaran!', error.message);
+            } else {
+                showFeedback('success', 'Pengeluaran Berhasil Dicatat! ✅', 'Data pengeluaran telah disimpan ke database.');
+                setShowAddForm(false);
+                setFormData({
+                    amount: "",
+                    category: 'gaji',
+                    description: '',
+                    expense_date: new Date().toISOString().split('T')[0],
+                    branch_id: profile?.branch_id || ''
+                });
 
-            setShowAddForm(false);
-            setFormData({
-                amount: "",
-                category: 'gaji',
-                description: '',
-                expense_date: new Date().toISOString().split('T')[0],
-                branch_id: profile?.branch_id || ''
-            });
-
-            fetchData();
+                fetchData();
+            }
         } catch (err: any) {
-            alert("Gagal menambahkan pengeluaran: " + (err?.message || 'Unknown error'));
+            showFeedback('error', 'Terjadi kesalahan!', err.message || 'Unknown error');
             console.error(err);
         } finally {
             setSubmitting(false);
@@ -495,6 +514,56 @@ export default function ExpensesPage() {
                         )}
                     </AnimatePresence>
                 </div>
+
+                {/* Modern Feedback Banner */}
+                {saveFeedback.show && (
+                    <div className={cn(
+                        "fixed top-6 left-1/2 -translate-x-1/2 z-[200] w-fit max-w-[90%] sm:min-w-[400px] shadow-2xl rounded-2xl p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-8 border-2 transition-all duration-300",
+                        saveFeedback.type === 'success' && "bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200 shadow-emerald-500/10",
+                        saveFeedback.type === 'warning' && "bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 shadow-amber-500/10",
+                        saveFeedback.type === 'info' && "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 shadow-blue-500/10",
+                        saveFeedback.type === 'error' && "bg-gradient-to-r from-rose-50 to-red-50 border-rose-200 shadow-rose-500/10"
+                    )}>
+                        <div className={cn(
+                            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                            saveFeedback.type === 'success' && "bg-emerald-100 text-emerald-600",
+                            saveFeedback.type === 'warning' && "bg-amber-100 text-amber-600",
+                            saveFeedback.type === 'info' && "bg-blue-100 text-blue-600",
+                            saveFeedback.type === 'error' && "bg-rose-100 text-rose-600"
+                        )}>
+                            {saveFeedback.type === 'success' && <CheckCircle2 size={20} />}
+                            {saveFeedback.type === 'warning' && <AlertTriangle size={20} />}
+                            {saveFeedback.type === 'info' && <Edit2 size={20} />}
+                            {saveFeedback.type === 'error' && <AlertCircle size={20} />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className={cn(
+                                "text-sm font-black truncate",
+                                saveFeedback.type === 'success' && "text-emerald-700",
+                                saveFeedback.type === 'warning' && "text-amber-700",
+                                saveFeedback.type === 'info' && "text-blue-700",
+                                saveFeedback.type === 'error' && "text-rose-700"
+                            )}>
+                                {saveFeedback.title}
+                            </p>
+                            <p className={cn(
+                                "text-xs truncate",
+                                saveFeedback.type === 'success' && "text-emerald-600",
+                                saveFeedback.type === 'warning' && "text-amber-600",
+                                saveFeedback.type === 'info' && "text-blue-600",
+                                saveFeedback.type === 'error' && "text-rose-600"
+                            )}>
+                                {saveFeedback.message}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setSaveFeedback(prev => ({ ...prev, show: false }))}
+                            className="p-1.5 text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+                        >
+                            <X size={16} />
+                        </button>
+                    </div>
+                )}
             </RoleGuard>
         </DashboardLayout>
     );
