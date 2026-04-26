@@ -42,6 +42,7 @@ export default function WalkInPage() {
     const [memberSearch, setMemberSearch] = useState("");
     const [memberResults, setMemberResults] = useState<any[]>([]);
     const [isSearchingMember, setIsSearchingMember] = useState(false);
+    const [hasSearched, setHasSearched] = useState(false);
 
     // Modern Feedback State
     const [saveFeedback, setSaveFeedback] = useState<{
@@ -82,6 +83,7 @@ export default function WalkInPage() {
         const searchMember = async () => {
             if (!memberSearch || memberSearch.length < 3) {
                 setMemberResults([]);
+                setHasSearched(false);
                 return;
             }
             setIsSearchingMember(true);
@@ -92,8 +94,10 @@ export default function WalkInPage() {
                 .eq("role", "member")
                 .or(`full_name.ilike.${pattern},phone_number.ilike.${pattern}`)
                 .limit(5);
+            
             if (data) setMemberResults(data);
             setIsSearchingMember(false);
+            setHasSearched(true);
         };
         const timer = setTimeout(searchMember, 400);
         return () => clearTimeout(timer);
@@ -299,6 +303,20 @@ export default function WalkInPage() {
                                                     </div>
                                                 )}
                                             </div>
+
+                                            {/* No Results found notice */}
+                                            {hasSearched && memberResults.length === 0 && !isSearchingMember && (
+                                                <motion.div 
+                                                    initial={{ opacity: 0, y: -10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    className="mt-3 px-5 py-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center gap-3"
+                                                >
+                                                    <AlertTriangle size={16} className="text-amber-500 shrink-0" />
+                                                    <p className="text-xs font-bold text-amber-200/80">
+                                                        Member tidak ditemukan. Silakan isi data manual di bawah.
+                                                    </p>
+                                                </motion.div>
+                                            )}
 
                                             {memberResults.length > 0 && (
                                                 <motion.div 
