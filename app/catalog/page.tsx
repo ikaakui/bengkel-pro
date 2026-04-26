@@ -39,6 +39,7 @@ interface CatalogItem {
     description: string;
     stock: number | null;
     is_active: boolean;
+    branch_id?: string | null;
     created_at?: string;
     updated_at?: string;
     updated_by_name?: string | null;
@@ -82,11 +83,17 @@ export default function CatalogPage() {
 
     const fetchCatalog = async () => {
         setLoading(true);
-        const { data, error } = await supabase
+        let query = supabase
             .from("catalog")
             .select("*")
-            .eq("is_active", true)
-            .order("created_at", { ascending: false });
+            .eq("is_active", true);
+
+        // Filter by branch: Show items belonging to this branch OR global items (null)
+        if (profile?.branch_id) {
+            query = query.or(`branch_id.eq.${profile.branch_id},branch_id.is.null`);
+        }
+
+        const { data, error } = await query.order("created_at", { ascending: false });
 
         if (data) {
             setItems(data);
@@ -114,6 +121,7 @@ export default function CatalogPage() {
                 points_required: parseInt(newPointsRequired) || 0,
                 stock: newCategory === 'Spare Part' ? parseInt(newStock) : null,
                 description: newDescription,
+                branch_id: profile?.branch_id || null,
                 updated_by_name: updaterName
             }]);
 

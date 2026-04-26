@@ -38,6 +38,7 @@ export default function SupplierRecapPage() {
     const [editItemModal, setEditItemModal] = useState<any>(null);
     const [editForm, setEditForm] = useState({ name: '', qty: 1, cost: 0 });
     const [savingEdit, setSavingEdit] = useState(false);
+    const [catalogSuggestions, setCatalogSuggestions] = useState<string[]>([]);
 
     const { profile, role } = useAuth();
 
@@ -153,8 +154,17 @@ export default function SupplierRecapPage() {
         }
     };
 
+    const fetchCatalogNames = async () => {
+        const { data } = await supabase.from('catalog').select('name').eq('is_active', true);
+        if (data) {
+            const uniqueNames = Array.from(new Set(data.map((i: any) => i.name)));
+            setCatalogSuggestions(uniqueNames as string[]);
+        }
+    };
+
     useEffect(() => {
         fetchData();
+        fetchCatalogNames();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [role]);
 
@@ -188,6 +198,50 @@ export default function SupplierRecapPage() {
                 .single();
 
             if (error) throw error;
+
+            // --- SYNC TO CATALOG ---
+            const updaterName = role === 'owner' ? 'Owner' : `Admin ${branches.find(b => b.id === formData.branch_id)?.name || ''}`.trim();
+            
+            for (const item of supplierItems) {
+                if (!item.name) continue;
+
+                // Search for item with same name AND branch_id
+                const { data: existing } = await supabase
+                    .from('catalog')
+                    .select('*')
+                    .ilike('name', item.name)
+                    .eq('branch_id', formData.branch_id)
+                    .maybeSingle();
+
+                if (existing) {
+                    // Update existing item
+                    await supabase
+                        .from('catalog')
+                        .update({
+                            stock: (existing.stock || 0) + (item.qty || 0),
+                            cost_price: item.cost,
+                            updated_at: new Date().toISOString(),
+                            updated_by_name: updaterName
+                        })
+                        .eq('id', existing.id);
+                } else {
+                    // Create new item for this branch
+                    await supabase
+                        .from('catalog')
+                        .insert([{
+                            name: item.name,
+                            category: 'Spare Part',
+                            cost_price: item.cost,
+                            price: Math.round((item.cost * 1.3) / 1000) * 1000, // Default 30% margin
+                            stock: item.qty,
+                            branch_id: formData.branch_id,
+                            is_active: true,
+                            updated_by_name: updaterName,
+                            description: 'Otomatis dari input supplier.'
+                        }]);
+                }
+            }
+            // --- END SYNC ---
 
             setShowAddForm(false);
             setFormData({
@@ -462,7 +516,19 @@ export default function SupplierRecapPage() {
                                                     <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3 relative group/item">
                                                         <div className="grid grid-cols-12 gap-3">
                                                             <div className="col-span-8">
-                                                                <input placeholder="Nama Barang" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" value={item.name} onChange={(e) => updateSupplierItem(idx, 'name', e.target.value)} required />
+                                                                <input 
+                                                                    placeholder="Nama Barang" 
+                                                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" 
+                                                                    value={item.name} 
+                                                                    onChange={(e) => updateSupplierItem(idx, 'name', e.target.value)} 
+                                                                    list="catalog-names"
+                                                                    required 
+                                                                />
+                                                                <datalist id="catalog-names">
+                                                                    {catalogSuggestions.map(name => (
+                                                                        <option key={name} value={name} />
+                                                                    ))}
+                                                                </datalist>
                                                             </div>
                                                             <div className="col-span-4">
                                                                 <input type="number" placeholder="Qty" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" value={item.qty || ''} onChange={(e) => updateSupplierItem(idx, 'qty', Number(e.target.value))} required />

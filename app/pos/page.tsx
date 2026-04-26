@@ -139,11 +139,16 @@ function POSContent() {
 
     const fetchItems = async () => {
         setLoading(true);
-        const { data } = await supabase
+        let query = supabase
             .from("catalog")
             .select("*")
-            .eq("is_active", true)
-            .order("name", { ascending: true });
+            .eq("is_active", true);
+
+        if (branchId) {
+            query = query.or(`branch_id.eq.${branchId},branch_id.is.null`);
+        }
+
+        const { data } = await query.order("name", { ascending: true });
 
         if (data) setItems(data);
 
