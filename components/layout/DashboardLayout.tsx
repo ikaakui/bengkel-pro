@@ -194,6 +194,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             { id: 'operasional', label: 'Operasional', group: 'Operasional' },
                             { id: 'keuangan', label: 'Keuangan', group: 'Keuangan' },
                             { id: 'manajemen', label: 'Manajemen', group: 'Manajemen' },
+                            { id: 'laporan', label: 'Laporan', group: 'Laporan' },
                             { id: 'asisten', label: 'AI Helper', group: 'Asisten' },
                             { id: 'akun', label: 'Akun & Profil', group: 'Akun' },
                             { id: 'sistem', label: 'Sistem', group: 'Sistem' }
