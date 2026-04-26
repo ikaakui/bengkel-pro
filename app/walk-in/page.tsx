@@ -242,6 +242,8 @@ export default function WalkInPage() {
                         
                     if (txnError) {
                         console.error("Failed to create initial draft transaction:", txnError);
+                        // If transaction fails (e.g. RLS), we MUST throw so the user knows!
+                        throw new Error("Gagal membuat Draft Transaksi: " + (txnError.message || JSON.stringify(txnError)));
                     }
 
                     setCreatedBookingId(booking.id);
