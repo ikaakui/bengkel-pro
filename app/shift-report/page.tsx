@@ -7,7 +7,8 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase-client";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { ClipboardList, Loader2, DollarSign, CreditCard, Wallet, CalendarClock, Download } from "lucide-react";
+import { ClipboardList, Loader2, DollarSign, CreditCard, Wallet, CalendarClock, Download, FileText } from "lucide-react";
+import * as XLSX from 'xlsx';
 
 export default function ShiftReportPage() {
     const { branchId, profile, branchName } = useAuth();
@@ -21,6 +22,66 @@ export default function ShiftReportPage() {
     });
 
     const supabase = createClient();
+
+    const handleExportExcel = async () => {
+        if (!branchId) return;
+        setLoading(true);
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const { data, error } = await supabase
+                .from("transactions")
+                .select(`
+                    customer_name,
+                    created_at,
+                    booking:booking_id (
+                        customer_phone,
+                        car_model,
+                        license_plate,
+                        created_at
+                    )
+                `)
+                .eq("branch_id", branchId)
+                .gte("created_at", today)
+                .eq("status", "Paid");
+
+            if (error) throw error;
+
+            if (data) {
+                const exportData = data.map(item => ({
+                    'Nama Pelanggan': item.customer_name || '-',
+                    'No. WhatsApp': item.booking?.customer_phone || '-',
+                    'Merek / Tipe Mobil': item.booking?.car_model || '-',
+                    'Nomor Polisi': item.booking?.license_plate || '-',
+                    'Waktu Pendaftaran': new Date(item.booking?.created_at || item.created_at).toLocaleString('id-ID', { 
+                        weekday: 'long', 
+                        day: 'numeric', 
+                        month: 'long', 
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }),
+                    'Cabang Aktif': branchName
+                }));
+
+                const worksheet = XLSX.utils.json_to_sheet(exportData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Shift");
+                
+                // Auto-fit columns
+                const maxWidths = Object.keys(exportData[0] || {}).map(key => ({
+                    wch: Math.max(key.length, ...exportData.map(row => String(row[key as keyof typeof row]).length)) + 2
+                }));
+                worksheet['!cols'] = maxWidths;
+
+                XLSX.writeFile(workbook, `Laporan_Shift_${branchName}_${today}.xlsx`);
+            }
+        } catch (err) {
+            console.error("Export Error:", err);
+            alert("Gagal mengekspor laporan.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         const fetchShiftData = async () => {
@@ -64,10 +125,11 @@ export default function ShiftReportPage() {
                             <p className="text-slate-500 mt-1 font-medium">Ringkasan penerimaan kasir hari ini di {branchName}</p>
                         </div>
                         <Button 
-                            onClick={() => window.print()} 
-                            className="bg-primary hover:bg-primary-dark text-white shadow-lg h-12 px-6 rounded-xl font-black uppercase tracking-widest"
+                            onClick={handleExportExcel} 
+                            disabled={loading}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg h-12 px-6 rounded-xl font-black uppercase tracking-widest transition-all active:scale-95"
                         >
-                            <Download size={18} className="mr-2" /> Cetak Laporan
+                            <FileText size={18} className="mr-2" /> Export Laporan
                         </Button>
                     </div>
 
