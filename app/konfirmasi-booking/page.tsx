@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import {
     Hash, Search, Loader2, CheckCircle2, User, Car,
-    Calendar, Phone, Zap, AlertCircle, ArrowRight, XCircle, Building2
+    Calendar, Phone, Zap, AlertCircle, ArrowRight, XCircle, Building2, Clock
 } from "lucide-react";
 import { createClient } from "@/lib/supabase-client";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -77,26 +77,27 @@ export default function KonfirmasiBookingPage() {
     }, [branchId, role, supabase]);
 
     useEffect(() => {
-        if (selectedBranchId || branchId) {
-            fetchPendingBookings();
-            
-            // Subscribe to real-time updates
-            const channel = supabase
-                .channel('pending_bookings_changes')
-                .on('postgres_changes', { 
-                    event: '*', 
-                    schema: 'public', 
-                    table: 'bookings',
-                    filter: `branch_id=eq.${branchId || selectedBranchId}`
-                }, () => {
-                    fetchPendingBookings();
-                })
-                .subscribe();
+        const targetId = branchId || selectedBranchId;
+        if (!targetId) return;
 
-            return () => {
-                supabase.removeChannel(channel);
-            };
-        }
+        fetchPendingBookings();
+        
+        // Subscribe to real-time updates
+        const channel = supabase
+            .channel('pending_bookings_changes')
+            .on('postgres_changes', { 
+                event: '*', 
+                schema: 'public', 
+                table: 'bookings',
+                filter: `branch_id=eq.${targetId}`
+            }, () => {
+                fetchPendingBookings();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [selectedBranchId, branchId, supabase]);
 
     const handleSearch = async (e?: React.FormEvent) => {
