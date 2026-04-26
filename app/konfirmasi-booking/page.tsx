@@ -202,8 +202,7 @@ export default function KonfirmasiBookingPage() {
                 .from("bookings")
                 .update({
                     status: 'processing',
-                    branch_id: finalBranchId,
-                    updated_at: new Date().toISOString()
+                    branch_id: finalBranchId
                 })
                 .eq("id", booking.id);
 
@@ -230,11 +229,14 @@ export default function KonfirmasiBookingPage() {
             }
 
             if (bookingToConfirm) {
-                // If it was from the list, we don't necessarily show the "Success" screen 
-                // but just refresh the list and show a small notification or just let real-time handle it
-                fetchPendingBookings();
+                // For list confirmation, redirect to antrian
+                router.push('/antrian');
             } else {
                 setSuccess(true);
+                // Also auto-redirect after a short delay if it was a manual search success
+                setTimeout(() => {
+                    router.push('/antrian');
+                }, 1500);
             }
         } catch (err: any) {
             alert("Gagal konfirmasi: " + err.message);
