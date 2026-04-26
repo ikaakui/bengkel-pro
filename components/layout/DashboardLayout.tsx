@@ -112,30 +112,46 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     if (isLoggingOut) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6">
-                <div className="text-center animate-fadeIn">
-                    <div className="relative w-24 h-24 mx-auto mb-8">
-                        <div className="absolute inset-0 border-4 border-primary/20 rounded-full" />
-                        <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="min-h-screen flex flex-col items-center justify-center bg-white/80 backdrop-blur-xl p-6 z-[1000]"
+            >
+                <div className="text-center">
+                    <motion.div 
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.5, ease: "easeOut" }}
+                        className="relative w-24 h-24 mx-auto mb-10"
+                    >
+                        <div className="absolute inset-0 border-[6px] border-primary/10 rounded-[2.5rem] rotate-45" />
+                        <div className="absolute inset-0 border-[6px] border-primary border-t-transparent rounded-[2.5rem] rotate-45 animate-spin" style={{ animationDuration: '1.5s' }} />
                         <div className="absolute inset-0 flex items-center justify-center text-primary">
-                            <Wrench size={32} className="animate-pulse" />
+                            <LogOut size={32} className="animate-pulse" />
                         </div>
-                    </div>
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">
-                        Keluar Sistem...
-                    </h2>
-                    <p className="text-slate-500 font-medium">
-                        Menghapus sesi dengan aman, silakan tunggu.
-                    </p>
+                    </motion.div>
+                    
+                    <motion.div
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.2, duration: 0.5 }}
+                    >
+                        <h2 className="text-3xl font-black text-slate-900 tracking-tighter mb-3">
+                            Keluar Sistem
+                        </h2>
+                        <div className="flex items-center justify-center gap-2 text-slate-400 font-bold text-xs uppercase tracking-[0.2em]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
+                            Menghapus sesi aman...
+                        </div>
+                    </motion.div>
                 </div>
 
-                {/* Visual feedback at bottom */}
-                <div className="fixed bottom-12 left-0 right-0 text-center">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
-                        Inka Otoservice &copy; {new Date().getFullYear()}
+                <div className="fixed bottom-12 text-center opacity-30">
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-900">
+                        Inka Otoservice
                     </p>
                 </div>
-            </div>
+            </motion.div>
         );
     }
 
