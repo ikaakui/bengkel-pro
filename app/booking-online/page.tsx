@@ -101,7 +101,12 @@ export default function BookingOnlinePage() {
         
         setIsSubmitting(true);
         try {
-            const code = `BK-${selectedBranch.name.substring(0, 3).toUpperCase()}-${new Date().getTime().toString().slice(-4)}`;
+            const now = new Date();
+            const dd = String(now.getDate()).padStart(2, '0');
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const branchPrefix = selectedBranch.name.toUpperCase().replace(/CABANG\s*/i, '').trim().substring(0, 3);
+            const random = Math.floor(1000 + Math.random() * 9000);
+            const code = `BK-${branchPrefix}-${dd}${mm}-${random}`;
             
             const { error } = await supabase.from("bookings").insert([{
                 customer_name: profile.full_name,

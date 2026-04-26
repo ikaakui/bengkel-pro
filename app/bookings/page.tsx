@@ -154,18 +154,39 @@ export default function BookingsPage() {
     // Admin: search booking by code
     const handleCodeSearch = async () => {
         if (!codeInput.trim()) return;
+        const cleanInput = codeInput.trim().toUpperCase();
         setCodeSearching(true);
         setCodeError("");
         setFoundBooking(null);
 
-        const { data, error } = await supabase
+        // First attempt: exact match
+        let { data, error } = await supabase
             .from("bookings")
             .select("*, member:member_id(full_name, referral_code)")
-            .eq("booking_code", codeInput.trim().toUpperCase())
-            .single();
+            .eq("booking_code", cleanInput)
+            .maybeSingle();
 
-        if (error || !data) {
-            setCodeError("Kode booking tidak ditemukan. Pastikan kode sudah benar.");
+        // Second attempt: if exact fails, try stripping hyphens
+        if (!data && cleanInput.includes('BK')) {
+            const searchCode = cleanInput.replace(/-/g, '');
+            const { data: fuzzyData } = await supabase
+                .from("bookings")
+                .select("*, member:member_id(full_name, referral_code)")
+                .ilike("booking_code", `%${searchCode.replace('BK', '')}%`)
+                .limit(10);
+            
+            if (fuzzyData && fuzzyData.length > 0) {
+                const match = fuzzyData.find(b => (b.booking_code || '').replace(/-/g, '') === searchCode);
+                if (match) data = match;
+            }
+        }
+
+        if (!data) {
+            let msg = "Kode booking tidak ditemukan. Pastikan kode sudah benar.";
+            if (role !== 'owner' && role !== 'admin') {
+                msg += ` (Pencarian terbatas untuk cabang ${branchName || 'Anda'})`;
+            }
+            setCodeError(msg);
         } else if (data.status !== 'pending') {
             setCodeError(`Booking ini sudah berstatus "${data.status}". Hanya booking pending yang bisa dikonfirmasi.`);
             setFoundBooking(data);

@@ -61,14 +61,40 @@ export default function KonfirmasiBookingPage() {
         setSuccess(false);
 
         try {
-            const { data, error: fetchError } = await supabase
+            const cleanInput = codeInput.trim().toUpperCase();
+            
+            // First attempt: exact match
+            let { data, error: fetchError } = await supabase
                 .from("bookings")
                 .select("*, member:member_id(full_name, referral_code, phone_number, total_points)")
-                .eq("booking_code", codeInput.trim().toUpperCase())
-                .single();
+                .eq("booking_code", cleanInput)
+                .maybeSingle();
 
-            if (fetchError || !data) {
-                setError("Kode booking tidak ditemukan. Pastikan kode sudah benar.");
+            // Second attempt: if exact fails, try stripping hyphens if the input looks like a code
+            if (!data && cleanInput.includes('BK')) {
+                const searchCode = cleanInput.replace(/-/g, '');
+                // Try searching for codes that match without hyphens (heuristic)
+                const { data: fuzzyData } = await supabase
+                    .from("bookings")
+                    .select("*, member:member_id(full_name, referral_code, phone_number, total_points)")
+                    .ilike("booking_code", `%${searchCode.replace('BK', '')}%`)
+                    .limit(5);
+                
+                if (fuzzyData && fuzzyData.length > 0) {
+                    // Try to find a exact alphanumeric match
+                    const match = fuzzyData.find(b => (b.booking_code || '').replace(/-/g, '') === searchCode);
+                    if (match) data = match;
+                }
+            }
+
+            if (!data) {
+                let msg = "Kode booking tidak ditemukan. Pastikan kode sudah benar.";
+                if (role !== 'owner' && !branchId) {
+                    msg += " (Tips: Sesi cabang Anda belum terdeteksi, mungkin berpengaruh pada pencarian)";
+                } else if (role !== 'owner') {
+                    msg += ` (Pencarian terbatas untuk cabang ${branchName || 'Anda'})`;
+                }
+                setError(msg);
                 return;
             }
 
