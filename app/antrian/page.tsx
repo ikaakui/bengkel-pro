@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import RoleGuard from "@/components/auth/RoleGuard";
@@ -66,6 +66,7 @@ export default function AntrianServicePage() {
     const supabase = createClient();
 
     const [resolvedBranchId, setResolvedBranchId] = useState<string | null>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     // Pre-resolve branch ID once, instead of looking it up inside every fetchQueue call
     useEffect(() => {
@@ -92,6 +93,12 @@ export default function AntrianServicePage() {
     }, [branchId, role]);
 
     const fetchQueue = async () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
         setLoading(true);
         try {
             let query = supabase
@@ -103,7 +110,8 @@ export default function AntrianServicePage() {
                 `)
                 .in("status", ["Draft", "In Progress", "Paid"])
                 .order("created_at", { ascending: false })
-                .limit(100);
+                .limit(100)
+                .abortSignal(controller.signal);
 
             if (resolvedBranchId) {
                 query = query.eq("branch_id", resolvedBranchId);
@@ -125,9 +133,12 @@ export default function AntrianServicePage() {
                 setItems(data as unknown as QueueItem[]);
             }
         } catch (err: any) {
+            if (err.name === 'AbortError') return;
             console.error("Fetch Queue Error:", err);
         } finally {
-            setLoading(false);
+            if (abortControllerRef.current === controller) {
+                setLoading(false);
+            }
         }
     };
 
@@ -135,6 +146,11 @@ export default function AntrianServicePage() {
         if (resolvedBranchId !== null) {
             fetchQueue();
         }
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
     }, [resolvedBranchId]);
 
     const filteredItems = items.filter(item => {

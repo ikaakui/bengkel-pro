@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import RoleGuard from "@/components/auth/RoleGuard";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
@@ -124,8 +124,13 @@ export default function CatalogPage() {
     };
 
     const supabase = createClient();
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     const fetchCatalog = async () => {
+        if (abortControllerRef.current) abortControllerRef.current.abort();
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
         setLoading(true);
         try {
             let query = supabase
@@ -147,7 +152,7 @@ export default function CatalogPage() {
                 }
             }
 
-            const fetchPromise = query.order("created_at", { ascending: false });
+            const fetchPromise = query.order("created_at", { ascending: false }).abortSignal(controller.signal);
             const timeoutPromise = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error("Catalog fetch timeout (15s)")), 15000)
             );
@@ -159,9 +164,10 @@ export default function CatalogPage() {
                 setItems(data);
             }
         } catch (err: any) {
+            if (err.name === 'AbortError') return;
             console.error("Catalog fetch error:", err?.message || err);
         } finally {
-            setLoading(false);
+            if (abortControllerRef.current === controller) setLoading(false);
         }
     };
 
@@ -170,6 +176,9 @@ export default function CatalogPage() {
         if (role) {
             fetchCatalog();
         }
+        return () => {
+            if (abortControllerRef.current) abortControllerRef.current.abort();
+        };
     }, [profile, role]);
 
     const handleAddItem = async (e: React.FormEvent) => {
