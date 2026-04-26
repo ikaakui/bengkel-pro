@@ -67,33 +67,41 @@ export default function AntrianServicePage() {
 
     const fetchQueue = async () => {
         setLoading(true);
-        let query = supabase
-            .from("transactions")
-            .select(`
-                *,
-                booking:booking_id(car_model, license_plate, booking_code, customer_phone),
-                transaction_items(id, qty, price_at_sale, catalog:catalog_id(name, category))
-            `)
-            .in("status", ["Draft", "In Progress", "Paid"])
-            .order("created_at", { ascending: false })
-            .limit(100);
+        try {
+            let query = supabase
+                .from("transactions")
+                .select(`
+                    *,
+                    booking:booking_id(car_model, license_plate, booking_code, customer_phone),
+                    transaction_items(id, qty, price_at_sale, catalog:catalog_id(name, category))
+                `)
+                .in("status", ["Draft", "In Progress", "Paid"])
+                .order("created_at", { ascending: false })
+                .limit(100);
 
-        if (branchId) {
-            query = query.eq("branch_id", branchId);
+            if (branchId) {
+                query = query.eq("branch_id", branchId);
+            }
+
+            // Tambahkan timeout 15 detik agar tidak stuck loading selamanya
+            const { data, error } = await Promise.race([
+                query,
+                new Promise((_, reject) => setTimeout(() => reject(new Error("Request timeout")), 15000))
+            ]) as any;
+
+            if (error) throw error;
+            if (data) {
+                setItems(data as unknown as QueueItem[]);
+            }
+        } catch (err: any) {
+            console.error("Fetch Queue Error:", err);
+        } finally {
+            setLoading(false);
         }
-
-        const { data, error } = await query;
-
-        if (data && !error) {
-            setItems(data as unknown as QueueItem[]);
-        }
-        setLoading(false);
     };
 
     useEffect(() => {
-        if (branchId) {
-            fetchQueue();
-        }
+        fetchQueue();
     }, [branchId]);
 
     const filteredItems = items.filter(item => {
