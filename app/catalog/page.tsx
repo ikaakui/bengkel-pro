@@ -28,7 +28,8 @@ import {
     Gift,
     AlertTriangle,
     AlertCircle,
-    ArrowLeft
+    ArrowLeft,
+    Percent
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -95,6 +96,31 @@ export default function CatalogPage() {
     const showFeedback = (type: 'success' | 'warning' | 'info' | 'error', title: string, message: string) => {
         setSaveFeedback({ show: true, type, title, message });
         setTimeout(() => setSaveFeedback(prev => ({ ...prev, show: false })), 4000);
+    };
+
+    const getCurrentMargin = () => {
+        const cost = editingItem ? editingItem.cost_price : parseRupiah(newCostPrice);
+        const price = editingItem ? editingItem.price : parseRupiah(newPrice);
+        if (!cost || cost === 0 || !price) return "";
+        return Math.round(((price - cost) / cost) * 100).toString();
+    };
+
+    const handleMarginChange = (val: string) => {
+        const numericVal = parseInt(val.replace(/[^\d-]/g, ''));
+        const margin = isNaN(numericVal) ? 0 : numericVal;
+        
+        const currentCost = editingItem ? editingItem.cost_price : parseRupiah(newCostPrice);
+        
+        if (currentCost > 0) {
+            const calculatedPrice = currentCost + (currentCost * margin / 100);
+            const roundedPrice = Math.round(calculatedPrice);
+            
+            if (editingItem) {
+                setEditingItem({ ...editingItem, price: roundedPrice });
+            } else {
+                setNewPrice(formatRupiah(roundedPrice.toString()));
+            }
+        }
     };
 
     const supabase = createClient();
@@ -453,43 +479,62 @@ export default function CatalogPage() {
                                                         />
                                                     </div>
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Harga Jual (Rp)</label>
-                                                    <div className="relative">
-                                                        <Coins className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                                                        <input
-                                                            type="text"
-                                                            required
-                                                            className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:outline-none focus:bg-white transition-all font-bold"
-                                                            placeholder="Contoh: 150.000"
-                                                            value={editingItem ? formatRupiah(editingItem.price) : newPrice}
-                                                            onChange={(e) => {
-                                                                const val = formatRupiah(e.target.value);
-                                                                editingItem 
-                                                                    ? setEditingItem({ ...editingItem, price: parseRupiah(val) }) 
-                                                                    : setNewPrice(val);
-                                                            }}
-                                                        />
+                                                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Harga Modal / Beli</label>
+                                                        <div className="relative">
+                                                            <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                                                            <input
+                                                                type="text"
+                                                                className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:outline-none focus:bg-white transition-all font-bold"
+                                                                placeholder="Contoh: 80.000"
+                                                                value={editingItem ? formatRupiah(editingItem.cost_price) : newCostPrice}
+                                                                onChange={(e) => {
+                                                                    const val = formatRupiah(e.target.value);
+                                                                    editingItem 
+                                                                        ? setEditingItem({ ...editingItem, cost_price: parseRupiah(val) }) 
+                                                                        : setNewCostPrice(val);
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <p className="text-[10px] text-slate-400 italic">Harga dari supplier.</p>
                                                     </div>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Harga Modal / Beli (Rp)</label>
-                                                    <div className="relative">
-                                                        <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                                                        <input
-                                                            type="text"
-                                                            className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:outline-none focus:bg-white transition-all font-bold"
-                                                            placeholder="Contoh: 80.000"
-                                                            value={editingItem ? formatRupiah(editingItem.cost_price) : newCostPrice}
-                                                            onChange={(e) => {
-                                                                const val = formatRupiah(e.target.value);
-                                                                editingItem 
-                                                                    ? setEditingItem({ ...editingItem, cost_price: parseRupiah(val) }) 
-                                                                    : setNewCostPrice(val);
-                                                            }}
-                                                        />
+
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Margin (%)</label>
+                                                        <div className="relative">
+                                                            <Percent className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500" size={18} />
+                                                            <input
+                                                                type="text"
+                                                                className="w-full pl-12 pr-4 py-4 bg-emerald-50 border border-emerald-100 rounded-2xl focus:ring-4 focus:ring-emerald-500/20 focus:outline-none focus:bg-white transition-all font-bold text-emerald-600"
+                                                                placeholder="Misal: 20"
+                                                                value={getCurrentMargin()}
+                                                                onChange={(e) => handleMarginChange(e.target.value)}
+                                                            />
+                                                        </div>
+                                                        <p className="text-[10px] text-emerald-600/70 italic font-medium">Input persen untuk auto-hitung.</p>
                                                     </div>
-                                                    <p className="text-[10px] text-slate-400 italic">Harga beli dari supplier, untuk perhitungan laba kotor di laporan.</p>
+
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black uppercase tracking-widest text-primary">Harga Jual (Rp)</label>
+                                                        <div className="relative">
+                                                            <Coins className="absolute left-4 top-1/2 -translate-y-1/2 text-primary" size={18} />
+                                                            <input
+                                                                type="text"
+                                                                required
+                                                                className="w-full pl-12 pr-4 py-4 bg-primary/5 border border-primary/20 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:outline-none focus:bg-white transition-all font-black text-primary"
+                                                                placeholder="Contoh: 150.000"
+                                                                value={editingItem ? formatRupiah(editingItem.price) : newPrice}
+                                                                onChange={(e) => {
+                                                                    const val = formatRupiah(e.target.value);
+                                                                    editingItem 
+                                                                        ? setEditingItem({ ...editingItem, price: parseRupiah(val) }) 
+                                                                        : setNewPrice(val);
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <p className="text-[10px] text-primary/70 italic font-medium">Bisa langsung ketik nominal.</p>
+                                                    </div>
                                                 </div>
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Poin Reward (Dibutuhkan)</label>
