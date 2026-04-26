@@ -477,11 +477,7 @@ export default function InvoicePage() {
                                             )}
                                         </div>
                                     </div>
-                                    {branch?.address && (
-                                        <p className="text-slate-600 text-sm mt-2 max-w-xs leading-relaxed">
-                                            {branch.address}
-                                        </p>
-                                    )}
+
                                     {branch?.phone && (
                                         <p className="text-slate-600 text-sm mt-1 font-medium">
                                             Telp: {branch.phone}

@@ -260,10 +260,7 @@ export default function BookingInvoicePage() {
                                     </div>
 
                                     <div className="space-y-2 max-w-xs">
-                                        <div className="flex items-start gap-3 text-slate-500 text-sm">
-                                            <MapPin size={18} className="shrink-0 mt-0.5 text-slate-400" />
-                                            <p className="leading-relaxed font-medium">{booking.branches?.address || "Alamat Bengkel Inka Otoservice"}</p>
-                                        </div>
+
                                         <div className="flex items-center gap-3 text-slate-500 text-sm">
                                             <Smartphone size={18} className="shrink-0 text-slate-400" />
                                             <p className="font-bold">{booking.branches?.phone || "0812-XXXX-XXXX"}</p>
