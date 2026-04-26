@@ -67,9 +67,9 @@ export default function ShiftReportPage() {
                     }),
                     'Cabang Aktif': branchName,
                     'Service yang dilakukan': (item.transaction_items as any[] || [])
-                        .map(ti => `${ti.catalog?.name || 'Item'} (Rp ${Number(ti.price_at_sale || 0).toLocaleString('id-ID')})`)
+                        .map(ti => `${ti.catalog?.name || 'Item'} (${Number(ti.price_at_sale || 0).toLocaleString('id-ID')})`)
                         .join(', ') || '-',
-                    'Total Transaksi': `Rp ${Number(item.total_amount || 0).toLocaleString('id-ID')}`
+                    'Total Transaksi': Number(item.total_amount || 0)
                 }));
 
                 const worksheet = XLSX.utils.json_to_sheet(exportData);
