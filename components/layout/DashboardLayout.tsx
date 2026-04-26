@@ -46,12 +46,8 @@ import type { UserRole } from "@/components/providers/AuthProvider";
 const navigation = [
     { name: 'Overview', href: '/', icon: LayoutDashboard, roles: ['owner', 'member', 'spv'], group: 'Utama' },
     // Member Exclusive
-    { name: 'Booking Online', href: '/booking-online', icon: CalendarPlus, roles: ['member'], group: 'Layanan' },
-    { name: 'Riwayat Servis', href: '/riwayat-servis', icon: Clock, roles: ['member'], group: 'Layanan' },
     { name: 'Konfirmasi Bayar Booking', href: '/pembayaran', icon: Receipt, roles: ['member'], group: 'Layanan' },
-    { name: 'Poin & Reward', href: '/rewards-member', icon: Gift, roles: ['member'], group: 'Loyalty' },
     { name: 'Profil Akun Member', href: '/profil-member', icon: UserCircle, roles: ['member'], group: 'Akun' },
-    { name: 'Kritik & Saran', href: '/complain', icon: MessageSquarePlus, roles: ['member'], group: 'Akun' },
 
     // Owner & SPV
     { name: 'Analisis Member', href: '/analytics/member', icon: Users2, roles: ['owner'], group: 'Analisis' },

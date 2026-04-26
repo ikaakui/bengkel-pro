@@ -1,23 +1,23 @@
+
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+dotenv.config({ path: '.env.local' });
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: join(__dirname, '..', '.env.local') });
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function main() {
-  const { data: profiles, error } = await supabase.from('profiles').select('id, full_name, role, branch_id').limit(10);
-  if (error) {
-    console.error(error);
-  } else {
-    console.log(JSON.stringify(profiles, null, 2));
-  }
+async function checkProfiles() {
+    console.log('Checking profiles for admins...');
+    
+    // We can't use ANON_KEY to see other profiles due to RLS
+    // but maybe we can see branches?
+    const { data: branches, error: bError } = await supabase.from('branches').select('*');
+    if (bError) console.error('Error branches:', bError);
+    else console.log('Branches:', branches);
+
+    console.log('\nNote: Cannot check other profiles without service role key or being logged in.');
 }
 
-main();
+checkProfiles();
