@@ -114,7 +114,6 @@ export default function UsersPage() {
     const supabase = createClient();
 
     const fetchUsers = async () => {
-        setLoading(true);
         let query = supabase.from("profiles").select("*");
         
         // Non-owner only see members
@@ -128,7 +127,6 @@ export default function UsersPage() {
             setUsers(data);
             setFilteredUsers(data);
         }
-        setLoading(false);
     };
 
     const fetchBranches = async () => {
@@ -166,9 +164,23 @@ export default function UsersPage() {
     };
 
     useEffect(() => {
-        fetchUsers();
-        fetchBranches();
-        fetchMVP();
+        const loadAll = async () => {
+            setLoading(true);
+            try {
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("Users fetch timeout (15s)")), 15000)
+                );
+                await Promise.race([
+                    Promise.all([fetchUsers(), fetchBranches(), fetchMVP()]),
+                    timeoutPromise
+                ]);
+            } catch (err: any) {
+                console.error("Users page fetch error:", err?.message || err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadAll();
     }, []);
 
     useEffect(() => {

@@ -56,7 +56,7 @@ export default function KonfirmasiBookingPage() {
 
         setFetchingPending(true);
         try {
-            const { data, error: fetchErr } = await supabase
+            const fetchPromise = supabase
                 .from("bookings")
                 .select("*, member:member_id(full_name, total_points)")
                 .eq("branch_id", finalBranchId)
@@ -65,9 +65,16 @@ export default function KonfirmasiBookingPage() {
                 .order("service_date", { ascending: true })
                 .order("service_time", { ascending: true });
             
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Booking fetch timeout (15s)")), 15000)
+            );
+
+            const { data, error: fetchErr } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+            
+            if (fetchErr) throw fetchErr;
             if (data) setPendingBookings(data);
-        } catch (err) {
-            console.error("Error fetching pending bookings:", err);
+        } catch (err: any) {
+            console.error("Error fetching pending bookings:", err?.message || err);
         } finally {
             setFetchingPending(false);
         }

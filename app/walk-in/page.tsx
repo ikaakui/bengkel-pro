@@ -56,22 +56,30 @@ export default function WalkInPage() {
         setTimeout(() => setSaveFeedback(prev => ({ ...prev, show: false })), 4000);
     };
 
-    // Fetch branches if branchId is missing
+    // Fetch branches with timeout protection
     useEffect(() => {
         const fetchBranches = async () => {
-            const { data } = await supabase.from("branches").select("*");
-            if (data) {
-                setBranches(data);
-                // Auto-select if branchId exists in auth
-                if (branchId) {
-                    setSelectedBranchId(branchId);
-                } else if (role === 'admin_bsd') {
-                    const bsd = data.find(b => b.name.includes('BSD'));
-                    if (bsd) setSelectedBranchId(bsd.id);
-                } else if (role === 'admin_depok') {
-                    const depok = data.find(b => b.name.includes('Depok'));
-                    if (depok) setSelectedBranchId(depok.id);
+            try {
+                const fetchPromise = supabase.from("branches").select("*");
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("Branch fetch timeout (15s)")), 15000)
+                );
+                const { data } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+                if (data) {
+                    setBranches(data);
+                    // Auto-select if branchId exists in auth
+                    if (branchId) {
+                        setSelectedBranchId(branchId);
+                    } else if (role === 'admin_bsd') {
+                        const bsd = data.find(b => b.name.includes('BSD'));
+                        if (bsd) setSelectedBranchId(bsd.id);
+                    } else if (role === 'admin_depok') {
+                        const depok = data.find(b => b.name.includes('Depok'));
+                        if (depok) setSelectedBranchId(depok.id);
+                    }
                 }
+            } catch (err: any) {
+                console.error("Walk-in branch fetch error:", err?.message || err);
             }
         };
         fetchBranches();

@@ -100,38 +100,48 @@ export default function CatalogPage() {
     const supabase = createClient();
 
     const fetchCatalog = async () => {
-        // Only fetch if profile is loaded or user is definitely logged in (RoleGuard handles this)
-        // but we add an extra check for profile.branch_id if they are a branch admin
         setLoading(true);
-        let query = supabase
-            .from("catalog")
-            .select("*")
-            .eq("is_active", true);
+        try {
+            let query = supabase
+                .from("catalog")
+                .select("*")
+                .eq("is_active", true);
 
-        // Filter by branch: 
-        // 1. Branch Admins: Only show their branch + global (null)
-        // 2. Owner/SPV: Show everything
-        if (profile?.branch_id) {
-            query = query.or(`branch_id.eq.${profile.branch_id},branch_id.is.null`);
-        } else if (role !== 'owner' && role !== 'spv') {
-            // Safety: if it's a branch admin but branch_id is somehow missing from profile, 
-            // don't show anything to prevent leakage, until profile is fully ready.
-            if (!profile) {
-                setLoading(false);
-                return;
+            // Filter by branch: 
+            // 1. Branch Admins: Only show their branch + global (null)
+            // 2. Owner/SPV: Show everything
+            if (profile?.branch_id) {
+                query = query.or(`branch_id.eq.${profile.branch_id},branch_id.is.null`);
+            } else if (role !== 'owner' && role !== 'spv') {
+                // Safety: if it's a branch admin but branch_id is somehow missing from profile, 
+                // don't show anything to prevent leakage, until profile is fully ready.
+                if (!profile) {
+                    setLoading(false);
+                    return;
+                }
             }
-        }
 
-        const { data, error } = await query.order("created_at", { ascending: false });
+            const fetchPromise = query.order("created_at", { ascending: false });
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Catalog fetch timeout (15s)")), 15000)
+            );
 
-        if (data) {
-            setItems(data);
+            const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+
+            if (error) throw error;
+            if (data) {
+                setItems(data);
+            }
+        } catch (err: any) {
+            console.error("Catalog fetch error:", err?.message || err);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     useEffect(() => {
-        if (!loading) {
+        // Fetch catalog when profile or role is available (no loading guard — that caused a deadlock)
+        if (role) {
             fetchCatalog();
         }
     }, [profile, role]);

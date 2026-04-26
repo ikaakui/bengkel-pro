@@ -4,7 +4,6 @@ const nextConfig = {
   compress: true,
   transpilePackages: ['lucide-react', 'framer-motion'],
   experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,

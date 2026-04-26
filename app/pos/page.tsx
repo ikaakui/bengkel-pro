@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import RoleGuard from "@/components/auth/RoleGuard";
+import { useAuth } from "@/components/providers/AuthProvider";
 import POSProductGrid from "./components/POSProductGrid";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -62,6 +63,7 @@ interface BookingData {
 function POSContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
+    const { branchId: authBranchId, role, profile: authProfile } = useAuth();
     const bookingId = searchParams.get("booking_id");
     const draftId = searchParams.get("draft_id");
 
@@ -114,24 +116,8 @@ function POSContent() {
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSavingDraft, setIsSavingDraft] = useState(false);
-    const [branchId, setBranchId] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchUserProfile = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('branch_id')
-                    .eq('id', user.id)
-                    .single();
-                if (profile) {
-                    setBranchId(profile.branch_id);
-                }
-            }
-        };
-        fetchUserProfile();
-    }, []);
+    // Use branchId from AuthProvider instead of redundant manual fetch
+    const branchId = authBranchId;
 
     useEffect(() => {
         loadDraft();
@@ -139,39 +125,38 @@ function POSContent() {
 
     const fetchItems = async () => {
         setLoading(true);
-        let query = supabase
-            .from("catalog")
-            .select("*")
-            .eq("is_active", true);
+        try {
+            let query = supabase
+                .from("catalog")
+                .select("*")
+                .eq("is_active", true);
 
-        // If branchId is set, filter by branch + global (null)
-        // If not set and not owner (handled by branchId being null for owners usually),
-        // we might want to wait.
-        if (branchId) {
-            query = query.or(`branch_id.eq.${branchId},branch_id.is.null`);
-        } else {
-            // Check if user is owner/spv before showing everything
-            const { data: { user } } = await supabase.auth.getUser();
-            const { data: profile } = await supabase.from('profiles').select('role').eq('id', user?.id).single();
-            if (profile && !['owner', 'spv'].includes(profile.role)) {
-                // If they are a branch admin but branchId is not yet loaded, wait
+            // Use role from AuthProvider — no extra DB calls needed
+            if (branchId) {
+                query = query.or(`branch_id.eq.${branchId},branch_id.is.null`);
+            } else if (role && !['owner', 'spv'].includes(role)) {
+                // Branch admin but branchId not ready yet — skip to avoid leaking data
                 setLoading(false);
                 return;
             }
+
+            const fetchPromise = Promise.all([
+                query.order("name", { ascending: true }),
+                supabase.from("rewards").select("*").eq("is_active", true).order("points_required", { ascending: true })
+            ]);
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("POS fetch timeout (15s)")), 15000)
+            );
+
+            const [catalogRes, rewardsRes] = await Promise.race([fetchPromise, timeoutPromise]) as any;
+
+            if (catalogRes?.data) setItems(catalogRes.data);
+            if (rewardsRes?.data) setRewards(rewardsRes.data);
+        } catch (err: any) {
+            console.error("POS fetchItems error:", err?.message || err);
+        } finally {
+            setLoading(false);
         }
-
-        const { data } = await query.order("name", { ascending: true });
-
-        if (data) setItems(data);
-
-        const { data: rwData } = await supabase
-            .from("rewards")
-            .select("*")
-            .eq("is_active", true)
-            .order("points_required", { ascending: true });
-        if (rwData) setRewards(rwData);
-
-        setLoading(false);
     };
 
     // Fetch booking data if booking_id is in URL
@@ -297,10 +282,11 @@ function POSContent() {
     }, [bookingSearchTerm]);
 
     useEffect(() => {
-        if (branchId !== undefined) {
+        // Only fetch when role is known (auth is ready)
+        if (role) {
             fetchItems();
         }
-    }, [branchId]);
+    }, [branchId, role]);
 
     useEffect(() => {
         if (bookingId) {

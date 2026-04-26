@@ -65,6 +65,32 @@ export default function AntrianServicePage() {
     const { branchId, role } = useAuth();
     const supabase = createClient();
 
+    const [resolvedBranchId, setResolvedBranchId] = useState<string | null>(null);
+
+    // Pre-resolve branch ID once, instead of looking it up inside every fetchQueue call
+    useEffect(() => {
+        const resolveBranch = async () => {
+            if (branchId) {
+                setResolvedBranchId(branchId);
+                return;
+            }
+            // Fallback for branch-specific admins without branchId in auth context
+            if (role === 'admin_bsd' || role === 'admin_depok') {
+                const searchName = role === 'admin_bsd' ? 'BSD' : 'Depok';
+                try {
+                    const { data: bData } = await supabase.from("branches").select("id").ilike("name", `%${searchName}%`).single();
+                    if (bData) setResolvedBranchId(bData.id);
+                } catch (err) {
+                    console.error("Branch resolve error:", err);
+                }
+            } else {
+                // Owner/admin/spv — no branch filter needed, set to empty string to signal "show all"
+                setResolvedBranchId('');
+            }
+        };
+        if (role) resolveBranch();
+    }, [branchId, role]);
+
     const fetchQueue = async () => {
         setLoading(true);
         try {
@@ -79,26 +105,16 @@ export default function AntrianServicePage() {
                 .order("created_at", { ascending: false })
                 .limit(100);
 
-            let activeBranchId = branchId;
-            
-            // Fallback: Jika branchId null tapi role spesifik cabang, coba cari ID cabang dari database
-            if (!activeBranchId && role) {
-                if (role === 'admin_bsd' || role === 'admin_depok') {
-                    const searchName = role === 'admin_bsd' ? 'BSD' : 'Depok';
-                    const { data: bData } = await supabase.from("branches").select("id").ilike("name", `%${searchName}%`).single();
-                    if (bData) activeBranchId = bData.id;
-                }
+            if (resolvedBranchId) {
+                query = query.eq("branch_id", resolvedBranchId);
+            } else if (resolvedBranchId === null) {
+                // Branch not yet resolved — skip fetch
+                setLoading(false);
+                return;
             }
+            // resolvedBranchId === '' means owner/admin — show all
 
-            if (activeBranchId) {
-                query = query.eq("branch_id", activeBranchId);
-            } else if (role !== 'owner' && role !== 'admin' && role !== 'spv') {
-                // Jika bukan owner/superadmin dan tetap tidak ada branchId, 
-                // batasi ke data kosong agar tidak melihat semua data (leaking)
-                query = query.eq("branch_id", "00000000-0000-0000-0000-000000000000");
-            }
-
-            // Tambahkan timeout 15 detik agar tidak stuck loading selamanya
+            // Timeout 15s agar tidak stuck loading selamanya
             const { data, error } = await Promise.race([
                 query,
                 new Promise((_, reject) => setTimeout(() => reject(new Error("Request timeout")), 15000))
@@ -116,8 +132,10 @@ export default function AntrianServicePage() {
     };
 
     useEffect(() => {
-        fetchQueue();
-    }, [branchId]);
+        if (resolvedBranchId !== null) {
+            fetchQueue();
+        }
+    }, [resolvedBranchId]);
 
     const filteredItems = items.filter(item => {
         const matchesFilter = filter === "all" || item.status === filter;

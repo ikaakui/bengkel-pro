@@ -36,31 +36,25 @@ export default function PembayaranPage() {
         if (!profile?.id) return;
         setLoading(true);
         try {
-            // Fetch Bookings
-            const { data: bookingData } = await supabase
+            const fetchPromise = supabase
                 .from("bookings")
                 .select("*, branches:branch_id(name)")
                 .eq("member_id", profile.id)
                 .order("created_at", { ascending: false });
-            
-            if (bookingData) setBookings(bookingData);
 
-            // Fetch Transactions
-            const { data: txnData } = await supabase
-                .from("transactions")
-                .select("*, branches:branch_id(name)")
-                .eq("booking_id", null) // Or link by member_id if we had it, but currently transactions are linked via booking_id or customer_name
-                // Wait, transactions table doesn't have member_id in schema.
-                // Let's check schema again.
-                .order("created_at", { ascending: false });
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Pembayaran fetch timeout (15s)")), 15000)
+            );
+
+            const { data: bookingData, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
             
-            // If transactions are not directly linked to member, we might need a better way.
-            // But let's focus on bookings as per user request "invoice booking".
-            
-        } catch (err) {
-            console.error(err);
+            if (error) throw error;
+            if (bookingData) setBookings(bookingData);
+        } catch (err: any) {
+            console.error("Pembayaran fetch error:", err?.message || err);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const formatDate = (dateStr: string) => {
