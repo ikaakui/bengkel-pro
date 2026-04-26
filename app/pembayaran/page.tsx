@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import RoleGuard from "@/components/auth/RoleGuard";
 import { Card } from "@/components/ui/Card";
@@ -21,7 +21,7 @@ import { useRouter } from "next/navigation";
 export default function PembayaranPage() {
     const { profile } = useAuth();
     const router = useRouter();
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
     const [loading, setLoading] = useState(true);
     const [bookings, setBookings] = useState<any[]>([]);
     const [transactions, setTransactions] = useState<any[]>([]);
@@ -29,33 +29,44 @@ export default function PembayaranPage() {
 
     useEffect(() => {
         if (!profile?.id) return;
+        
+        let mounted = true;
+        
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                const fetchPromise = supabase
+                    .from("bookings")
+                    .select("*, branches:branch_id(name)")
+                    .eq("member_id", profile.id)
+                    .order("created_at", { ascending: false });
+
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("Pembayaran fetch timeout (15s)")), 15000)
+                );
+
+                const { data: bookingData, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+                
+                if (!mounted) return;
+                
+                if (error) throw error;
+                if (bookingData) setBookings(bookingData);
+            } catch (err: any) {
+                if (!mounted) return;
+                console.error("Pembayaran fetch error:", err?.message || err);
+            } finally {
+                if (mounted) {
+                    setLoading(false);
+                }
+            }
+        };
+
         fetchData();
-    }, [profile?.id]);
-
-    const fetchData = async () => {
-        if (!profile?.id) return;
-        setLoading(true);
-        try {
-            const fetchPromise = supabase
-                .from("bookings")
-                .select("*, branches:branch_id(name)")
-                .eq("member_id", profile.id)
-                .order("created_at", { ascending: false });
-
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Pembayaran fetch timeout (15s)")), 15000)
-            );
-
-            const { data: bookingData, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
-            
-            if (error) throw error;
-            if (bookingData) setBookings(bookingData);
-        } catch (err: any) {
-            console.error("Pembayaran fetch error:", err?.message || err);
-        } finally {
-            setLoading(false);
-        }
-    };
+        
+        return () => {
+            mounted = false;
+        };
+    }, [profile?.id, supabase]);
 
     const formatDate = (dateStr: string) => {
         return new Date(dateStr).toLocaleDateString("id-ID", {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import RoleGuard from "@/components/auth/RoleGuard";
 import { Card } from "@/components/ui/Card";
@@ -17,7 +17,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function RiwayatServisPage() {
     const { profile } = useAuth();
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
     const [loading, setLoading] = useState(true);
     const [services, setServices] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
@@ -27,26 +27,51 @@ export default function RiwayatServisPage() {
 
     useEffect(() => {
         if (!profile?.id) return;
+        
+        let mounted = true;
+        
         const fetch = async () => {
             setLoading(true);
-            const { data } = await supabase
-                .from("transactions")
-                .select("id, total, status, created_at, customer_name, car_type, license_plate, payment_method, branch:branch_id(name)")
-                .eq("member_id", profile.id)
-                .order("created_at", { ascending: false });
-            if (data) {
-                setServices(data as any[]);
-                const paid = data.filter((s: any) => s.status === "Paid");
-                setTotalStats({
-                    count: paid.length,
-                    spent: paid.reduce((a: number, s: any) => a + (Number(s.total) || 0), 0),
-                    points: profile.total_points || 0
-                });
+            try {
+                const fetchPromise = supabase
+                    .from("transactions")
+                    .select("id, total, status, created_at, customer_name, car_type, license_plate, payment_method, branch:branch_id(name)")
+                    .eq("member_id", profile.id)
+                    .order("created_at", { ascending: false });
+                
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("Riwayat fetch timeout")), 15000)
+                );
+
+                const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+                
+                if (!mounted) return;
+                
+                if (error) throw error;
+                if (data) {
+                    setServices(data as any[]);
+                    const paid = data.filter((s: any) => s.status === "Paid");
+                    setTotalStats({
+                        count: paid.length,
+                        spent: paid.reduce((a: number, s: any) => a + (Number(s.total) || 0), 0),
+                        points: profile.total_points || 0
+                    });
+                }
+            } catch (err) {
+                if (!mounted) return;
+                console.error("Riwayat fetch error:", err);
+            } finally {
+                if (mounted) {
+                    setLoading(false);
+                }
             }
-            setLoading(false);
         };
         fetch();
-    }, [profile?.id]);
+        
+        return () => {
+            mounted = false;
+        };
+    }, [profile?.id, profile?.total_points, supabase]);
 
     const fmt = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
 
