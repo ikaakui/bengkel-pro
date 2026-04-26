@@ -45,7 +45,7 @@ interface CatalogItem {
 
 export default function CatalogPage() {
     const { role, profile, branchName } = useAuth();
-    const isOwnerOrSpv = role === 'owner' || role === 'spv';
+    const canManage = role === 'owner' || role === 'spv' || role === 'admin' || role === 'admin_bsd' || role === 'admin_depok';
     const [items, setItems] = useState<CatalogItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
@@ -271,7 +271,7 @@ export default function CatalogPage() {
                             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Katalog Bengkel</h2>
                         </div>
                         <div className="flex flex-wrap gap-2 sm:gap-3">
-                            {isOwnerOrSpv && (
+                            {canManage && (
                                 <>
                                     <Button variant="outline" onClick={() => setShowBulkUpdate(!showBulkUpdate)} className={`h-12 px-6 ${showBulkUpdate ? "bg-amber-50 border-amber-500 text-amber-600" : ""}`}>
                                         <Coins size={20} className="mr-2" />
@@ -588,7 +588,8 @@ export default function CatalogPage() {
                                             </div>
 
                                             {/* Action Buttons */}
-                                            {isOwnerOrSpv && (
+                                            {/* Action Buttons */}
+                                            {canManage && (
                                                 <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                     <button
                                                         onClick={() => { setEditingItem(item); setShowForm(true); }}
@@ -663,10 +664,9 @@ export default function CatalogPage() {
                                                         onClick={() => setEditingStockId(null)}
                                                         className="w-11 h-11 rounded-xl bg-white text-slate-400 border border-slate-200 flex items-center justify-center hover:text-red-500 hover:border-red-200 transition-all"
                                                     >
-                                                        <X size={16} />
-                                                    </button>
+                                                        </button>
                                                 </div>
-                                            ) : isOwnerOrSpv ? (
+                                            ) : canManage ? (
                                                 <button
                                                     onClick={() => {
                                                         setEditingStockId(item.id);

@@ -165,7 +165,7 @@ CREATE POLICY "Catalog viewable by authenticated" ON catalog
 DROP POLICY IF EXISTS "Owner and Admin can manage catalog" ON catalog;
 CREATE POLICY "Owner and Admin can manage catalog" ON catalog
   FOR ALL USING (
-    (auth.jwt()->'user_metadata'->>'role') IN ('owner', 'admin')
+    (auth.jwt()->'user_metadata'->>'role') IN ('owner', 'admin', 'spv', 'admin_bsd', 'admin_depok')
   );
 
 -- Sample data
