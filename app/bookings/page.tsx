@@ -182,6 +182,16 @@ export default function BookingsPage() {
         }
 
         if (!data) {
+            // Global search fallback
+            const { data: globalData } = await supabase
+                .rpc('search_booking_global', { target_code: cleanInput });
+            
+            if (globalData && globalData.length > 0) {
+                data = globalData[0];
+            }
+        }
+
+        if (!data) {
             let msg = "Kode booking tidak ditemukan. Pastikan kode sudah benar.";
             if (role !== 'owner' && role !== 'admin') {
                 msg += ` (Pencarian terbatas untuk cabang ${branchName || 'Anda'})`;

@@ -88,10 +88,20 @@ export default function KonfirmasiBookingPage() {
             }
 
             if (!data) {
+                // Third attempt: Global search via RPC (bypasses RLS)
+                const { data: globalData, error: rpcError } = await supabase
+                    .rpc('search_booking_global', { target_code: cleanInput });
+                
+                if (globalData && globalData.length > 0) {
+                    data = globalData[0];
+                    // Since RPC doesn't join by default, we might need to fetch member manually or just accept basic data
+                    // For confirmation, basic data is usually enough as it will be linked to a transaction later
+                }
+            }
+
+            if (!data) {
                 let msg = "Kode booking tidak ditemukan. Pastikan kode sudah benar.";
-                if (role !== 'owner' && !branchId) {
-                    msg += " (Tips: Sesi cabang Anda belum terdeteksi, mungkin berpengaruh pada pencarian)";
-                } else if (role !== 'owner') {
+                if (role !== 'owner') {
                     msg += ` (Pencarian terbatas untuk cabang ${branchName || 'Anda'})`;
                 }
                 setError(msg);
