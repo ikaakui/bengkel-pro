@@ -38,6 +38,9 @@ export default function ShiftReportPage() {
                         car_model,
                         license_plate,
                         created_at
+                    ),
+                    transaction_items (
+                        catalog:catalog_id (name)
                     )
                 `)
                 .eq("branch_id", branchId)
@@ -60,7 +63,11 @@ export default function ShiftReportPage() {
                         hour: '2-digit',
                         minute: '2-digit'
                     }),
-                    'Cabang Aktif': branchName
+                    'Cabang Aktif': branchName,
+                    'Service yang dilakukan': (item.transaction_items as any[] || [])
+                        .map(ti => ti.catalog?.name)
+                        .filter(Boolean)
+                        .join(', ') || '-'
                 }));
 
                 const worksheet = XLSX.utils.json_to_sheet(exportData);
