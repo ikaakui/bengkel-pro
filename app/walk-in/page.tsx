@@ -277,10 +277,8 @@ export default function WalkInPage() {
         setCreatedBookingId(null);
     };
 
-    const handleGoToPOS = () => {
-        if (createdBookingId) {
-            router.push(`/pos?booking_id=${createdBookingId}`);
-        }
+    const handleGoToAntrian = () => {
+        router.push('/antrian');
     };
 
     return (
@@ -333,12 +331,19 @@ export default function WalkInPage() {
                                             )}
                                         </div>
                                         <div className="flex gap-3 mt-6">
-                                            <Button variant="outline" onClick={handleReset} className="flex-1 h-14 rounded-2xl font-black text-xs uppercase tracking-widest">
+                                            <Button 
+                                                onClick={handleReset} 
+                                                className="flex-1 h-14 rounded-2xl font-black text-xs uppercase tracking-widest bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25 border-none transition-all active:scale-95"
+                                            >
+                                                <CheckCircle2 size={16} className="mr-2" />
                                                 Daftarkan Lagi
                                             </Button>
-                                            <Button onClick={handleGoToPOS} className="flex-[2] h-14 rounded-2xl font-black text-xs uppercase tracking-widest bg-primary text-white">
+                                            <Button 
+                                                onClick={handleGoToAntrian} 
+                                                className="flex-[2] h-14 rounded-2xl font-black text-xs uppercase tracking-widest bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/25 border-none transition-all active:scale-95"
+                                            >
                                                 <ArrowRight size={18} className="mr-2" />
-                                                Lanjut ke POS
+                                                Lihat Antrian
                                             </Button>
                                         </div>
                                     </CardContent>
