@@ -136,24 +136,32 @@ export default function WalkInPage() {
         if (!finalBranchId && role) {
             const searchName = role.includes('bsd') ? 'BSD' : role.includes('depok') ? 'Depok' : null;
             if (searchName) {
-                const { data: branchData } = await supabase
-                    .from("branches")
-                    .select("id")
-                    .ilike("name", `%${searchName}%`)
-                    .limit(1)
-                    .single();
-                if (branchData) finalBranchId = branchData.id;
+                try {
+                    const { data: branchData } = await supabase
+                        .from("branches")
+                        .select("id")
+                        .ilike("name", `%${searchName}%`)
+                        .limit(1)
+                        .single();
+                    if (branchData) finalBranchId = branchData.id;
+                } catch (e) {
+                    console.error("Fallback branch fetch error", e);
+                }
             }
         }
 
         // If owner/spv/admin without branch, pick the first available branch
         if (!finalBranchId && (role === 'owner' || role === 'spv' || role === 'admin')) {
-            const { data: anyBranch } = await supabase
-                .from("branches")
-                .select("id")
-                .limit(1)
-                .single();
-            if (anyBranch) finalBranchId = anyBranch.id;
+            try {
+                const { data: anyBranch } = await supabase
+                    .from("branches")
+                    .select("id")
+                    .limit(1)
+                    .single();
+                if (anyBranch) finalBranchId = anyBranch.id;
+            } catch (e) {
+                console.error("Any branch fetch error", e);
+            }
         }
 
         if (!finalBranchId) {
@@ -163,70 +171,90 @@ export default function WalkInPage() {
         }
 
         setIsSaving(true);
+        
+        // Fail-safe timeout to prevent infinite loading (max 15 seconds)
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("Request timeout. Server tidak merespon terlalu lama.")), 15000)
+        );
+
         try {
-            // Cek apakah sudah ada antrian dengan plat nomor ini yang masih aktif hari ini
-            if (!isConfirmed) {
-                const today = new Date().toISOString().split('T')[0];
-                const { data: existing } = await supabase
-                    .from("bookings")
-                    .select("id, customer_name, car_model")
-                    .eq("license_plate", licensePlate.toUpperCase())
-                    .eq("service_date", today)
-                    .in("status", ["pending", "processing"])
-                    .maybeSingle();
+            // Wrap the main logic in Promise.race with the timeout
+            await Promise.race([
+                (async () => {
+                    // Cek apakah sudah ada antrian dengan plat nomor ini yang masih aktif hari ini
+                    if (!isConfirmed) {
+                        const today = new Date().toISOString().split('T')[0];
+                        const { data: existing, error: checkError } = await supabase
+                            .from("bookings")
+                            .select("id, customer_name, car_model")
+                            .eq("license_plate", licensePlate.toUpperCase())
+                            .eq("service_date", today)
+                            .in("status", ["pending", "processing"])
+                            .maybeSingle();
 
-                if (existing) {
-                    setShowDuplicateModal(true);
-                    setIsSaving(false);
-                    return;
-                }
-            }
+                        if (checkError) throw checkError;
 
-            // Create booking entry for walk-in
-            const { data: booking, error: bookingError } = await supabase
-                .from("bookings")
-                .insert({
-                    customer_name: customerName,
-                    customer_phone: customerPhone,
-                    car_model: carModel,
-                    license_plate: licensePlate.toUpperCase(),
-                    service_date: new Date().toISOString().split('T')[0],
-                    service_time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-                    branch_id: finalBranchId,
-                    member_id: selectedMember?.id || null,
-                    booking_type: 'direct',
-                    status: 'processing',
-                })
-                .select()
-                .single();
+                        if (existing) {
+                            setShowDuplicateModal(true);
+                            setIsSaving(false);
+                            return 'duplicate'; // Signal to exit early
+                        }
+                    }
 
-            if (bookingError) {
-                console.error("Supabase Error:", bookingError);
-                throw bookingError;
-            }
+                    // Create booking entry for walk-in
+                    const { data: booking, error: bookingError } = await supabase
+                        .from("bookings")
+                        .insert({
+                            customer_name: customerName,
+                            customer_phone: customerPhone,
+                            car_model: carModel,
+                            license_plate: licensePlate.toUpperCase(),
+                            service_date: new Date().toISOString().split('T')[0],
+                            service_time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+                            branch_id: finalBranchId,
+                            member_id: selectedMember?.id || null,
+                            booking_type: 'direct',
+                            status: 'processing',
+                        })
+                        .select()
+                        .single();
 
-            // Auto-create a Draft transaction so it immediately appears in Antrian (Queue)
-            const { error: txnError } = await supabase
-                .from("transactions")
-                .insert({
-                    customer_name: customerName,
-                    total_amount: 0,
-                    branch_id: finalBranchId,
-                    payment_method: "Cash",
-                    status: "Draft",
-                    booking_id: booking.id
-                });
-                
-            if (txnError) {
-                console.error("Failed to create initial draft transaction:", txnError);
-                // We don't throw here, to still allow the booking to succeed, 
-                // but we might want to alert the user or log it.
-            }
+                    if (bookingError) {
+                        console.error("Supabase Error during insert:", bookingError);
+                        throw bookingError;
+                    }
 
-            setCreatedBookingId(booking.id);
-            setSuccess(true);
+                    if (!booking || !booking.id) {
+                        throw new Error("Gagal mendapatkan ID Booking setelah insert.");
+                    }
+
+                    // Auto-create a Draft transaction so it immediately appears in Antrian (Queue)
+                    const { error: txnError } = await supabase
+                        .from("transactions")
+                        .insert({
+                            customer_name: customerName,
+                            total_amount: 0,
+                            branch_id: finalBranchId,
+                            payment_method: "Cash",
+                            status: "Draft",
+                            booking_id: booking.id
+                        });
+                        
+                    if (txnError) {
+                        console.error("Failed to create initial draft transaction:", txnError);
+                    }
+
+                    setCreatedBookingId(booking.id);
+                    setSuccess(true);
+                    return 'success';
+                })(),
+                timeoutPromise
+            ]);
         } catch (err: any) {
-            showFeedback('error', 'Gagal mendaftarkan!', err?.message || "Terjadi kesalahan sistem keamanan database.");
+            console.error("Walk-In Submit Catch Error:", err);
+            // If the error message is literally "Infinity" or similar, catch it
+            const errorMsg = err?.message || (typeof err === 'string' ? err : "Terjadi kesalahan sistem database.");
+            showFeedback('error', 'Gagal mendaftarkan!', errorMsg);
         } finally {
             setIsSaving(false);
         }
