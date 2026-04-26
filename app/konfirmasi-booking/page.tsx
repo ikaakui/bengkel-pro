@@ -16,7 +16,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function KonfirmasiBookingPage() {
-    const { branchId, branchName } = useAuth();
+    const { role, branchId, branchName } = useAuth();
     const router = useRouter();
     const supabase = createClient();
 
@@ -49,8 +49,6 @@ export default function KonfirmasiBookingPage() {
             setFoundBooking(filteredBookings[0]);
         }
     }, [codeInput, filteredBookings, foundBooking]);
-
-    const { role, branchId, branchName } = useAuth();
 
     const fetchPendingBookings = async () => {
         const finalBranchId = branchId || selectedBranchId;
