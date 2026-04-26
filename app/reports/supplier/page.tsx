@@ -422,15 +422,22 @@ export default function SupplierRecapPage() {
                                                 <input type="date" className="w-full bg-slate-100 border border-slate-200 rounded-2xl py-4 px-5 text-sm font-bold text-slate-500 cursor-not-allowed" value={formData.expense_date} disabled required />
                                             </div>
                                         </div>
-                                        {(role === 'owner' || role === 'spv') && (
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Cabang</label>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Cabang</label>
+                                            {role === 'owner' || role === 'spv' ? (
                                                 <select className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-5 text-sm font-bold text-slate-700" value={formData.branch_id} onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })} required>
                                                     <option value="">-- Pilih Cabang --</option>
                                                     {branches.map(br => <option key={br.id} value={br.id}>{br.name}</option>)}
                                                 </select>
-                                            </div>
-                                        )}
+                                            ) : (
+                                                <input 
+                                                    type="text" 
+                                                    value={branches.find(b => b.id === formData.branch_id)?.name || 'Mencari Cabang...'} 
+                                                    disabled 
+                                                    className="w-full bg-slate-100 border border-slate-200 rounded-2xl py-4 px-5 text-sm font-bold text-slate-500 cursor-not-allowed" 
+                                                />
+                                            )}
+                                        </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Total Tagihan (Rp)</label>
                                             <input 
