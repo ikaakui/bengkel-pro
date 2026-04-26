@@ -37,9 +37,11 @@ export default function SupplierRecapPage() {
     
     // Edit State
     const [editItemModal, setEditItemModal] = useState<any>(null);
-    const [editForm, setEditForm] = useState({ name: '', qty: 1, cost: 0, catalog_id: '' });
+    const [editForm, setEditForm] = useState({ name: '', qty: 1, cost: 0, catalog_id: '', supplier_name: '' });
     const [savingEdit, setSavingEdit] = useState(false);
     const [catalogItems, setCatalogItems] = useState<any[]>([]);
+
+    const [supplierName, setSupplierName] = useState("");
 
     const { profile, role } = useAuth();
 
@@ -114,7 +116,8 @@ export default function SupplierRecapPage() {
                                     date: exp.expense_date,
                                     branch_id: exp.branch_id,
                                     branch_name: branchName,
-                                    total_cost: item.qty * item.cost
+                                    total_cost: item.qty * item.cost,
+                                    supplier_name: item.supplier_name || '-'
                                 });
                             });
                         } catch (e) {
@@ -127,7 +130,8 @@ export default function SupplierRecapPage() {
                                 date: exp.expense_date,
                                 branch_id: exp.branch_id,
                                 branch_name: branchName,
-                                total_cost: exp.amount
+                                total_cost: exp.amount,
+                                supplier_name: '-'
                             });
                         }
                     } else {
@@ -142,7 +146,8 @@ export default function SupplierRecapPage() {
                             date: exp.expense_date,
                             branch_id: exp.branch_id,
                             branch_name: branchName,
-                            total_cost: exp.amount
+                            total_cost: exp.amount,
+                            supplier_name: '-'
                         });
                     }
                 });
@@ -202,7 +207,7 @@ export default function SupplierRecapPage() {
                 .from("expenses")
                 .insert({
                     ...formData,
-                    description: `STRUCT_JSON:${JSON.stringify(supplierItems)}`
+                    description: `STRUCT_JSON:${JSON.stringify(supplierItems.map(item => ({...item, supplier_name: supplierName})))}`
                 })
                 .select()
                 .single();
@@ -237,11 +242,13 @@ export default function SupplierRecapPage() {
                 branch_id: profile?.branch_id || ''
             });
             setSupplierItems([{ name: '', qty: 1, cost: 0, sell: 0 }]);
+            setSupplierName("");
 
             if (inserted) {
                 const enrichedExpense = {
                     ...inserted,
-                    branch_name: branches.find(b => b.id === inserted.branch_id)?.name || 'Bengkel'
+                    branch_name: branches.find(b => b.id === inserted.branch_id)?.name || 'Bengkel',
+                    supplier_name: supplierName
                 };
                 sendWhatsApp(enrichedExpense);
             }
@@ -273,6 +280,7 @@ export default function SupplierRecapPage() {
             `Berikut adalah rincian barang yang baru saja diambil:%0A%0A` +
             `*Tanggal:* ${date}%0A` +
             `*Kategori:* Pembelian Stok/Sparepart%0A` +
+            `*Toko Supplier:* ${expense.supplier_name || '-'}%0A` +
             `*Total Tagihan:* Rp ${expense.amount.toLocaleString('id-ID')}%0A%0A` +
             `*Rincian Barang:*%0A${descriptionText}%0A%0A` +
             `_Silakan lampirkan foto nota fisik sebagai bukti._`;
@@ -282,7 +290,7 @@ export default function SupplierRecapPage() {
 
     const handleEditClick = (item: any) => {
         setEditItemModal(item);
-        setEditForm({ name: item.name, qty: item.qty, cost: item.cost, catalog_id: item.catalog_id || '' });
+        setEditForm({ name: item.name, qty: item.qty, cost: item.cost, catalog_id: item.catalog_id || '', supplier_name: item.supplier_name || '' });
     };
 
     const handleSaveEdit = async (e: React.FormEvent) => {
@@ -297,6 +305,7 @@ export default function SupplierRecapPage() {
                 items[editItemModal.item_index].qty = editForm.qty;
                 items[editItemModal.item_index].cost = editForm.cost;
                 items[editItemModal.item_index].catalog_id = editForm.catalog_id;
+                items[editItemModal.item_index].supplier_name = editForm.supplier_name;
                 
                 // Recalculate total amount for this expense
                 const newTotal = items.reduce((sum: number, it: any) => sum + (it.qty * it.cost), 0);
@@ -358,10 +367,11 @@ export default function SupplierRecapPage() {
     };
 
     const handleExportExcel = () => {
-        const headers = ["Tanggal", "Cabang", "Nama Barang", "Qty", "Harga Modal", "Total Harga"];
+        const headers = ["Tanggal", "Cabang", "Nama Supplier", "Nama Barang", "Qty", "Harga Modal", "Total Harga"];
         const rows = filteredData.map(item => [
             new Date(item.date).toLocaleDateString('id-ID'),
             item.branch_name,
+            `"${(item.supplier_name || '-').replace(/"/g, '""')}"`,
             `"${item.name.replace(/"/g, '""')}"`, // escape quotes
             item.qty,
             item.cost,
@@ -477,6 +487,17 @@ export default function SupplierRecapPage() {
                                                     className="w-full bg-slate-100 border border-slate-200 rounded-2xl py-4 px-5 text-sm font-bold text-slate-500 cursor-not-allowed" 
                                                 />
                                             )}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nama Toko Supplier</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="Contoh: Toko Sparepart Makmur"
+                                                className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" 
+                                                value={supplierName} 
+                                                onChange={(e) => setSupplierName(e.target.value)}
+                                                required 
+                                            />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Total Tagihan (Rp)</label>
@@ -639,6 +660,17 @@ export default function SupplierRecapPage() {
                                             </div>
                                         )}
                                     </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nama Toko Supplier</label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                            value={editForm.supplier_name}
+                                            onChange={(e) => setEditForm({ ...editForm, supplier_name: e.target.value })}
+                                            placeholder="Nama Toko Supplier"
+                                            required
+                                        />
+                                    </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Qty</label>
@@ -730,6 +762,7 @@ export default function SupplierRecapPage() {
                                 <thead className="bg-slate-50 border-b border-slate-100">
                                     <tr>
                                         <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tanggal & Cabang</th>
+                                        <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Supplier</th>
                                         <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nama Barang (Qty)</th>
                                         <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Harga Modal</th>
                                         <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Aksi</th>
@@ -770,6 +803,14 @@ export default function SupplierRecapPage() {
                                                         <Building2 size={10} className="text-blue-500" />
                                                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">{item.branch_name}</span>
                                                     </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-6">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
+                                                        <Building2 size={14} className="text-indigo-500" />
+                                                    </div>
+                                                    <span className="text-sm font-bold text-slate-700">{item.supplier_name || '-'}</span>
                                                 </div>
                                             </td>
                                             <td className="px-8 py-6">
