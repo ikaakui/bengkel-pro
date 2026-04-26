@@ -119,7 +119,25 @@ export default function WalkInPage() {
             return;
         }
 
-        const finalBranchId = branchId || selectedBranchId;
+        // Robust Branch Detection Fallback
+        let finalBranchId = branchId || selectedBranchId;
+        
+        // If still missing, try to detect from role (last resort)
+        if (!finalBranchId && role) {
+            if (role.includes('bsd')) {
+                const bsdBranch = branches.find(b => b.name.toLowerCase().includes('bsd'));
+                if (bsdBranch) finalBranchId = bsdBranch.id;
+            } else if (role.includes('depok')) {
+                const depokBranch = branches.find(b => b.name.toLowerCase().includes('depok'));
+                if (depokBranch) finalBranchId = depokBranch.id;
+            }
+        }
+
+        if (!finalBranchId) {
+            console.error("Critical: Branch ID not found for registration", { role, branchId, selectedBranchId });
+            showFeedback('error', 'Gagal Mendeteksi Cabang', 'Sistem tidak dapat menentukan cabang Anda. Silakan refresh halaman.');
+            return;
+        }
 
         setIsSaving(true);
         try {
@@ -159,12 +177,15 @@ export default function WalkInPage() {
                 .select()
                 .single();
 
-            if (bookingError) throw bookingError;
+            if (bookingError) {
+                console.error("Supabase Error:", bookingError);
+                throw bookingError;
+            }
 
             setCreatedBookingId(booking.id);
             setSuccess(true);
         } catch (err: any) {
-            showFeedback('error', 'Gagal mendaftarkan!', err?.message || "Terjadi kesalahan sistem.");
+            showFeedback('error', 'Gagal mendaftarkan!', err?.message || "Terjadi kesalahan sistem keamanan database.");
         } finally {
             setIsSaving(false);
             setIsConfirmedDuplicate(false);
