@@ -125,7 +125,7 @@ DROP POLICY IF EXISTS "Settings viewable by authenticated" ON app_settings;
 CREATE POLICY "Settings viewable by authenticated" ON app_settings
   FOR SELECT USING (auth.role() = 'authenticated');
 
-DROP POLICY IF EXISTS "Owner can manage settings" ON app_settings;
+DROP POLICY IF EXISTS "Admins and Owner can manage settings" ON app_settings;
 CREATE POLICY "Admins and Owner can manage settings" ON app_settings
   FOR ALL USING (
     (auth.jwt()->'user_metadata'->>'role') IN ('owner', 'admin', 'spv', 'admin_bsd', 'admin_depok')
@@ -304,10 +304,9 @@ CREATE POLICY "Owner can manage all expenses" ON expenses
   );
 
 DROP POLICY IF EXISTS "Admin can manage branch expenses" ON expenses;
-CREATE POLICY "Admin can manage branch expenses" ON expenses
+CREATE POLICY "Branch Admins can manage expenses" ON expenses
   FOR ALL USING (
-    (auth.jwt()->'user_metadata'->>'role') = 'admin'
-    AND branch_id = get_auth_user_branch()
+    (auth.jwt()->'user_metadata'->>'role') IN ('admin', 'spv', 'admin_bsd', 'admin_depok')
   );
 
 -- ────────────────────────────────────────────────────────────────
