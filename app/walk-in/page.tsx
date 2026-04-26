@@ -374,25 +374,6 @@ export default function WalkInPage() {
 
                                     <CardContent className="p-8 sm:p-10 space-y-8 bg-white">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            {/* Branch Selection if missing */}
-                                            {!branchId && branches.length > 0 && (
-                                                <div className="col-span-full space-y-3 p-6 bg-amber-50/50 rounded-3xl border-2 border-dashed border-amber-100">
-                                                    <label className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] flex items-center gap-2">
-                                                        <Building2 size={12} /> Konfirmasi Cabang
-                                                    </label>
-                                                    <select 
-                                                        className="w-full h-14 bg-white border-2 border-amber-100 rounded-2xl px-5 font-black text-slate-900 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 outline-none transition-all shadow-sm"
-                                                        value={selectedBranchId}
-                                                        onChange={(e) => setSelectedBranchId(e.target.value)}
-                                                    >
-                                                        <option value="">Pilih Cabang Pengerjaan</option>
-                                                        {branches.map(b => (
-                                                            <option key={b.id} value={b.id}>{b.name}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            )}
-
                                             <div className="space-y-3">
                                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Nama Pelanggan *</label>
                                                 <div className="relative group">
