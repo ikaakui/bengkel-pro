@@ -114,6 +114,27 @@ export default function KonfirmasiBookingPage() {
                 .eq("id", foundBooking.id);
 
             if (updateError) throw updateError;
+
+            // Auto-create a Draft transaction so it immediately appears in Antrian (Queue)
+            const { data: existingTxn } = await supabase
+                .from("transactions")
+                .select("id")
+                .eq("booking_id", foundBooking.id)
+                .maybeSingle();
+
+            if (!existingTxn) {
+                await supabase
+                    .from("transactions")
+                    .insert({
+                        customer_name: foundBooking.customer_name,
+                        total_amount: 0,
+                        branch_id: finalBranchId,
+                        payment_method: "Cash",
+                        status: "Draft",
+                        booking_id: foundBooking.id
+                    });
+            }
+
             setSuccess(true);
         } catch (err: any) {
             alert("Gagal konfirmasi: " + err.message);

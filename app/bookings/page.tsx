@@ -183,6 +183,29 @@ export default function BookingsPage() {
             .update({ status: 'processing', updated_at: new Date().toISOString() })
             .eq("id", bookingId);
 
+        if (!error) {
+            // Auto-create a Draft transaction so it immediately appears in Antrian (Queue)
+            const { data: bookingData } = await supabase.from("bookings").select("customer_name, branch_id").eq("id", bookingId).single();
+            const { data: existingTxn } = await supabase
+                .from("transactions")
+                .select("id")
+                .eq("booking_id", bookingId)
+                .maybeSingle();
+
+            if (!existingTxn && bookingData) {
+                await supabase
+                    .from("transactions")
+                    .insert({
+                        customer_name: bookingData.customer_name,
+                        total_amount: 0,
+                        branch_id: bookingData.branch_id,
+                        payment_method: "Cash",
+                        status: "Draft",
+                        booking_id: bookingId
+                    });
+            }
+        }
+
         setIsSaving(false);
         if (error) {
             alert(`Gagal konfirmasi: ${error.message}`);

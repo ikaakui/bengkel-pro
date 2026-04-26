@@ -182,6 +182,24 @@ export default function WalkInPage() {
                 throw bookingError;
             }
 
+            // Auto-create a Draft transaction so it immediately appears in Antrian (Queue)
+            const { error: txnError } = await supabase
+                .from("transactions")
+                .insert({
+                    customer_name: customerName,
+                    total_amount: 0,
+                    branch_id: finalBranchId,
+                    payment_method: "Cash",
+                    status: "Draft",
+                    booking_id: booking.id
+                });
+                
+            if (txnError) {
+                console.error("Failed to create initial draft transaction:", txnError);
+                // We don't throw here, to still allow the booking to succeed, 
+                // but we might want to alert the user or log it.
+            }
+
             setCreatedBookingId(booking.id);
             setSuccess(true);
         } catch (err: any) {
