@@ -122,7 +122,7 @@ export default function WalkInPage() {
         // Robust Branch Detection Fallback
         let finalBranchId = branchId || selectedBranchId;
         
-        // If still missing, try to detect from role (last resort)
+        // If still missing, try to detect from local branches state
         if (!finalBranchId && role) {
             if (role.includes('bsd')) {
                 const bsdBranch = branches.find(b => b.name.toLowerCase().includes('bsd'));
@@ -133,9 +133,33 @@ export default function WalkInPage() {
             }
         }
 
+        // Ultimate fallback: fetch branch directly from database
+        if (!finalBranchId && role) {
+            const searchName = role.includes('bsd') ? 'BSD' : role.includes('depok') ? 'Depok' : null;
+            if (searchName) {
+                const { data: branchData } = await supabase
+                    .from("branches")
+                    .select("id")
+                    .ilike("name", `%${searchName}%`)
+                    .limit(1)
+                    .single();
+                if (branchData) finalBranchId = branchData.id;
+            }
+        }
+
+        // If owner/spv/admin without branch, pick the first available branch
+        if (!finalBranchId && (role === 'owner' || role === 'spv' || role === 'admin')) {
+            const { data: anyBranch } = await supabase
+                .from("branches")
+                .select("id")
+                .limit(1)
+                .single();
+            if (anyBranch) finalBranchId = anyBranch.id;
+        }
+
         if (!finalBranchId) {
-            console.error("Critical: Branch ID not found for registration", { role, branchId, selectedBranchId });
-            showFeedback('error', 'Gagal Mendeteksi Cabang', 'Sistem tidak dapat menentukan cabang Anda. Silakan refresh halaman.');
+            console.error("Critical: Branch ID not found for registration", { role, branchId, selectedBranchId, branches });
+            showFeedback('error', 'Gagal Mendeteksi Cabang', 'Sistem tidak dapat menentukan cabang Anda. Silakan refresh halaman atau hubungi owner.');
             return;
         }
 
