@@ -31,7 +31,26 @@ export default function KonfirmasiBookingPage() {
     const [pendingBookings, setPendingBookings] = useState<any[]>([]);
     const [fetchingPending, setFetchingPending] = useState(false);
 
-    const { role } = useAuth();
+    // Filtered bookings based on search input
+    const filteredBookings = pendingBookings.filter(b => {
+        if (!codeInput.trim()) return true;
+        const search = codeInput.toLowerCase();
+        return (
+            b.customer_name?.toLowerCase().includes(search) ||
+            b.booking_code?.toLowerCase().includes(search) ||
+            b.car_model?.toLowerCase().includes(search) ||
+            b.license_plate?.toLowerCase().includes(search)
+        );
+    });
+
+    // Auto-select booking if filter results in only one match
+    useEffect(() => {
+        if (codeInput.trim() && filteredBookings.length === 1 && !foundBooking) {
+            setFoundBooking(filteredBookings[0]);
+        }
+    }, [codeInput, filteredBookings, foundBooking]);
+
+    const { role, branchId, branchName } = useAuth();
 
     const fetchPendingBookings = async () => {
         const finalBranchId = branchId || selectedBranchId;
@@ -400,8 +419,8 @@ export default function KonfirmasiBookingPage() {
                                         <Loader2 className="animate-spin text-slate-300 mx-auto" size={32} />
                                         <p className="text-xs font-bold text-slate-400">Memuat data...</p>
                                     </div>
-                                ) : pendingBookings.length > 0 ? (
-                                    pendingBookings.map((b) => (
+                                ) : filteredBookings.length > 0 ? (
+                                    filteredBookings.map((b) => (
                                         <motion.div
                                             key={b.id}
                                             initial={{ opacity: 0, x: 20 }}
