@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { formatRupiah, parseRupiah } from "@/lib/format";
 
 type Expense = {
     id: string;
@@ -56,7 +57,7 @@ export default function ExpensesPage() {
 
     // Form state
     const [formData, setFormData] = useState({
-        amount: 0,
+        amount: "",
         category: 'gaji' as const,
         description: '',
         expense_date: new Date().toISOString().split('T')[0],
@@ -136,7 +137,7 @@ export default function ExpensesPage() {
             const { error } = await supabase
                 .from("expenses")
                 .insert({
-                    amount: formData.amount,
+                    amount: parseRupiah(formData.amount),
                     category: formData.category,
                     description: formData.description,
                     expense_date: formData.expense_date,
@@ -147,7 +148,7 @@ export default function ExpensesPage() {
 
             setShowAddForm(false);
             setFormData({
-                amount: 0,
+                amount: "",
                 category: 'gaji',
                 description: '',
                 expense_date: new Date().toISOString().split('T')[0],
@@ -460,10 +461,11 @@ export default function ExpensesPage() {
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Jumlah (Rp)</label>
                                                     <input
-                                                        type="number"
+                                                        type="text"
                                                         className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-5 text-xl font-black text-slate-900"
-                                                        value={formData.amount || ''}
-                                                        onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
+                                                        placeholder="Contoh: 1.000.000"
+                                                        value={formData.amount}
+                                                        onChange={(e) => setFormData({ ...formData, amount: formatRupiah(e.target.value) })}
                                                         required
                                                     />
                                                 </div>

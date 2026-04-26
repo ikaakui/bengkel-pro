@@ -28,6 +28,7 @@ import {
     Gift
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { formatRupiah, parseRupiah } from "@/lib/format";
 
 interface CatalogItem {
     id: string;
@@ -109,20 +110,18 @@ export default function CatalogPage() {
         e.preventDefault();
         setIsSaving(true);
 
-        const updaterName = role === 'owner' ? 'Owner' : `Admin ${branchName || ''}`.trim();
-
         const { error } = await supabase
             .from("catalog")
             .insert([{
                 name: newName,
                 category: newCategory,
-                price: parseInt(newPrice),
-                cost_price: parseInt(newCostPrice) || 0,
-                points_required: parseInt(newPointsRequired) || 0,
-                stock: newCategory === 'Spare Part' ? parseInt(newStock) : null,
+                price: parseRupiah(newPrice),
+                cost_price: parseRupiah(newCostPrice),
+                points_required: parseRupiah(newPointsRequired),
+                stock: newCategory === 'Spare Part' ? parseRupiah(newStock) : null,
                 description: newDescription,
                 branch_id: profile?.branch_id || null,
-                updated_by_name: updaterName
+                updated_by_name: profile?.full_name || role
             }]);
 
         setIsSaving(false);
@@ -147,20 +146,13 @@ export default function CatalogPage() {
         if (!editingItem) return;
         setIsSaving(true);
 
-        const updaterName = role === 'owner' ? 'Owner' : `Admin ${branchName || ''}`.trim();
-
-        const { error } = await supabase
-            .from("catalog")
-            .update({
-                name: editingItem.name,
-                category: editingItem.category,
                 price: editingItem.price,
                 cost_price: editingItem.cost_price || 0,
                 points_required: editingItem.points_required || 0,
                 stock: editingItem.category === 'Spare Part' ? editingItem.stock : null,
                 description: editingItem.description,
                 updated_at: new Date().toISOString(),
-                updated_by_name: updaterName
+                updated_by_name: profile?.full_name || role
             })
             .eq("id", editingItem.id);
 
@@ -204,27 +196,10 @@ export default function CatalogPage() {
 
         setIsBulkLoading(true);
 
-        const updaterName = role === 'owner' ? 'Owner' : `Admin ${branchName || ''}`.trim();
-
-        try {
-            // Update items one by one for calculation logic (or use a RPC if DB supports it)
-            // For safety and reliability in this specific scale, we loop or use a batch update
-            const updates = items.map(async (item) => {
-                let newPrice = item.price;
-                if (bulkType === 'percent') {
-                    const factor = bulkMode === 'increase' ? (1 + val / 100) : (1 - val / 100);
-                    newPrice = item.price * factor;
-                    // Pembulatan ke ribuan terdekat sesuai permintaan user
-                    newPrice = Math.round(newPrice / 1000) * 1000;
-                } else {
-                    newPrice = bulkMode === 'increase' ? item.price + val : item.price - val;
-                }
-
                 return supabase
                     .from("catalog")
-                    .update({ price: Math.max(0, newPrice), updated_at: new Date().toISOString(), updated_by_name: updaterName })
+                    .update({ price: Math.max(0, newPrice), updated_at: new Date().toISOString(), updated_by_name: profile?.full_name || role })
                     .eq("id", item.id);
-            });
 
             await Promise.all(updates);
             alert("✅ Seluruh harga katalog berhasil diperbarui!");
@@ -246,11 +221,9 @@ export default function CatalogPage() {
         }
 
         setIsSavingStock(true);
-        const updaterName = role === 'owner' ? 'Owner' : `Admin ${branchName || ''}`.trim();
-
         const { error } = await supabase
             .from("catalog")
-            .update({ stock: stockVal, updated_at: new Date().toISOString(), updated_by_name: updaterName })
+            .update({ stock: stockVal, updated_at: new Date().toISOString(), updated_by_name: profile?.full_name || role })
             .eq("id", itemId);
 
         setIsSavingStock(false);
@@ -427,12 +400,17 @@ export default function CatalogPage() {
                                                     <div className="relative">
                                                         <Coins className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                                                         <input
-                                                            type="number"
+                                                            type="text"
                                                             required
                                                             className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:outline-none focus:bg-white transition-all font-bold"
-                                                            placeholder="Contoh: 150000"
-                                                            value={editingItem ? editingItem.price : newPrice}
-                                                            onChange={(e) => editingItem ? setEditingItem({ ...editingItem, price: parseInt(e.target.value) }) : setNewPrice(e.target.value)}
+                                                            placeholder="Contoh: 150.000"
+                                                            value={editingItem ? formatRupiah(editingItem.price) : newPrice}
+                                                            onChange={(e) => {
+                                                                const val = formatRupiah(e.target.value);
+                                                                editingItem 
+                                                                    ? setEditingItem({ ...editingItem, price: parseRupiah(val) }) 
+                                                                    : setNewPrice(val);
+                                                            }}
                                                         />
                                                     </div>
                                                 </div>
@@ -441,11 +419,16 @@ export default function CatalogPage() {
                                                     <div className="relative">
                                                         <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                                                         <input
-                                                            type="number"
+                                                            type="text"
                                                             className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:outline-none focus:bg-white transition-all font-bold"
-                                                            placeholder="Contoh: 80000"
-                                                            value={editingItem ? editingItem.cost_price : newCostPrice}
-                                                            onChange={(e) => editingItem ? setEditingItem({ ...editingItem, cost_price: parseInt(e.target.value) || 0 }) : setNewCostPrice(e.target.value)}
+                                                            placeholder="Contoh: 80.000"
+                                                            value={editingItem ? formatRupiah(editingItem.cost_price) : newCostPrice}
+                                                            onChange={(e) => {
+                                                                const val = formatRupiah(e.target.value);
+                                                                editingItem 
+                                                                    ? setEditingItem({ ...editingItem, cost_price: parseRupiah(val) }) 
+                                                                    : setNewCostPrice(val);
+                                                            }}
                                                         />
                                                     </div>
                                                     <p className="text-[10px] text-slate-400 italic">Harga beli dari supplier, untuk perhitungan laba kotor di laporan.</p>
@@ -455,11 +438,16 @@ export default function CatalogPage() {
                                                     <div className="relative">
                                                         <Gift className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-500" size={18} />
                                                         <input
-                                                            type="number"
+                                                            type="text"
                                                             className="w-full pl-12 pr-4 py-4 bg-amber-50 border border-amber-100 rounded-2xl focus:ring-4 focus:ring-amber-500/10 focus:outline-none focus:bg-white transition-all font-bold text-amber-600"
                                                             placeholder="Contoh: 500"
-                                                            value={editingItem ? editingItem.points_required : newPointsRequired}
-                                                            onChange={(e) => editingItem ? setEditingItem({ ...editingItem, points_required: parseInt(e.target.value) || 0 }) : setNewPointsRequired(e.target.value)}
+                                                            value={editingItem ? formatRupiah(editingItem.points_required) : newPointsRequired}
+                                                            onChange={(e) => {
+                                                                const val = formatRupiah(e.target.value);
+                                                                editingItem 
+                                                                    ? setEditingItem({ ...editingItem, points_required: parseRupiah(val) }) 
+                                                                    : setNewPointsRequired(val);
+                                                            }}
                                                         />
                                                     </div>
                                                     <p className="text-[10px] text-amber-600/60 italic font-medium">Jika diisi > 0, item ini akan muncul di Katalog Reward member.</p>
@@ -496,11 +484,16 @@ export default function CatalogPage() {
                                                     <div className="relative">
                                                         <Boxes className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                                                         <input
-                                                            type="number"
+                                                            type="text"
                                                             className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:outline-none focus:bg-white transition-all font-bold"
                                                             placeholder="Ketik stok..."
-                                                            value={editingItem ? (editingItem.stock || "") : newStock}
-                                                            onChange={(e) => editingItem ? setEditingItem({ ...editingItem, stock: parseInt(e.target.value) }) : setNewStock(e.target.value)}
+                                                            value={editingItem ? formatRupiah(editingItem.stock) : newStock}
+                                                            onChange={(e) => {
+                                                                const val = formatRupiah(e.target.value);
+                                                                editingItem 
+                                                                    ? setEditingItem({ ...editingItem, stock: parseRupiah(val) }) 
+                                                                    : setNewStock(val);
+                                                            }}
                                                             disabled={(editingItem ? editingItem.category : newCategory) === 'Service'}
                                                         />
                                                     </div>
