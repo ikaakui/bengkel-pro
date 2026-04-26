@@ -346,8 +346,7 @@ export default function AntrianServicePage() {
                                                         {item.status === "Draft" && (
                                                             <>
                                                                 <Button
-                                                                    variant="outline"
-                                                                    className="text-xs px-3 py-2"
+                                                                    className="text-xs px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white border-none shadow-sm shadow-emerald-200"
                                                                     onClick={() => handleUpdateStatus(item.id, "In Progress")}
                                                                 >
                                                                     <Wrench size={14} className="mr-1" />
