@@ -24,7 +24,8 @@ import {
     Boxes,
     TrendingUp,
     Edit2,
-    Trash2
+    Trash2,
+    Gift
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -588,7 +589,6 @@ export default function CatalogPage() {
                                             </div>
 
                                             {/* Action Buttons */}
-                                            {/* Action Buttons */}
                                             {canManage && (
                                                 <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                     <button
@@ -664,7 +664,8 @@ export default function CatalogPage() {
                                                         onClick={() => setEditingStockId(null)}
                                                         className="w-11 h-11 rounded-xl bg-white text-slate-400 border border-slate-200 flex items-center justify-center hover:text-red-500 hover:border-red-200 transition-all"
                                                     >
-                                                        </button>
+                                                        <X size={16} />
+                                                    </button>
                                                 </div>
                                             ) : canManage ? (
                                                 <button
@@ -682,7 +683,6 @@ export default function CatalogPage() {
                                                     <Boxes size={16} />
                                                     Stok Saat Ini: {item.stock}
                                                 </div>
-                                            )}
                                             )}
                                         </div>
                                     )}
