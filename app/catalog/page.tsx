@@ -146,6 +146,11 @@ export default function CatalogPage() {
         if (!editingItem) return;
         setIsSaving(true);
 
+        const { error } = await supabase
+            .from("catalog")
+            .update({
+                name: editingItem.name,
+                category: editingItem.category,
                 price: editingItem.price,
                 cost_price: editingItem.cost_price || 0,
                 points_required: editingItem.points_required || 0,
@@ -196,10 +201,22 @@ export default function CatalogPage() {
 
         setIsBulkLoading(true);
 
+        try {
+            const updates = items.map(async (item) => {
+                let newPrice = item.price;
+                if (bulkType === 'percent') {
+                    const factor = bulkMode === 'increase' ? (1 + val / 100) : (1 - val / 100);
+                    newPrice = item.price * factor;
+                    newPrice = Math.round(newPrice / 1000) * 1000;
+                } else {
+                    newPrice = bulkMode === 'increase' ? item.price + val : item.price - val;
+                }
+
                 return supabase
                     .from("catalog")
                     .update({ price: Math.max(0, newPrice), updated_at: new Date().toISOString(), updated_by_name: profile?.full_name || role })
                     .eq("id", item.id);
+            });
 
             await Promise.all(updates);
             alert("✅ Seluruh harga katalog berhasil diperbarui!");
