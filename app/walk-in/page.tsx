@@ -34,7 +34,6 @@ export default function WalkInPage() {
 
     // Duplicate check
     const [showDuplicateModal, setShowDuplicateModal] = useState(false);
-    const [isConfirmedDuplicate, setIsConfirmedDuplicate] = useState(false);
 
     const [selectedMember, setSelectedMember] = useState<any>(null);
 
@@ -111,7 +110,7 @@ export default function WalkInPage() {
         setMemberResults([]);
     };
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (isConfirmed: boolean = false) => {
         if (isSaving) return;
 
         if (!customerName || !customerPhone || !carModel || !licensePlate) {
@@ -166,7 +165,7 @@ export default function WalkInPage() {
         setIsSaving(true);
         try {
             // Cek apakah sudah ada antrian dengan plat nomor ini yang masih aktif hari ini
-            if (!isConfirmedDuplicate) {
+            if (!isConfirmed) {
                 const today = new Date().toISOString().split('T')[0];
                 const { data: existing } = await supabase
                     .from("bookings")
@@ -230,21 +229,13 @@ export default function WalkInPage() {
             showFeedback('error', 'Gagal mendaftarkan!', err?.message || "Terjadi kesalahan sistem keamanan database.");
         } finally {
             setIsSaving(false);
-            setIsConfirmedDuplicate(false);
         }
     };
 
     const handleConfirmDuplicate = () => {
         setShowDuplicateModal(false);
-        setIsConfirmedDuplicate(true);
+        handleSubmit(true);
     };
-
-    // Trigger submit after confirmation
-    useEffect(() => {
-        if (isConfirmedDuplicate) {
-            handleSubmit();
-        }
-    }, [isConfirmedDuplicate]);
 
     const handleReset = () => {
         setCustomerName("");
@@ -494,7 +485,7 @@ export default function WalkInPage() {
                                         </div>
 
                                         <Button
-                                            onClick={handleSubmit}
+                                            onClick={() => handleSubmit(false)}
                                             disabled={isSaving}
                                             className="w-full h-20 rounded-[1.5rem] bg-slate-900 hover:bg-slate-800 text-white font-black text-base uppercase tracking-[0.2em] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.3)] hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] transition-all active:scale-95 group overflow-hidden relative"
                                         >
