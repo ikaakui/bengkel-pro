@@ -130,7 +130,7 @@ export default function BranchesPage() {
         // Fetch global logo URL
         try {
             const { data: logoData } = await supabase
-                .from("settings")
+                .from("app_settings")
                 .select("value")
                 .eq("key", "global_logo_url")
                 .single();
@@ -174,7 +174,7 @@ export default function BranchesPage() {
         try {
             // Check if settings table exists by doing an upside down insert
             const { error: saveError } = await supabase
-                .from("settings")
+                .from("app_settings")
                 .upsert(
                     { key: "global_logo_url", value: globalLogoUrl, updated_at: new Date().toISOString() },
                     { onConflict: "key" }
@@ -182,7 +182,7 @@ export default function BranchesPage() {
 
             if (saveError) {
                 if (saveError.code === "42P01") {
-                    throw new Error("Tabel settings belum ada. Mohon jalankan SQL Editor dari admin panel!");
+                    throw new Error("Tabel app_settings belum ada. Mohon jalankan SQL Editor dari admin panel!");
                 }
                 throw saveError;
             }
@@ -204,7 +204,7 @@ export default function BranchesPage() {
 
         try {
             const { error: saveError } = await supabase
-                .from("settings")
+                .from("app_settings")
                 .upsert(
                     { key: "global_logo_url", value: "", updated_at: new Date().toISOString() },
                     { onConflict: "key" }
