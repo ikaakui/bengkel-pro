@@ -29,18 +29,36 @@ export default function AdminFinancePage() {
         setLoading(true);
         try {
             const branchId = profile?.branch_id;
-            if (!branchId) return;
+            const isOwner = role === 'owner';
+
+            // Owner/Manager: tarik semua cabang tanpa filter branch_id
+            // Admin/SPV: harus punya branch_id
+            if (!isOwner && !branchId) {
+                setLoading(false);
+                return;
+            }
 
             const now = new Date();
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
+            let txsQuery = supabase.from("transactions")
+                .select("total_amount")
+                .eq("status", "Paid")
+                .gte("created_at", startOfMonth);
+
+            let expsQuery = supabase.from("expenses")
+                .select("amount")
+                .gte("created_at", startOfMonth);
+
+            if (!isOwner && branchId) {
+                txsQuery = txsQuery.eq("branch_id", branchId);
+                expsQuery = expsQuery.eq("branch_id", branchId);
+            }
+
             const [
                 { data: txs },
                 { data: exps }
-            ] = await Promise.all([
-                supabase.from("transactions").select("total_amount").eq("branch_id", branchId).eq("status", "Paid").gte("created_at", startOfMonth),
-                supabase.from("expenses").select("amount").eq("branch_id", branchId).gte("created_at", startOfMonth)
-            ]);
+            ] = await Promise.all([txsQuery, expsQuery]);
 
             setFinanceData({
                 revenue: (txs || []).reduce((acc, t) => acc + Number(t.total_amount), 0),
@@ -56,8 +74,8 @@ export default function AdminFinancePage() {
     };
 
     useEffect(() => {
-        if (role && ['admin', 'spv', 'admin_depok', 'admin_bsd'].includes(role)) fetchFinanceData();
-    }, [role]);
+        if (role) fetchFinanceData();
+    }, [role, profile?.branch_id]);
 
     if (loading) {
         return (
@@ -72,7 +90,7 @@ export default function AdminFinancePage() {
 
     return (
         <DashboardLayout>
-            <RoleGuard allowedRoles={['admin', 'spv', 'admin_depok', 'admin_bsd']}>
+            <RoleGuard allowedRoles={['owner', 'admin', 'spv', 'admin_depok', 'admin_bsd']}>
                 <div className="space-y-10">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>

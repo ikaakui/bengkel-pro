@@ -30,22 +30,33 @@ export default function AdminOperationsPage() {
         setLoading(true);
         try {
             const branchId = profile?.branch_id;
-            if (!branchId) return;
+            const isOwner = role === 'owner';
+
+            // Owner/Manager: tarik semua cabang tanpa filter branch_id
+            // Admin/SPV: filter berdasarkan branch_id mereka
+            if (!isOwner && !branchId) {
+                setLoading(false);
+                return;
+            }
+
+            let bookingsQuery = supabase.from("bookings")
+                .select("*")
+                .in("status", ["pending", "in_progress", "ready"])
+                .order("created_at", { ascending: false });
+
+            let staffQuery = supabase.from("profiles")
+                .select("*")
+                .eq("role", "staff");
+
+            if (!isOwner && branchId) {
+                bookingsQuery = bookingsQuery.eq("branch_id", branchId);
+                staffQuery = staffQuery.eq("branch_id", branchId);
+            }
 
             const [
                 { data: bookings },
                 { data: staff }
-            ] = await Promise.all([
-                supabase.from("bookings")
-                    .select("*")
-                    .eq("branch_id", branchId)
-                    .in("status", ["pending", "in_progress", "ready"])
-                    .order("created_at", { ascending: false }),
-                supabase.from("profiles")
-                    .select("*")
-                    .eq("branch_id", branchId)
-                    .eq("role", "staff")
-            ]);
+            ] = await Promise.all([bookingsQuery, staffQuery]);
 
             setActiveBookings(bookings || []);
             setActiveStaff(staff || []);
@@ -58,8 +69,8 @@ export default function AdminOperationsPage() {
     };
 
     useEffect(() => {
-        if (role && ['admin', 'spv', 'admin_depok', 'admin_bsd'].includes(role)) fetchOpsData();
-    }, [role]);
+        if (role) fetchOpsData();
+    }, [role, profile?.branch_id]);
 
     if (loading) {
         return (
@@ -72,7 +83,7 @@ export default function AdminOperationsPage() {
 
     return (
         <DashboardLayout>
-            <RoleGuard allowedRoles={['admin', 'spv', 'admin_depok', 'admin_bsd']}>
+            <RoleGuard allowedRoles={['owner', 'admin', 'spv', 'admin_depok', 'admin_bsd']}>
                 <div className="space-y-10">
                 <div>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
