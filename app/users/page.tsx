@@ -114,14 +114,12 @@ export default function UsersPage() {
     const supabase = createClient();
 
     const fetchUsers = async () => {
-        let query = supabase.from("profiles").select("*");
-        
-        // Non-owner only see members
-        if (currentUserRole !== "owner") {
-            query = query.eq("role", "member");
-        }
-
-        const { data, error } = await query.order("created_at", { ascending: false });
+        // Halaman ini khusus Data Member pelanggan — selalu filter hanya role 'member'
+        const { data } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("role", "member")
+            .order("created_at", { ascending: false });
 
         if (data) {
             setUsers(data);
@@ -530,20 +528,15 @@ export default function UsersPage() {
                             />
                         </div>
                         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                            {["all", "owner", "admin", "member"]
-                                .filter(r => currentUserRole === "owner" || (r === "all" || r === "member"))
-                                .map((r) => (
-                                    <button
-                                        key={r}
-                                        onClick={() => setFilterRole(r)}
-                                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${filterRole === r
-                                            ? "bg-primary text-white shadow-lg shadow-primary/20"
-                                            : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-                                            }`}
-                                    >
-                                        {r === "all" ? "Semua" : r.charAt(0).toUpperCase() + r.slice(1)}
-                                    </button>
-                                ))}
+                            <button
+                                onClick={() => setFilterRole("all")}
+                                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${filterRole === "all"
+                                    ? "bg-primary text-white shadow-lg shadow-primary/20"
+                                    : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                                    }`}
+                            >
+                                Semua Member
+                            </button>
                         </div>
                     </div>
 
