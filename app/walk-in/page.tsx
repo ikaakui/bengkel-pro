@@ -189,30 +189,13 @@ export default function WalkInPage() {
             // Wrap the main logic in Promise.race with the timeout
             await Promise.race([
                 (async () => {
-                    // Cek apakah sudah ada antrian dengan plat nomor ini yang masih aktif hari ini
-                    if (!isConfirmed) {
-                        const today = new Date().toISOString().split('T')[0];
-                        const { data: existing, error: checkError } = await supabase
-                            .from("bookings")
-                            .select("id, customer_name, car_model")
-                            .eq("license_plate", licensePlate.toUpperCase())
-                            .eq("service_date", today)
-                            .in("status", ["pending", "processing"])
-                            .maybeSingle();
-
-                        if (checkError) throw checkError;
-
-                        if (existing) {
-                            setShowDuplicateModal(true);
-                            setIsSaving(false);
-                            return 'duplicate'; // Signal to exit early
-                        }
-                    }
-
-                    // Create booking entry for walk-in
-                    const { data: booking, error: bookingError } = await supabase
-                        .from("bookings")
-                        .insert({
+                    // Call API Route instead of direct Supabase insert to bypass complex RLS
+                    const response = await fetch('/api/walk-in', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
                             customer_name: customerName,
                             customer_phone: customerPhone,
                             car_model: carModel,
@@ -223,38 +206,23 @@ export default function WalkInPage() {
                             member_id: selectedMember?.id || null,
                             booking_type: 'direct',
                             status: 'processing',
-                        })
-                        .select()
-                        .single();
+                            isConfirmed: isConfirmed
+                        }),
+                    });
 
-                    if (bookingError) {
-                        console.error("Supabase Error during insert:", bookingError);
-                        throw bookingError;
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.error || "Gagal menghubungi server");
                     }
 
-                    if (!booking || !booking.id) {
-                        throw new Error("Gagal mendapatkan ID Booking setelah insert.");
+                    if (result.duplicate) {
+                        setShowDuplicateModal(true);
+                        setIsSaving(false);
+                        return 'duplicate';
                     }
 
-                    // Auto-create a Draft transaction so it immediately appears in Antrian (Queue)
-                    const { error: txnError } = await supabase
-                        .from("transactions")
-                        .insert({
-                            customer_name: customerName,
-                            total_amount: 0,
-                            branch_id: finalBranchId,
-                            payment_method: "Cash",
-                            status: "Draft",
-                            booking_id: booking.id
-                        });
-                        
-                    if (txnError) {
-                        console.error("Failed to create initial draft transaction:", txnError);
-                        // If transaction fails (e.g. RLS), we MUST throw so the user knows!
-                        throw new Error("Gagal membuat Draft Transaksi: " + (txnError.message || JSON.stringify(txnError)));
-                    }
-
-                    setCreatedBookingId(booking.id);
+                    setCreatedBookingId(result.bookingId);
                     setSuccess(true);
                     return 'success';
                 })(),
