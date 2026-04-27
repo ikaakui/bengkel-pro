@@ -194,48 +194,39 @@ export default function AuthProvider({
 
     const signOut = async () => {
         try {
-            // 1. Set global logging out state immediately
+            // 1. Show logout screen immediately (feels instant)
             setIsLoggingOut(true);
 
-            // 2. Clear React state immediately so UI reacts
+            // 2. Clear React state immediately so UI reflects logout
             setUser(null);
             setProfile(null);
             setBranchName(null);
 
-            // 3. Execute all cleanup in parallel for maximum speed
-            // We await these to ensure the server actually receives the signout request
-            // before we navigate away (which would cancel pending requests)
-            await Promise.all([
-                // Supabase internal cleanup
-                supabase.auth.signOut(),
-                // Server-side cookie cleanup
-                fetch('/api/auth/signout', { method: 'POST' }).catch((e) => console.error("Signout API error:", e)),
-                // Small buffer for smooth transition animation (visual only)
-                new Promise(resolve => setTimeout(resolve, 800))
-            ]);
-
-            // 4. Clear local storage and session storage
+            // 3. Clear browser storage immediately (instant, no waiting)
             if (typeof window !== 'undefined') {
                 localStorage.clear();
                 sessionStorage.clear();
 
-                // Clear all remaining cookies as a fail-safe
-                const cookies = document.cookie.split(";");
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i];
-                    const eqPos = cookie.indexOf("=");
-                    const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-                    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-                }
+                // Expire all cookies client-side as a fail-safe
+                document.cookie.split(";").forEach((cookie) => {
+                    const name = cookie.split("=")[0].trim();
+                    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;SameSite=Lax";
+                });
             }
 
-            // 5. Force hard redirect to login
-            // Using .href instead of .assign for a slightly cleaner feeling on some browsers
-            window.location.href = "/login";
+            // 4. Fire server-side cleanup in parallel (runs in the background)
+            // No artificial delay — the backend now correctly sends Set-Cookie headers
+            await Promise.all([
+                supabase.auth.signOut({ scope: 'local' }),
+                fetch('/api/auth/signout', { method: 'POST' }).catch((e) => console.error("Signout API error:", e)),
+            ]);
+
+            // 5. Hard redirect — bypasses Next.js router cache entirely
+            window.location.replace("/login");
 
         } catch (err) {
             console.error("Error during signOut:", err);
-            window.location.href = "/login";
+            window.location.replace("/login");
         }
     };
 

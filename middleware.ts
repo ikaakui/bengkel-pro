@@ -28,7 +28,9 @@ export async function middleware(request: NextRequest) {
         }
     );
 
-    const { data: { session } } = await supabase.auth.getSession();
+    // getUser() validates the token against the Supabase Auth server (not just the local cookie)
+    // This is the correct method for middleware — it catches cleared/expired sessions reliably
+    const { data: { user } } = await supabase.auth.getUser();
 
     // Public routes that don't require authentication
     const publicRoutes = ['/login', '/register'];
@@ -37,13 +39,13 @@ export async function middleware(request: NextRequest) {
     );
 
     // If not authenticated and trying to access protected route
-    if (!session && !isPublicRoute) {
+    if (!user && !isPublicRoute) {
         const redirectUrl = new URL('/login', request.url);
         return NextResponse.redirect(redirectUrl);
     }
 
     // If authenticated and trying to access login/register
-    if (session && isPublicRoute) {
+    if (user && isPublicRoute) {
         const redirectUrl = new URL('/', request.url);
         return NextResponse.redirect(redirectUrl);
     }
