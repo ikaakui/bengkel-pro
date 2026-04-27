@@ -30,7 +30,16 @@ export async function POST() {
     );
 
     // Sign out on the Supabase server side
-    await supabase.auth.signOut();
+    // Wrap in try-catch and Promise.race so that if it fails or hangs, 
+    // we still proceed to clear the cookies within 1 second.
+    try {
+        await Promise.race([
+            supabase.auth.signOut(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Supabase signOut timeout")), 1000))
+        ]);
+    } catch (error) {
+        console.error("Supabase server-side signOut error/timeout:", error);
+    }
 
     // Build response and explicitly expire all sb-* cookies in the browser
     const response = NextResponse.json({ success: true });

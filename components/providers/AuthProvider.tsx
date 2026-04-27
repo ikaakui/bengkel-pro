@@ -215,10 +215,13 @@ export default function AuthProvider({
             }
 
             // 4. Fire server-side cleanup in parallel (runs in the background)
-            // No artificial delay — the backend now correctly sends Set-Cookie headers
-            await Promise.all([
-                supabase.auth.signOut({ scope: 'local' }),
-                fetch('/api/auth/signout', { method: 'POST' }).catch((e) => console.error("Signout API error:", e)),
+            // Added a safety timeout so it never hangs indefinitely
+            await Promise.race([
+                Promise.all([
+                    supabase.auth.signOut({ scope: 'local' }).catch(console.error),
+                    fetch('/api/auth/signout', { method: 'POST' }).catch(console.error),
+                ]),
+                new Promise((resolve) => setTimeout(resolve, 1500)) // Force continue after 1.5s
             ]);
 
             // 5. Hard redirect — bypasses Next.js router cache entirely
