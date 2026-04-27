@@ -32,6 +32,7 @@ interface AuthContextType {
     globalLogoUrl: string | null;
     logoLoading: boolean;
     isLoggingOut: boolean;
+    profileError: string | null;
     signOut: () => Promise<void>;
     refreshProfile: () => Promise<void>;
     refreshGlobalLogo: () => Promise<void>;
@@ -48,6 +49,7 @@ const AuthContext = createContext<AuthContextType>({
     globalLogoUrl: null,
     logoLoading: true,
     isLoggingOut: false,
+    profileError: null,
     signOut: async () => { },
     refreshProfile: async () => { },
     refreshGlobalLogo: async () => { },
@@ -71,6 +73,7 @@ export default function AuthProvider({
     const [globalLogoUrl, setGlobalLogoUrl] = useState<string | null>(null);
     const [logoLoading, setLogoLoading] = useState(true);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [profileError, setProfileError] = useState<string | null>(null);
     const [loading, setLoading] = useState(!initialUser);
     const router = useRouter();
     const supabase = useMemo(() => createClient(), []);
@@ -86,25 +89,39 @@ export default function AuthProvider({
 
     const fetchProfile = useCallback(async (userId: string, retryCount = 0): Promise<boolean> => {
         try {
-            const { data, error } = await supabase
+            if (retryCount === 0) setProfileError(null);
+            
+            // Add a fail-safe timeout (8 seconds) to prevent infinite loading
+            const fetchPromise = supabase
                 .from("profiles")
                 .select("*")
                 .eq("id", userId)
                 .single();
+                
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Timeout: Supabase took too long to respond.")), 8000)
+            );
+
+            const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
             if (error) {
                 console.error("Error fetching profile:", error.message);
                 // Retry up to 2 times on failure (except "not found")
                 if (error.code !== 'PGRST116' && retryCount < 2) {
-                    await new Promise(r => setTimeout(r, 400));
+                    await new Promise(r => setTimeout(r, 600));
                     return fetchProfile(userId, retryCount + 1);
                 }
-                if (error.code === 'PGRST116') setProfile(null);
+                if (error.code === 'PGRST116') {
+                    setProfile(null);
+                } else {
+                    setProfileError("Gagal memuat profil. Sesi mungkin kedaluwarsa atau koneksi terputus.");
+                }
                 return false;
             }
 
             if (data) {
                 setProfile(data as UserProfile);
+                setProfileError(null);
                 // Fetch branch name in background (non-blocking for loading state)
                 if (data.branch_id) {
                     supabase
@@ -114,7 +131,7 @@ export default function AuthProvider({
                         .single()
                         .then(({ data: branchData }) => {
                             if (branchData) setBranchName(branchData.name);
-                        });
+                        }).catch(console.error);
                 } else {
                     setBranchName(null);
                 }
@@ -124,9 +141,10 @@ export default function AuthProvider({
         } catch (err: any) {
             console.error("Profile fetch exception:", err.message);
             if (retryCount < 2) {
-                await new Promise(r => setTimeout(r, 400));
+                await new Promise(r => setTimeout(r, 600));
                 return fetchProfile(userId, retryCount + 1);
             }
+            setProfileError("Terjadi kesalahan sistem saat memuat profil. Silakan coba lagi.");
             return false;
         }
     }, [supabase]);
@@ -245,6 +263,7 @@ export default function AuthProvider({
                 globalLogoUrl,
                 logoLoading,
                 isLoggingOut,
+                profileError,
                 signOut,
                 refreshProfile,
                 refreshGlobalLogo,
