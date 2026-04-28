@@ -105,7 +105,29 @@ export default function AuthProvider({
             const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
             if (error) {
-                console.error("Error fetching profile:", error.message);
+                console.error("Error fetching profile:", error.message, error.code);
+                
+                // --- AUTO-KICK LOGIC FOR INVALID SESSION ---
+                const isAuthError = error.code === 'PGRST301' || 
+                                  error.message.includes('JWT') || 
+                                  error.message.includes('Auth') ||
+                                  error.message.includes('Timeout');
+                                  
+                if (isAuthError) {
+                    // Verify if session is actually still valid
+                    const { data: sessionData } = await supabase.auth.getSession();
+                    if (!sessionData.session) {
+                        console.warn("Auto-Kick: Sesi sudah tidak valid atau kosong. Mengalihkan ke login...");
+                        setProfileError("Sesi Anda telah berakhir. Mengalihkan ke halaman login...");
+                        // Bersihkan cache secara lokal lalu paksa pindah
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        setTimeout(() => window.location.replace("/login"), 1500);
+                        return false;
+                    }
+                }
+                // --- END AUTO-KICK LOGIC ---
+
                 // Retry up to 2 times on failure (except "not found")
                 if (error.code !== 'PGRST116' && retryCount < 2) {
                     await new Promise(r => setTimeout(r, 600));
@@ -204,9 +226,29 @@ export default function AuthProvider({
             }
         );
 
+        // --- BACKGROUND SESSION VALIDATOR ---
+        // Cek secara berkala setiap 5 menit apakah token di background masih valid
+        const sessionCheckInterval = setInterval(async () => {
+            if (!mounted) return;
+            // Hanya cek jika kita sedang dalam state logged in
+            const currentUser = (await supabase.auth.getUser()).data.user;
+            if (!currentUser) {
+                const { data } = await supabase.auth.getSession();
+                if (!data.session) {
+                    // Cek lokasi saat ini, jangan redirect jika sudah di login/register
+                    const path = window.location.pathname;
+                    if (path !== '/login' && path !== '/register') {
+                        console.warn("Background Validator: Sesi hilang/mati. Auto-kick diaktifkan.");
+                        window.location.replace("/login");
+                    }
+                }
+            }
+        }, 5 * 60 * 1000); // 5 menit
+
         return () => {
             mounted = false;
             subscription.unsubscribe();
+            clearInterval(sessionCheckInterval);
         };
     }, [supabase, fetchProfile, refreshGlobalLogo]);
 
